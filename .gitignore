@@ -47,6 +47,9 @@ yarn-error.log*
 /outputs/
 /work/
 /artifacts/qa/
+/artifacts/qa-final/
+/artifacts/releases/
+/artifacts/presentation/
 *.tsbuildinfo
 /platforms/windows/src-tauri/target/
 /platforms/android/android/.gradle/
@@ -63,6 +66,9 @@ yarn-error.log*
 /artifacts/runtime/
 /artifacts/ppt-build/final-render*/
 /artifacts/ppt-build/rendered*/
+/artifacts/ppt-build/*montage*.png
+/artifacts/ppt-build/deck-contact.png
+/artifacts/ppt-build/source-notes.txt
 
 # local Codex/agent routing notes are not product source
 /AGENTROUTER-QUICK-START.md
