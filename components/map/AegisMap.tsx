@@ -2654,7 +2654,11 @@ export function AegisMap({
 
   const activeSelection = selection ?? internalSelection;
   const activeViewMode = viewMode ?? internalViewMode;
-  const showCampusMassing = Boolean(twinScene) || showEstimatedCampusMassing;
+  // The EIT isometric overlay is valid only when an EIT TwinScene is supplied.
+  // A searched world location must remain its own real map context rather than
+  // inheriting an unrelated campus visualisation.
+  const campusTwinActive = Boolean(twinScene);
+  const showCampusMassing = campusTwinActive && showEstimatedCampusMassing;
   const globeRotationEnabled = globeRotationOverride ?? autoRotateGlobe;
 
   useEffect(() => {
@@ -3134,7 +3138,7 @@ export function AegisMap({
 
           if (mode === "twin") {
             pauseOrbit(1_200);
-            flyTwin(map, EIT_FARIDABAD, 1_700, enableTerrain, showCampusMassing);
+            flyTwin(map, activeTwinCenterRef.current, 1_700, enableTerrain, showCampusMassing);
           } else {
             setCampusLayerVisibility(map, false);
             // Start the presentation orbit quickly after the first stable
@@ -3479,6 +3483,9 @@ export function AegisMap({
       const targetZoom = focusZoom ?? 8.5;
       const globeOverview = worldFocusUsesGlobe(targetZoom);
       activeViewRef.current = "world";
+      // Preserve the searched/clicked position for a later Scenario/Site
+      // transition. This prevents a brief, misleading jump to EIT.
+      activeTwinCenterRef.current = center;
       // Keep the spherical Earth for global/regional framing, then hand off to
       // Mercator for reliable provider streets, terrain and 3D buildings.
       // Staying in the WORLD product mode must not force the globe projection
@@ -3580,7 +3587,7 @@ export function AegisMap({
   const visibleMessage = forceOffline
     ? activeViewMode === "world"
       ? "Offline world continuity"
-      : "Offline isometric campus continuity"
+      : campusTwinActive ? "Offline isometric campus continuity" : "Offline local map context"
     : connectionMessage;
   const inspectionProperties = inspection ? orderedInspectionProperties(inspection.properties) : [];
   const wrapperClass = className ? `${styles.wrapper} ${className}` : styles.wrapper;
@@ -3594,9 +3601,9 @@ export function AegisMap({
         aria-hidden={visibleConnection === "offline"}
       />
 
-      {visibleConnection === "offline" && activeViewMode === "world" ? <WorldContinuity /> : null}
+      {visibleConnection === "offline" && (activeViewMode === "world" || !campusTwinActive) ? <WorldContinuity /> : null}
 
-      {activeViewMode === "twin" ? (
+      {activeViewMode === "twin" && campusTwinActive ? (
         <OfflineCampusTwin
           layers={normalizedLayers}
           flood={floodVisual}
@@ -3754,9 +3761,11 @@ export function AegisMap({
 
       {activeViewMode === "twin" ? (
         <div className={styles.twinDisclosure}>
-          <span>CONTACT-MAP REFERENCE</span>
+          <span>{campusTwinActive ? "CONTACT-MAP REFERENCE" : "GLOBAL LOCATION CONTEXT"}</span>
           <i />
-          <span>{twinScene?.campus.prototypeLabel ?? "OSM FOOTPRINTS IMPORTED / HEIGHTS + OCCUPANCY ESTIMATED / NOT BIM"}</span>
+          <span>{campusTwinActive
+            ? twinScene?.campus.prototypeLabel ?? "OSM FOOTPRINTS IMPORTED / HEIGHTS + OCCUPANCY ESTIMATED / NOT BIM"
+            : "OPEN-MAP STREETS / AVAILABLE 3D BUILDINGS / SIMULATED LOCAL MODEL"}</span>
         </div>
       ) : null}
 

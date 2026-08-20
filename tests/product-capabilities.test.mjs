@@ -244,6 +244,15 @@ test("controlled WORLD maps keep the globe instead of auto-flying to the twin", 
   assert.equal(shouldAutoFlyToTwin({ enabled: false, hasInitialCamera: false, controlledView: false }), false);
 });
 
+test("a searched global location never inherits the EIT campus twin", async () => {
+  const source = await readFile(new URL("../components/map/AegisMap.tsx", import.meta.url), "utf8");
+  assert.match(source, /const campusTwinActive = Boolean\(twinScene\)/);
+  assert.match(source, /const showCampusMassing = campusTwinActive && showEstimatedCampusMassing/);
+  assert.match(source, /activeViewMode === "twin" && campusTwinActive/);
+  assert.match(source, /activeTwinCenterRef\.current = center/);
+  assert.match(source, /flyTwin\(map, activeTwinCenterRef\.current, 1_700/);
+});
+
 test("provider geographic labels are distinguishable from AEGIS overlay symbols", () => {
   assert.equal(isProviderContextLabelLayer({
     id: "road-label",
