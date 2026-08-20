@@ -2,7 +2,7 @@
 
 The **Agent Ledger** is a separate judge-facing site at `/agent-ledger`. It records what the AEGIS operations agent actually executed, which provider path it used, what evidence it received, what it proposed and whether a human approved or rejected it.
 
-The software does not seed fictional “success” events. A fresh store is empty, while the live D1 store now contains real release-acceptance executions, including an approved revision 2. Every displayed row must originate from an executed endpoint request.
+There are no seeded “success” events. A fresh store is empty, while the live D1 store now contains real release-acceptance executions, including an approved revision 2. Every displayed row must originate from an executed endpoint request.
 
 ## Why it exists
 
