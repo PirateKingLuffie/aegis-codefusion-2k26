@@ -2,6 +2,8 @@
 
 - Live command center: https://aegis-codefusion-2k26.guptashivaani233.workers.dev
 - Dedicated Agent Ledger: https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
+- Source repository: https://github.com/PirateKingLuffie/aegis-codefusion-2k26
+- Windows and presentation downloads: https://github.com/PirateKingLuffie/aegis-codefusion-2k26/releases/tag/v0.1.0
 
 ## For the judge presentation
 

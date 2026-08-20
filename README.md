@@ -8,6 +8,8 @@ AEGIS combines a rotating 3D world view, source-labelled incident intelligence, 
 
 - **AEGIS command center:** https://aegis-codefusion-2k26.guptashivaani233.workers.dev
 - **Dedicated Agent Ledger:** https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
+- **Source repository:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26
+- **Windows and presentation downloads:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26/releases/tag/v0.1.0
 - **Main Worker version:** `e0b147fe-0219-4193-ad09-b402aa498170`
 - **Ledger Worker version:** `4a840328-2982-4761-940b-95cb127c583b`
 
