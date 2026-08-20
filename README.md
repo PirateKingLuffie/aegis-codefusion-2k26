@@ -2,7 +2,7 @@
 
 Adaptive Emergency Geospatial Intelligence & Simulation — a map-first emergency digital twin and single-operator decision-support system for CodeFusion 2K26.
 
-AEGIS combines a rotating 3D world view, source-labelled incident intelligence, deterministic hazard simulation, time-specific consequence layers, evacuation and resource planning, what-if comparison, reverse-cascade intervention ranking, recovery/re-entry screening, and decision receipts. The active targets are the responsive web command center and Windows desktop wrapper. The phone app is documentation-only for now.
+AEGIS combines a slowly rotating and searchable 3D world view, source-labelled incident intelligence, deterministic hazard simulation at a selected world location or operating area, time-specific consequence layers, evacuation and resource planning, what-if comparison, reverse-cascade intervention ranking, recovery/re-entry screening, and decision receipts. The active targets are the responsive web command center and Windows desktop wrapper. The phone app is documentation-only for now.
 
 ## Live deployment
 
@@ -10,8 +10,18 @@ AEGIS combines a rotating 3D world view, source-labelled incident intelligence, 
 - **Dedicated Agent Ledger:** https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 - **Source repository:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26
 - **Windows and presentation downloads:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26/releases/tag/v0.1.0
-- **Main Worker version:** `58accdae-9be1-440c-b7f2-3cec0ff45e86`
-- **Ledger Worker version:** `af5d0e22-9ed7-4e83-b0ff-ea62a312114f`
+- **Previously accepted main Worker version:** `58accdae-9be1-440c-b7f2-3cec0ff45e86`
+- **Previously accepted ledger Worker version:** `af5d0e22-9ed7-4e83-b0ff-ea62a312114f`
+
+### Current-rehaul release record — root must complete
+
+- **Final commit:** `[ROOT: INSERT FINAL COMMIT]`
+- **Main Worker version:** `[ROOT: INSERT FINAL MAIN WORKER VERSION]`
+- **Ledger Worker version:** `[ROOT: INSERT FINAL LEDGER WORKER VERSION OR “UNCHANGED”]`
+- **Canonical verification:** `[ROOT: INSERT EXACT TOTAL/PASS/FAIL/SKIP COUNTS]`
+- **Remote browser:** `[ROOT: INSERT SEARCH/ZOOM/ORBIT/HAZARD/CONSOLE RESULT]`
+
+The URLs above may still serve the preceding accepted release until this block is completed. Do not present the current source rehaul as deployed solely because the prior Worker IDs remain reachable.
 
 Cloudflare D1 is migrated and live for immutable Agent Ledger receipt revisions. Cross-deployment `GET`, `POST` and human-review `PATCH` were verified. D1 is the ledger store only; scenario history remains browser-local unless the separate FastAPI operations service is deployed.
 
@@ -27,6 +37,15 @@ Cloudflare D1 is migrated and live for immutable Agent Ledger receipt revisions.
 - No paid model, card or API key is required for the core workflow. Cloudflare’s current [Workers AI pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/) includes a daily free allocation, but external quotas and terms can change.
 
 Public upstreams can throttle, revise or become unavailable. AEGIS exposes their status and never relabels a simulation, dated report, search link or ordinary video as a live sensor/camera.
+
+## World-to-scenario workflow
+
+- The initial Earth uses a slightly tilted globe projection and a restrained idle orbit. Pointer, wheel, keyboard and camera interaction pause rotation; it resumes only after idle while the camera remains at globe-overview zoom. Reduced-motion preference and background tabs also pause it.
+- Nominatim search accepts countries, cities, addresses, streets, buildings, landmarks and coordinates. A selected result receives a persistent focus marker/name and becomes the active planning coordinate.
+- At regional/street zoom, an opaque keyless CARTO/OSM-derived street raster is kept beneath a separate labels overlay and AEGIS operational layers. This provides a non-black handoff when optional dated Earth imagery or subtle provider-vector fills are unavailable.
+- Place labels, roads and available building context come from public OpenStreetMap/OpenMapTiles/CARTO sources. Coverage is not uniform and the imagery is not live satellite.
+- Source-labelled current/live incidents can pulse red. That status is inherited from the named provider record and freshness rules; it is not an AEGIS field observation and is not mixed with simulated hazard geometry.
+- The operator can place a hazard source, evacuation origins/destinations and an operating area, then run any of the five implemented hazard plugins around the selected world location. “Any location” does not mean survey-grade fidelity everywhere, and “five plugins” does not mean literally every disaster type is modelled.
 
 ## Development verification
 
@@ -61,6 +80,7 @@ Open **Workspace → Campus data** to import a validated campus JSON file. The s
 ## Implemented hazard and decision capabilities
 
 - Five executable plugins: flagship surface-water flood plus earthquake, wildfire, cyclone/surge and chemical-plume screening models.
+- Hazard-specific time visuals: flood/deeper-water extents and flow; earthquake isoseismal bands and symbolic pulse outlines; wildfire perimeter, smoke and spread axis; cyclone wind/surface-water fields and scenario track; chemical plume, threshold zone and direction axis.
 - A shared deterministic seed, 120-minute timeline and reproducible what-if branches.
 - Flood depth, arrival, rise/recession, velocity, surface, waterlines, internal-depth and affected-floor screens.
 - Building, road, bridge, critical-facility, utility and population consequences by selected minute.
@@ -70,6 +90,9 @@ Open **Workspace → Campus data** to import a validated campus JSON file. The s
 - Capacity-aware evacuation origins/destinations, alternatives, staged departures, resources, shelters, coverage gaps and human approval receipts.
 - Imported OSRM candidates screened against active simulated consequence polygons before route styling.
 - Scenario save/load/version history, bookmarks, annotations, named layouts, replay, JSON/CSV/print exports, measurement, layer search/presets/solo/threshold, comparison layouts, alerts, command palette and local audit history.
+- The primary Scenario panel includes three loaded planning cases at different locations: EIT campus flood, Guwahati urban flood and Miami cyclone/surge. A separate Tokyo coastal-inundation card is explicitly labelled as a tsunami proxy that reuses the cyclone/surge low-point engine; it is not a calibrated tsunami solver.
+- Main World map, Incident, Scenarios, Impacts, Sources and Analysis destinations include concise purpose briefings instead of unexplained icons.
+- Decision support includes an **Explain evacuation procedure** action grounded in the current departure stages, screened route, destination/capacity, coverage, remaining exposure and model warning. The optional language layer may explain this structured plan; it does not create a route or evacuation order.
 
 All hazard consequences and evacuation outcomes are prototype planning estimates. They are not observed damage, engineering certification, official closures, casualty predictions or evacuation orders. Casualty and economic-damage values remain disabled until authoritative methods and inputs are provided.
 
@@ -87,7 +110,7 @@ All hazard consequences and evacuation outcomes are prototype planning estimates
 - [Windows and deferred mobile builds](docs/PLATFORM_BUILDS.md)
 - [Completion ledger](COMPLETION.txt)
 
-## Release verification snapshot
+## Previously accepted release verification snapshot
 
 - Five deployed hazard requests returned HTTP 200 in `100–420 ms`, each with 25 timeline frames. Flood returned 41 route candidates in the accepted sample; other hazards can truthfully return zero routes when no destination remains feasible.
 - A unique cold live-intelligence query completed in `4,559 ms` with three live sources, one degraded source and nine incidents; its immediate cached repeat completed in `169 ms`.
@@ -95,6 +118,8 @@ All hazard consequences and evacuation outcomes are prototype planning estimates
 - Backend tests passed `7/7`; opt-in public-feed tests passed `6/6`; `npm audit` reported zero vulnerabilities.
 - Final canonical `npm run verify`: 67 tests total, 66 passed, zero failed and one intentional optional-network skip. Typecheck, lint and production build passed; the build reports only the documented large-chunk performance advisory.
 - Remote-browser acceptance on the public Worker confirmed the labelled, slightly tilted globe, visible idle rotation, world search to New Delhi, district and street labels through deep zoom, no black canvas and no browser warnings or errors. A final run on the actual Lenovo LOQ remains the owner’s device-specific check.
+
+These results belong to the preceding accepted Worker versions listed above. The current-rehaul acceptance must be recorded separately in the placeholder block after its own build, deployment and remote-browser replay.
 
 ## Oracle Free Tier expansion
 

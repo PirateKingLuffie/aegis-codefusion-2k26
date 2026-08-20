@@ -20,6 +20,12 @@ export type WorkspaceSelectionPoint = {
   label?: string;
 };
 
+/** Operator-drawn local simulation extent retained with a saved workspace. */
+export type WorkspaceSelectionArea = {
+  name?: string;
+  coordinates: [number, number][];
+};
+
 export type WorkspaceAnnotation = {
   id: string;
   label: string;
@@ -52,7 +58,10 @@ export type ScenarioWorkspace = {
   layout: WorkspaceLayoutId;
   layerVisibility: Record<string, boolean>;
   layerThreshold: number;
-  selection: { points: WorkspaceSelectionPoint[] };
+  selection: {
+    points: WorkspaceSelectionPoint[];
+    area?: WorkspaceSelectionArea;
+  };
   annotations: WorkspaceAnnotation[];
   sourceIncident?: {
     id: string;
@@ -135,6 +144,9 @@ export const SCENARIO_PRESETS: Array<{
   hazard: WorkspaceHazardId;
   strength: number;
   minute: number;
+  parameterOverrides?: Record<string, string | number | boolean>;
+  /** Truth label shown with presets that intentionally reuse a proxy model. */
+  modelDisclosure?: string;
 }> = [
   {
     id: "eit-flood",
@@ -167,6 +179,34 @@ export const SCENARIO_PRESETS: Array<{
     hazard: "cyclone",
     strength: 104,
     minute: 0,
+  },
+  {
+    id: "cape-town-wildfire",
+    name: "Cape Town foothills wildfire exercise",
+    location: { id: "cape-town", name: "Cape Town", region: "Western Cape, South Africa", latitude: -33.9249, longitude: 18.4241, fidelity: "GLOBAL PROTOTYPE" },
+    hazard: "wildfire",
+    strength: 88,
+    minute: 0,
+    parameterOverrides: { windSpeedKph: 34, windDirectionDeg: 132, fuelDryness: 0.84, relativeHumidityPct: 24 },
+  },
+  {
+    id: "rotterdam-chemical",
+    name: "Rotterdam port chemical-plume exercise",
+    location: { id: "rotterdam-port", name: "Port of Rotterdam", region: "South Holland, Netherlands", latitude: 51.9496, longitude: 4.1453, fidelity: "GLOBAL PROTOTYPE" },
+    hazard: "industrial",
+    strength: 78,
+    minute: 0,
+    parameterOverrides: { releaseKgPerMinute: 6.5, releaseDurationMinutes: 45, windSpeedKph: 19, windDirectionDeg: 82, atmosphericStability: "D" },
+  },
+  {
+    id: "sendai-coastal-inundation-proxy",
+    name: "Sendai tsunami / coastal inundation screening proxy",
+    location: { id: "sendai-coast", name: "Sendai coastal area", region: "Miyagi, Japan", latitude: 38.2682, longitude: 140.8694, fidelity: "GLOBAL PROTOTYPE" },
+    hazard: "cyclone",
+    strength: 98,
+    minute: 0,
+    parameterOverrides: { peakWindKph: 118, rainfallMmPerHour: 72, coastalSurgeM: 3.4, trackDirectionDeg: 318, forwardSpeedKph: 24 },
+    modelDisclosure: "Uses the deterministic cyclone/surge low-point engine as a coastal-inundation screening proxy; it is not a calibrated tsunami, wave-propagation or evacuation model.",
   },
 ];
 

@@ -130,6 +130,65 @@ export interface ImpactZoneProperties {
   [key: string]: unknown;
 }
 
+/**
+ * A deterministic, time-selected visual primitive for the active hazard.
+ * These properties describe a renderer effect only; `classification` and
+ * `evidenceClass` deliberately prevent the geometry being mistaken for an
+ * observed incident perimeter or an engineering model output.
+ */
+export interface HazardFootprintProperties extends ImpactZoneProperties {
+  hazard: "flood" | "earthquake" | "wildfire" | "cyclone" | "chemical";
+  visualRole:
+    | "flood-extent"
+    | "flood-deep-water"
+    | "earthquake-isoseismal"
+    | "wildfire-active-perimeter"
+    | "wildfire-smoke-envelope"
+    | "cyclone-wind-field"
+    | "cyclone-surface-water"
+    | "chemical-plume"
+    | "chemical-threshold-zone";
+  classification: "SIMULATED";
+  evidenceClass: "Simulated";
+  selectedMinute: number;
+  phase: string;
+  intensity01: number;
+  animationProgress01: number;
+  metric: string;
+  value: number;
+  unit: string;
+  directionDegrees?: number;
+  innerRadiusM?: number;
+  outerRadiusM?: number;
+  displayLabel: string;
+  displayNote: string;
+  [key: string]: unknown;
+}
+
+/** Direction/track companion to `HazardFootprintProperties`. */
+export interface HazardVectorProperties {
+  hazard: HazardFootprintProperties["hazard"];
+  visualRole:
+    | "flood-net-flow"
+    | "earthquake-pulse-outline"
+    | "wildfire-spread-axis"
+    | "cyclone-track"
+    | "chemical-plume-axis";
+  classification: "SIMULATED";
+  evidenceClass: "Simulated";
+  selectedMinute: number;
+  phase: string;
+  intensity01: number;
+  animationProgress01: number;
+  metric: string;
+  value: number;
+  unit: string;
+  directionDegrees?: number;
+  displayLabel: string;
+  displayNote: string;
+  [key: string]: unknown;
+}
+
 export interface OperationalImpactProperties extends ImpactZoneProperties {
   status?: string;
   value?: number;
@@ -187,6 +246,10 @@ export interface AegisMapLayers {
   hospitals?: FeatureCollection<Point, HospitalProperties>;
   shelters?: FeatureCollection<Point, ShelterProperties>;
   impactZones?: FeatureCollection<Polygon | MultiPolygon, ImpactZoneProperties>;
+  /** Hazard-specific animated shapes for the selected timeline minute. */
+  hazardFootprints?: FeatureCollection<Polygon | MultiPolygon, HazardFootprintProperties>;
+  /** Hazard-specific motion, spread or track vectors for the selected minute. */
+  hazardVectors?: FeatureCollection<LineString | MultiLineString, HazardVectorProperties>;
   /** Semantic impact layers. Red damage, amber warnings, green safe and gray unavailable. */
   damage?: FeatureCollection<Polygon | MultiPolygon, OperationalImpactProperties>;
   populationImpact?: FeatureCollection<Polygon | MultiPolygon, OperationalImpactProperties>;
@@ -296,9 +359,9 @@ export interface AegisMapProps {
   autoFlyToEit?: boolean;
   /** Slowly rotates the idle world globe. Defaults to true. */
   autoRotateGlobe?: boolean;
-  /** Degrees of longitude per second while idle. Defaults to a visible but restrained 0.65. */
+  /** Degrees of longitude per second while idle. Defaults to a slow, visible 0.5. */
   autoRotateSpeedDegPerSecond?: number;
-  /** Delay after interaction before idle rotation resumes. Defaults to 6500 ms. */
+  /** Delay after interaction before idle rotation resumes. Defaults to 3200 ms. */
   globeIdleResumeMs?: number;
   defaultTool?: AegisMapTool;
   initialLayerVisibility?: Partial<Record<AegisMapLayerKey, boolean>>;

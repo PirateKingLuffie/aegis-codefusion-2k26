@@ -10,6 +10,8 @@ import type {
   EvacuationRouteProperties,
   FloodDepthProperties,
   FloodFlowProperties,
+  HazardFootprintProperties,
+  HazardVectorProperties,
   HospitalProperties,
   ImpactZoneProperties,
   OperationalRoadProperties,
@@ -135,6 +137,8 @@ export interface RecoveryPriorityLayerProperties extends ImpactAssetLayerPropert
  * `AegisMapLayers`, while exposing consequence layers for a richer renderer.
  */
 export interface AegisImpactMapLayers extends AegisMapLayers {
+  hazardFootprints: FeatureCollection<Polygon, HazardFootprintProperties & AegisEvidenceProperties>;
+  hazardVectors: FeatureCollection<LineString, HazardVectorProperties & AegisEvidenceProperties>;
   damagedBuildings: FeatureCollection<Polygon, ImpactAssetLayerProperties>;
   impactedRoads: FeatureCollection<LineString, ImpactAssetLayerProperties>;
   impactedBridges: FeatureCollection<Point, ImpactAssetLayerProperties>;
@@ -154,6 +158,8 @@ type AdaptedResourceProperties = ResourceProperties & AegisEvidenceProperties;
 type AdaptedHospitalProperties = HospitalProperties & AegisEvidenceProperties;
 type AdaptedShelterProperties = ShelterProperties & AegisEvidenceProperties;
 type AdaptedImpactProperties = ImpactZoneProperties & AegisEvidenceProperties;
+type AdaptedHazardFootprintProperties = HazardFootprintProperties & AegisEvidenceProperties;
+type AdaptedHazardVectorProperties = HazardVectorProperties & AegisEvidenceProperties;
 
 const EARTH_RADIUS_M = 6_371_000;
 
@@ -330,6 +336,128 @@ function destinationPoint(
   };
 }
 
+function directedDestination(
+  start: Coordinate,
+  directionDegrees: number,
+  signedDistanceM: number,
+): Coordinate {
+  return destinationPoint(
+    start,
+    signedDistanceM < 0 ? directionDegrees + 180 : directionDegrees,
+    Math.abs(signedDistanceM),
+  );
+}
+
+function circleCoordinates(
+  center: Coordinate,
+  radiusM: number,
+  vertices = 48,
+): Array<[number, number]> {
+  const coordinates = Array.from({ length: vertices }, (_, index) =>
+    coordinate(destinationPoint(center, index / vertices * 360, Math.max(1, radiusM))));
+  coordinates.push([...coordinates[0]]);
+  return coordinates;
+}
+
+function circlePolygon(center: Coordinate, radiusM: number): Polygon {
+  return { type: "Polygon", coordinates: [circleCoordinates(center, radiusM)] };
+}
+
+function annulusPolygon(center: Coordinate, innerRadiusM: number, outerRadiusM: number): Polygon {
+  const outer = circleCoordinates(center, outerRadiusM);
+  if (innerRadiusM <= 1) return { type: "Polygon", coordinates: [outer] };
+  return {
+    type: "Polygon",
+    coordinates: [outer, circleCoordinates(center, innerRadiusM).reverse()],
+  };
+}
+
+function cellCornerCoordinates(cell: TerrainCell, scenario: ScenarioDefinition): Array<[number, number]> {
+  return cellPolygon(cell, scenario).coordinates[0].slice(0, -1) as Array<[number, number]>;
+}
+
+function convexHull(points: Array<[number, number]>): Array<[number, number]> {
+  const unique = [...new Map(points.map((point) => [`${point[0]},${point[1]}`, point])).values()]
+    .sort((left, right) => left[0] - right[0] || left[1] - right[1]);
+  if (unique.length <= 2) return unique;
+  const cross = (
+    origin: [number, number],
+    left: [number, number],
+    right: [number, number],
+  ) => (left[0] - origin[0]) * (right[1] - origin[1]) -
+    (left[1] - origin[1]) * (right[0] - origin[0]);
+  const lower: Array<[number, number]> = [];
+  for (const point of unique) {
+    while (lower.length >= 2 && cross(lower.at(-2)!, lower.at(-1)!, point) <= 0) lower.pop();
+    lower.push(point);
+  }
+  const upper: Array<[number, number]> = [];
+  for (const point of [...unique].reverse()) {
+    while (upper.length >= 2 && cross(upper.at(-2)!, upper.at(-1)!, point) <= 0) upper.pop();
+    upper.push(point);
+  }
+  lower.pop();
+  upper.pop();
+  return [...lower, ...upper];
+}
+
+function footprintForSeries(
+  scenario: ScenarioDefinition,
+  selected: SpatialCellSeries[],
+  fallbackRadiusM: number,
+): Polygon {
+  const hull = convexHull(selected.flatMap((series) => cellCornerCoordinates(series.cell, scenario)));
+  if (hull.length < 3) {
+    return circlePolygon(selected[0]?.cell.center ?? scenario.hazardSource, fallbackRadiusM);
+  }
+  return { type: "Polygon", coordinates: [[...hull, [...hull[0]]]] };
+}
+
+function maximumScenarioRadiusM(scenario: ScenarioDefinition): number {
+  return Math.max(
+    120,
+    ...scenario.terrain.map((cell) => distanceMeters(scenario.hazardSource, cell.center)),
+  );
+}
+
+function selectedTimelineFrame(result: SimulationResult, selectedMinute: number) {
+  return result.timeline.reduce((nearest, frame) =>
+    Math.abs(frame.minute - selectedMinute) < Math.abs(nearest.minute - selectedMinute)
+      ? frame
+      : nearest,
+  result.timeline[0]);
+}
+
+function baseHazardVisualProperties(
+  result: SimulationResult,
+  selectedMinute: number,
+  phase: string,
+  intensity01: number,
+): Pick<
+  AdaptedHazardFootprintProperties,
+  | keyof AegisEvidenceProperties
+  | "classification"
+  | "selectedMinute"
+  | "phase"
+  | "intensity01"
+  | "animationProgress01"
+  | "severity"
+  | "damageIndex"
+> {
+  const boundedIntensity = round(clamp(intensity01, 0, 1), 3);
+  return {
+    ...evidence(result, selectedMinute, "Simulated", "Simulated", "Simulated"),
+    evidenceClass: "Simulated",
+    classification: "SIMULATED",
+    selectedMinute,
+    phase,
+    intensity01: boundedIntensity,
+    animationProgress01: round(clamp(selectedMinute / Math.max(1, result.timeline.at(-1)?.minute ?? 1), 0, 1), 3),
+    severity: severity(boundedIntensity),
+    damageIndex: boundedIntensity,
+  };
+}
+
 function sampleRisk(sample: HazardCellSample): number {
   return hazardRiskRatio(sample);
 }
@@ -393,6 +521,365 @@ function sampleProperties(sample: HazardCellSample): Record<string, string | num
     depositionIndex: sample.depositionIndex,
     shelterInPlaceEffective: sample.shelterInPlaceEffective,
   };
+}
+
+function hazardVisualLayers(
+  scenario: ScenarioDefinition,
+  result: SimulationResult,
+  selectedMinute: number,
+  options: Required<AegisMapAdapterOptions>,
+): {
+  footprints: FeatureCollection<Polygon, AdaptedHazardFootprintProperties>;
+  vectors: FeatureCollection<LineString, AdaptedHazardVectorProperties>;
+} {
+  const footprints: Array<Feature<Polygon, AdaptedHazardFootprintProperties>> = [];
+  const vectors: Array<Feature<LineString, AdaptedHazardVectorProperties>> = [];
+  const frame = selectedTimelineFrame(result, selectedMinute);
+  const samples = result.field.map((series) => ({ series, sample: sampleAt(series, selectedMinute) }));
+  const maximumRadiusM = maximumScenarioRadiusM(scenario);
+  const fallbackRadiusM = Math.max(24, maximumRadiusM / Math.max(scenario.gridRows, scenario.gridColumns));
+
+  const addFootprint = (
+    id: string,
+    geometry: Polygon,
+    visualRole: HazardFootprintProperties["visualRole"],
+    intensity01: number,
+    metric: string,
+    value: number,
+    unit: string,
+    displayLabel: string,
+    displayNote: string,
+    extra: Partial<AdaptedHazardFootprintProperties> = {},
+  ) => {
+    footprints.push({
+      type: "Feature",
+      id: `${id}-${selectedMinute}`,
+      geometry,
+      properties: {
+        ...baseHazardVisualProperties(result, selectedMinute, frame.phase, intensity01),
+        hazard: result.hazard,
+        visualRole,
+        impactType: visualRole,
+        metric,
+        value: round(value, 3),
+        unit,
+        name: displayLabel,
+        displayLabel,
+        displayNote,
+        ...extra,
+      },
+    });
+  };
+  const addVector = (
+    id: string,
+    geometry: LineString,
+    visualRole: HazardVectorProperties["visualRole"],
+    intensity01: number,
+    metric: string,
+    value: number,
+    unit: string,
+    displayLabel: string,
+    displayNote: string,
+    extra: Partial<AdaptedHazardVectorProperties> = {},
+  ) => {
+    vectors.push({
+      type: "Feature",
+      id: `${id}-${selectedMinute}`,
+      geometry,
+      properties: {
+        ...baseHazardVisualProperties(result, selectedMinute, frame.phase, intensity01),
+        hazard: result.hazard,
+        visualRole,
+        metric,
+        value: round(value, 3),
+        unit,
+        displayLabel,
+        displayNote,
+        ...extra,
+      },
+    });
+  };
+
+  if (result.hazard === "flood") {
+    const floodSamples = samples.filter((entry): entry is typeof entry & { sample: Extract<HazardCellSample, { hazard: "flood" }> } =>
+      entry.sample.hazard === "flood");
+    const wet = floodSamples.filter(({ sample }) => sample.depthM >= options.minimumFloodDepthM);
+    const maximumDepthM = Math.max(0, ...floodSamples.map(({ sample }) => sample.depthM));
+    const maximumVelocityMps = Math.max(0, ...floodSamples.map(({ sample }) => sample.velocityMps));
+    if (wet.length > 0) {
+      const intensity = clamp(maximumDepthM / 1.5, 0, 1);
+      addFootprint(
+        "hazard-flood-extent",
+        footprintForSeries(scenario, wet.map(({ series }) => series), fallbackRadiusM),
+        "flood-extent",
+        intensity,
+        "maximum water depth",
+        maximumDepthM,
+        "m",
+        `SIMULATED flood extent · T+${selectedMinute}`,
+        `Time-selected ${frame.phase} envelope derived from deterministic wet cells; it is not an observed flood boundary.`,
+      );
+      const deepThresholdM = Math.max(0.25, maximumDepthM * 0.55);
+      const deep = wet.filter(({ sample }) => sample.depthM >= deepThresholdM);
+      if (deep.length > 0) {
+        addFootprint(
+          "hazard-flood-deep-water",
+          footprintForSeries(scenario, deep.map(({ series }) => series), fallbackRadiusM),
+          "flood-deep-water",
+          intensity,
+          "deep-water threshold",
+          deepThresholdM,
+          "m",
+          `SIMULATED deeper water · T+${selectedMinute}`,
+          "Display band derived from the selected deterministic depth field; it is not a surveyed waterline.",
+        );
+      }
+      const directionWeights = wet.filter(({ sample }) => sample.velocityMps > 0.01);
+      if (directionWeights.length > 0) {
+        const east = directionWeights.reduce((sum, { sample }) => sum + Math.sin(toRadians(sample.directionDeg)) * sample.velocityMps, 0);
+        const north = directionWeights.reduce((sum, { sample }) => sum + Math.cos(toRadians(sample.directionDeg)) * sample.velocityMps, 0);
+        const directionDegrees = (Math.atan2(east, north) * 180 / Math.PI + 360) % 360;
+        const center = {
+          lat: wet.reduce((sum, { series }) => sum + series.cell.center.lat, 0) / wet.length,
+          lon: wet.reduce((sum, { series }) => sum + series.cell.center.lon, 0) / wet.length,
+        };
+        addVector(
+          "hazard-flood-net-flow",
+          {
+            type: "LineString",
+            coordinates: [
+              coordinate(center),
+              coordinate(destinationPoint(center, directionDegrees, maximumRadiusM * (0.12 + intensity * 0.3))),
+            ],
+          },
+          "flood-net-flow",
+          intensity,
+          "maximum flow velocity",
+          maximumVelocityMps,
+          "m/s",
+          `SIMULATED net flow · T+${selectedMinute}`,
+          "Aggregate display direction only; inspect cell vectors for local model values.",
+          { directionDegrees: round(directionDegrees, 1) },
+        );
+      }
+    }
+  } else if (result.hazard === "earthquake") {
+    const earthquakeSamples = samples.filter((entry): entry is typeof entry & { sample: Extract<HazardCellSample, { hazard: "earthquake" }> } =>
+      entry.sample.hazard === "earthquake");
+    const maximumMmi = Math.max(1, ...earthquakeSamples.map(({ sample }) => sample.mmi));
+    const maximumPgaG = Math.max(0, ...earthquakeSamples.map(({ sample }) => sample.pgaG));
+    const intensity = clamp((maximumMmi - 1) / 8, 0, 1);
+    if (intensity >= options.minimumImpactRisk) {
+      const fractions = [0.28, 0.52, 0.76, 1];
+      let innerRadiusM = 0;
+      fractions.forEach((fraction, index) => {
+        const outerRadiusM = maximumRadiusM * fraction;
+        const bandIntensity = clamp(intensity * (1 - index * 0.14), 0, 1);
+        addFootprint(
+          `hazard-earthquake-isoseismal-${index + 1}`,
+          annulusPolygon(scenario.hazardSource, innerRadiusM, outerRadiusM),
+          "earthquake-isoseismal",
+          bandIntensity,
+          "Modified Mercalli intensity",
+          Math.max(1, maximumMmi - index * 0.9),
+          "MMI",
+          `SIMULATED shaking band ${index + 1} · T+${selectedMinute}`,
+          "Concentric isoseismal screening band; animation shows the deterministic event envelope, not real-time seismic-wave travel.",
+          { innerRadiusM: round(innerRadiusM, 1), outerRadiusM: round(outerRadiusM, 1) },
+        );
+        addVector(
+          `hazard-earthquake-pulse-${index + 1}`,
+          { type: "LineString", coordinates: circleCoordinates(scenario.hazardSource, outerRadiusM) },
+          "earthquake-pulse-outline",
+          bandIntensity,
+          "peak ground acceleration",
+          maximumPgaG,
+          "g",
+          `SIMULATED shaking outline ${index + 1}`,
+          "Symbolic isoseismal outline, not a measured station contour.",
+        );
+        innerRadiusM = outerRadiusM;
+      });
+    }
+  } else if (result.hazard === "wildfire") {
+    const wildfireSamples = samples.filter((entry): entry is typeof entry & { sample: Extract<HazardCellSample, { hazard: "wildfire" }> } =>
+      entry.sample.hazard === "wildfire");
+    const burning = wildfireSamples.filter(({ sample }) => sample.burning && sample.firelineIntensityKwM > 0);
+    const smoky = wildfireSamples.filter(({ sample }) => sample.smokeIndex >= 0.1);
+    const maximumIntensityKwM = Math.max(0, ...wildfireSamples.map(({ sample }) => sample.firelineIntensityKwM));
+    const maximumSmoke = Math.max(0, ...wildfireSamples.map(({ sample }) => sample.smokeIndex));
+    if (smoky.length > 0) {
+      addFootprint(
+        "hazard-wildfire-smoke",
+        footprintForSeries(scenario, smoky.map(({ series }) => series), fallbackRadiusM),
+        "wildfire-smoke-envelope",
+        maximumSmoke,
+        "smoke index",
+        maximumSmoke,
+        "0–1",
+        `SIMULATED smoke envelope · T+${selectedMinute}`,
+        "Wind-aligned smoke screening envelope; it is not an observed plume or air-quality measurement.",
+        { directionDegrees: scenario.parameters.kind === "wildfire" ? scenario.parameters.windDirectionDeg : undefined },
+      );
+    }
+    if (burning.length > 0) {
+      const intensity = clamp(maximumIntensityKwM / 3_200, 0, 1);
+      addFootprint(
+        "hazard-wildfire-perimeter",
+        footprintForSeries(scenario, burning.map(({ series }) => series), fallbackRadiusM),
+        "wildfire-active-perimeter",
+        intensity,
+        "maximum fireline intensity",
+        maximumIntensityKwM,
+        "kW/m",
+        `SIMULATED active-fire perimeter · T+${selectedMinute}`,
+        "Convex display envelope around currently burning deterministic cells; it is not a mapped fire perimeter.",
+        { directionDegrees: scenario.parameters.kind === "wildfire" ? scenario.parameters.windDirectionDeg : undefined },
+      );
+    }
+    if (scenario.parameters.kind === "wildfire" && (burning.length > 0 || smoky.length > 0)) {
+      const reached = [...burning, ...smoky].reduce(
+        (maximum, { series }) => Math.max(maximum, distanceMeters(scenario.hazardSource, series.cell.center)),
+        fallbackRadiusM,
+      );
+      addVector(
+        "hazard-wildfire-spread-axis",
+        {
+          type: "LineString",
+          coordinates: [
+            coordinate(scenario.hazardSource),
+            coordinate(destinationPoint(scenario.hazardSource, scenario.parameters.windDirectionDeg, reached)),
+          ],
+        },
+        "wildfire-spread-axis",
+        clamp(Math.max(maximumSmoke, maximumIntensityKwM / 3_200), 0, 1),
+        "wind-aligned spread distance",
+        reached,
+        "m",
+        `SIMULATED spread axis · T+${selectedMinute}`,
+        "Display axis follows the scenario wind direction; it is not an evacuation route or forecast track.",
+        { directionDegrees: scenario.parameters.windDirectionDeg },
+      );
+    }
+  } else if (result.hazard === "cyclone") {
+    const cycloneSamples = samples.filter((entry): entry is typeof entry & { sample: Extract<HazardCellSample, { hazard: "cyclone" }> } =>
+      entry.sample.hazard === "cyclone");
+    const windAffected = cycloneSamples.filter(({ sample }) => sample.windKph >= 30);
+    const inundated = cycloneSamples.filter(({ sample }) => sample.surfaceFloodDepthM >= options.minimumFloodDepthM);
+    const maximumWindKph = Math.max(0, ...cycloneSamples.map(({ sample }) => sample.windKph));
+    const maximumSurfaceWaterM = Math.max(0, ...cycloneSamples.map(({ sample }) => sample.surfaceFloodDepthM));
+    if (windAffected.length > 0) {
+      addFootprint(
+        "hazard-cyclone-wind-field",
+        footprintForSeries(scenario, windAffected.map(({ series }) => series), fallbackRadiusM),
+        "cyclone-wind-field",
+        clamp(maximumWindKph / 180, 0, 1),
+        "maximum sustained wind",
+        maximumWindKph,
+        "km/h",
+        `SIMULATED cyclone wind field · T+${selectedMinute}`,
+        "Parametric wind-screening envelope; it is not an observed or forecast storm field.",
+        { directionDegrees: scenario.parameters.kind === "cyclone" ? scenario.parameters.trackDirectionDeg : undefined },
+      );
+    }
+    if (inundated.length > 0) {
+      addFootprint(
+        "hazard-cyclone-surface-water",
+        footprintForSeries(scenario, inundated.map(({ series }) => series), fallbackRadiusM),
+        "cyclone-surface-water",
+        clamp(maximumSurfaceWaterM / 1.5, 0, 1),
+        "combined surge/surface-water depth",
+        maximumSurfaceWaterM,
+        "m",
+        `SIMULATED coastal/surface-water proxy · T+${selectedMinute}`,
+        "Combined low-point surge and rainfall-excess screening. Without coastal bathymetry it is not a calibrated storm-surge or tsunami model.",
+      );
+    }
+    if (scenario.parameters.kind === "cyclone") {
+      const direction = scenario.parameters.trackDirectionDeg;
+      const signedTrackDistanceM = clamp(
+        (selectedMinute - 60) * scenario.parameters.forwardSpeedKph * 1_000 / 60,
+        -maximumRadiusM * 1.25,
+        maximumRadiusM * 1.25,
+      );
+      const start = directedDestination(scenario.hazardSource, direction, -maximumRadiusM * 1.25);
+      const current = directedDestination(scenario.hazardSource, direction, signedTrackDistanceM);
+      addVector(
+        "hazard-cyclone-track",
+        { type: "LineString", coordinates: [coordinate(start), coordinate(current)] },
+        "cyclone-track",
+        clamp(maximumWindKph / 180, 0, 1),
+        "storm-centre display offset",
+        signedTrackDistanceM,
+        "m",
+        `SIMULATED storm track · T+${selectedMinute}`,
+        "Parametric scenario track for animation only; it is not a meteorological forecast track.",
+        { directionDegrees: direction },
+      );
+    }
+  } else {
+    const chemicalSamples = samples.filter((entry): entry is typeof entry & { sample: Extract<HazardCellSample, { hazard: "chemical" }> } =>
+      entry.sample.hazard === "chemical");
+    const plume = chemicalSamples.filter(({ sample }) => sample.plumePresent || sample.exposureRatio >= 0.1);
+    const threshold = chemicalSamples.filter(({ sample }) => sample.exposureRatio >= 1);
+    const maximumExposureRatio = Math.max(0, ...chemicalSamples.map(({ sample }) => sample.exposureRatio));
+    const maximumConcentration = Math.max(0, ...chemicalSamples.map(({ sample }) => sample.concentrationMgM3));
+    if (plume.length > 0) {
+      addFootprint(
+        "hazard-chemical-plume",
+        footprintForSeries(scenario, plume.map(({ series }) => series), fallbackRadiusM),
+        "chemical-plume",
+        clamp(maximumExposureRatio / 4, 0, 1),
+        "maximum concentration",
+        maximumConcentration,
+        "mg/m³",
+        `SIMULATED directional plume · T+${selectedMinute}`,
+        "Gaussian-plume screening envelope; it is not observed gas, CFD or an official public-health boundary.",
+        { directionDegrees: scenario.parameters.kind === "chemical" ? scenario.parameters.windDirectionDeg : undefined },
+      );
+    }
+    if (threshold.length > 0) {
+      addFootprint(
+        "hazard-chemical-threshold",
+        footprintForSeries(scenario, threshold.map(({ series }) => series), fallbackRadiusM),
+        "chemical-threshold-zone",
+        clamp(maximumExposureRatio / 4, 0, 1),
+        "outdoor toxicity-threshold ratio",
+        maximumExposureRatio,
+        "× threshold",
+        `SIMULATED threshold-exceedance zone · T+${selectedMinute}`,
+        "Scenario toxicity-threshold screen only; material-specific authority guidance supersedes it.",
+      );
+    }
+    if (scenario.parameters.kind === "chemical") {
+      const frontDistanceM = Math.min(
+        maximumRadiusM * 1.4,
+        scenario.parameters.windSpeedKph * 1_000 / 60 * selectedMinute,
+      );
+      if (frontDistanceM > 0) {
+        addVector(
+          "hazard-chemical-plume-axis",
+          {
+            type: "LineString",
+            coordinates: [
+              coordinate(scenario.hazardSource),
+              coordinate(destinationPoint(scenario.hazardSource, scenario.parameters.windDirectionDeg, frontDistanceM)),
+            ],
+          },
+          "chemical-plume-axis",
+          clamp(maximumExposureRatio / 4, 0, 1),
+          "advected plume-front distance",
+          frontDistanceM,
+          "m",
+          `SIMULATED plume axis · T+${selectedMinute}`,
+          "Wind-advection display axis only; it is not a measured plume centreline.",
+          { directionDegrees: scenario.parameters.windDirectionDeg },
+        );
+      }
+    }
+  }
+
+  return { footprints: collection(footprints), vectors: collection(vectors) };
 }
 
 function floodLayers(
@@ -1089,6 +1576,7 @@ export function buildAegisMapLayers({
     includeNegligibleCells: suppliedOptions?.includeNegligibleCells ?? false,
   };
   const flood = floodLayers(scenario, result, selectedMinute, options);
+  const hazardVisuals = hazardVisualLayers(scenario, result, selectedMinute, options);
   const roads = roadLayer(scenario, result, selectedMinute);
   const facilities = facilityLayers(scenario, result, selectedMinute, evacuationPlan);
   const impactSnapshot = suppliedImpactSnapshot ?? buildImpactSnapshot({
@@ -1107,6 +1595,8 @@ export function buildAegisMapLayers({
   return {
     floodDepth: flood.depth,
     floodFlow: flood.flow,
+    hazardFootprints: hazardVisuals.footprints,
+    hazardVectors: hazardVisuals.vectors,
     roads,
     evacuationRoutes: routeLayer(
       scenario,

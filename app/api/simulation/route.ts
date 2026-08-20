@@ -76,6 +76,7 @@ export async function POST(request: Request): Promise<Response> {
         durationMinutes: scenario.durationMinutes,
         stepMinutes: scenario.stepMinutes,
         area: scenario.area,
+        operatingArea: scenario.operatingArea,
         hazardSource: scenario.hazardSource,
         parameters: scenario.parameters,
         provenance: scenario.provenance,

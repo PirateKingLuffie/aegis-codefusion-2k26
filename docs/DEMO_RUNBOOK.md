@@ -1,6 +1,8 @@
 # AEGIS demo runbook
 
-This is the primary **5–7 minute** judge flow for the live Cloudflare deployment at https://aegis-codefusion-2k26.guptashivaani233.workers.dev. The dedicated audit surface is https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger. Do not improvise numerical claims; let the current interface show them and state their evidence class.
+This is the primary **5–7 minute** judge flow for the Cloudflare command center at https://aegis-codefusion-2k26.guptashivaani233.workers.dev. The dedicated audit surface is https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger. Do not improvise numerical claims; let the current interface show them and state their evidence class.
+
+**Release gate:** before using this runbook, the root release owner must replace the current-rehaul placeholders in `docs/GLOBE_AND_UI_ACCEPTANCE.md`, `README.md` and `COMPLETION.txt` with the exact final commit, verification totals and Worker version. Until that happens, the URLs may still serve the preceding accepted release.
 
 ## Roles
 
@@ -12,10 +14,10 @@ This is the primary **5–7 minute** judge flow for the live Cloudflare deployme
 
 1. Open `https://aegis-codefusion-2k26.guptashivaani233.workers.dev` in a clean, current Chrome window at 100% zoom.
 2. Use the Lenovo LOQ on AC power, Windows performance mode, RTX 4050 enabled and Chrome hardware acceleration on.
-3. Confirm that the globe renders, auto-rotates and responds to drag, scroll and search.
+3. Confirm that the slightly tilted globe renders with place labels, begins a slow orbit after its startup delay, pauses on drag/scroll and resumes only after idle at world-overview zoom.
 4. Open **Service setup** from the header. Confirm **OpenFreeMap** is primary, **CARTO Dark Matter** is fallback, and no required paid key is missing.
 5. Confirm the incident strip shows a provider/source and timestamp, or honestly displays a degraded/unavailable state.
-6. Search `Echelon Institute of Technology, Faridabad` once and confirm **Site 3D** opens around the EIT reference.
+6. Search one world city, one street/landmark and `Echelon Institute of Technology, Faridabad`. Confirm the selected-place marker remains visible, deep zoom retains an opaque street map and labels, and **Site 3D** opens around the EIT reference.
 7. Select **Urban Flood**, set the timeline to `T+000`, and keep panels in their reset positions.
 8. Rehearse one saved scenario and evacuation receipt in a separate browser profile. The D1 Agent Ledger is shared and already contains the genuine release-acceptance record; do not describe it as a new judge execution.
 9. Keep the actual-build evidence packet ready in a separate tab: screenshots, a short screen recording, exported scenario JSON/CSV and this runbook. Never substitute stock or generated disaster imagery.
@@ -25,13 +27,13 @@ This is the primary **5–7 minute** judge flow for the live Cloudflare deployme
 
 ### 0:00–0:35 — The problem and world view
 
-**Action:** Enter AEGIS and let the detailed globe rotate for several seconds. Drag it, scroll once, and use the world search bar.
+**Action:** Enter AEGIS and let the detailed, labelled globe rotate for several seconds. Drag it to pause, return to the overview and let the orbit resume. Search a city or landmark and show the persistent selected-place marker, named place and high-zoom streets.
 
 **Say:**
 
 > Disaster response is not missing another map. It is missing a reliable chain from a source-labelled signal to consequences, routes and an approved action. AEGIS puts that chain on one command surface.
 
-Point out the interactive globe, city context, incident clusters, source labels and provider state. Do not call map imagery “live satellite.”
+Point out the interactive globe, city/street labels, incident clusters, source labels and provider state. A pulsing red incident mark is current/live only according to its named upstream record and freshness classification; it is not an AEGIS observation. Do not call map imagery “live satellite.” If no upstream incident is classified current/live, say so and do not create a fake red marker.
 
 ### 0:35–1:10 — Source-labelled incident to scenario
 
@@ -43,9 +45,9 @@ Point out the interactive globe, city context, incident clusters, source labels 
 
 If feeds are quiet or degraded, search EIT directly and say that live provider state is visibly unavailable; do not wait for a perfect headline.
 
-### 1:10–2:25 — EIT 3D flood consequence
+### 1:10–2:25 — Selected location, scenario and EIT 3D flood consequence
 
-**Action:** Search EIT, select **Site 3D**, choose **Urban Flood**, switch to **SIMULATE**, and play or drag the timeline through rise, peak and recession. Pause at a visually clear impact minute.
+**Action:** Open **Scenarios** and point out its one-line purpose briefing and current X/Y/terrain-derived Z summary. Briefly show the three primary loaded cases—EIT Campus Flood Exercise, Guwahati Urban Flood and Miami Cyclone and Surge—then load EIT, select **Site 3D**, choose **Urban Flood**, switch to **SIMULATE**, and play or drag the timeline through rise, peak and recession. Pause at a visually clear impact minute.
 
 **Show:**
 
@@ -60,6 +62,8 @@ If feeds are quiet or degraded, search EIT directly and say that live provider s
 **Say:**
 
 > The selected minute drives every layer. For flood, AEGIS screens water depth, flow, arrival and recession, internal building depth, affected floors, access and secondary consequences. Red means simulated damage screening—not a confirmed structural inspection. The EIT massing uses the institute map reference, nearby OSM footprints and estimated attributes; it is not a surveyed BIM.
+
+If a judge asks about global use, search/select another valid world coordinate or operating area, choose one of the five executable hazard plugins and run it there. Say: “The workflow is location-generic; fidelity follows the public roads, labels, terrain and building data available at the selected location.” Do not say it can accurately model literally every disaster.
 
 ### 2:25–3:25 — Evacuation as a constrained decision
 
@@ -87,11 +91,11 @@ If feeds are quiet or degraded, search EIT directly and say that live provider s
 
 ### 5:05–5:40 — Decision brief and AI boundary
 
-**Action:** Open **Decision brief** (`Ctrl+B`) and ask “Prioritize hospitals” or “What if Bridge B fails?”
+**Action:** Open **Decision brief** (`Ctrl+B`) and select **Explain evacuation procedure**. Point to the departure minute, staged demand, preferred/available route, destination, capacity/coverage, remaining exposure and warning drawn from the current evacuation plan. If time remains, ask “Prioritize hospitals” or “What if Bridge B fails?”
 
 **Say:**
 
-> The assistant is grounded in current structured twin state. The numerical path stays deterministic and reproducible. An optional language-model layer may explain that state, but it cannot invent depths, casualty counts or closures, and its activity is logged for review.
+> The assistant is grounded in the current structured twin and evacuation plan. The numerical path stays deterministic and reproducible. An optional language-model layer may explain that state, but it cannot invent depths, casualty counts, routes or closures, and its activity is logged for review.
 
 Open the dedicated **Agent activity ledger** URL after the answer appears. Show the matching request, deterministic-first execution path, hosted provider or disclosed fallback, evidence citations, latency and SHA-256 integrity receipt. Approve or reject the pending recommendation to create the next hash-linked revision. The live release has already verified cross-deployment D1 create/read/review; use a new execution for the judge rather than presenting the acceptance record as if it just ran.
 
@@ -115,6 +119,18 @@ Cut the detailed Workspace and Recovery interaction. Keep these four proof point
 2. EIT 3D flood impact across time;
 3. time/mode/capacity-aware evacuation with approval;
 4. what-if/cascade plus the truth policy.
+
+## Optional 45-second multi-hazard proof
+
+Use timeline seek rather than waiting for playback. Load one location, change the active hazard and show the map vocabulary changing with the selected minute:
+
+1. **Earthquake:** concentric isoseismal bands and symbolic pulse outlines with damage/access progression.
+2. **Wildfire:** active-fire perimeter, smoke envelope and wind-aligned spread axis.
+3. **Cyclone/surge:** wind field, coastal/surface-water envelope and scenario track.
+4. **Chemical release:** directional plume, threshold zone and plume axis.
+5. **Flood:** water/deeper-water extents, flow and building/road access changes.
+
+The separate coastal-inundation card is a tsunami **proxy**, not a sixth solver. It deliberately reuses the cyclone/surge low-point engine and is not calibrated wave propagation, run-up or official tsunami evacuation modelling.
 
 ## Live demo backup ladder
 
@@ -141,11 +157,14 @@ Use the first working level and continue. Never hide provider failure or invent 
 2. Check whether the browser has WebGL/hardware acceleration enabled.
 3. Select **World** again to reset the projection and camera.
 4. Use **Retry live globe** once after connectivity returns.
-5. If both providers remain unavailable, continue with the continuity renderer and evidence packet.
+5. Confirm the opaque CARTO/OSM-derived street layer and separate labels layer have loaded at close zoom; optional dated imagery may still be degraded.
+6. If both providers remain unavailable, continue with the continuity renderer and evidence packet.
 
 ### Search returns no result
 
 Use direct coordinates as `latitude, longitude`, or select the EIT quick location. Nominatim may throttle public requests; do not repeat searches rapidly.
+
+If a result is returned but the map is visually empty, return to **World**, repeat the result selection once and confirm the selected-place marker/name appears. Do not describe missing public building geometry as a failed simulation; street and label context should remain, while detailed 3D geometry depends on upstream coverage.
 
 ### EIT view appears approximate
 
@@ -170,5 +189,7 @@ Do not call the records durable. Continue the execution proof, show the visible 
 - “Estimated” is an inferred planning input or consequence, not a survey or confirmed impact.
 - “Exposure envelope” is not a casualty count.
 - “Current/recent feed” is not necessarily a currently occurring event or camera view.
+- A pulsing red live-incident mark inherits its status and timestamp from a named upstream record; it is not an AEGIS field observation.
+- The tsunami/coastal-inundation demonstration is a cyclone/surge-engine planning proxy, not calibrated tsunami physics.
 - All recommendations require a human operator and competent authority.
 - Call Agent Ledger records durable only when its storage badge reports linked durable storage; D1 durability covers ledger revisions, not scenarios.

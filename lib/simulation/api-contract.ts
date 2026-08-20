@@ -35,6 +35,24 @@ const parameterOverridesSchema = z.record(
   message: "At most 16 parameter overrides are accepted.",
 });
 
+const operatingAreaSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("polygon"),
+    boundary: z.array(apiCoordinateSchema).min(3).max(128),
+    label: z.string().trim().min(1).max(120).optional(),
+  }).strict(),
+  z.object({
+    kind: z.literal("bounds"),
+    bounds: z.object({
+      north: z.number().finite().min(-84).max(84),
+      south: z.number().finite().min(-84).max(84),
+      east: z.number().finite().min(-180).max(180),
+      west: z.number().finite().min(-180).max(180),
+    }).strict(),
+    label: z.string().trim().min(1).max(120).optional(),
+  }).strict(),
+]);
+
 export const apiScenarioSchema = z.object({
   hazard: apiHazardSchema.default("flood"),
   seed: z.string().trim().min(1).max(80).default("aegis-api-scenario-v1"),
@@ -43,6 +61,7 @@ export const apiScenarioSchema = z.object({
     lon: z.number().finite().min(-180).max(180),
     label: z.string().trim().min(1).max(120),
   }).strict().optional(),
+  operatingArea: operatingAreaSchema.optional(),
   parameterOverrides: parameterOverridesSchema.optional(),
 }).strict();
 
@@ -176,6 +195,19 @@ export function scenarioFromApi(input: ScenarioApiInput): ScenarioDefinition {
       locationLabel: input.location.label,
       seed: input.seed,
       parameterOverrides,
+      operatingArea: input.operatingArea
+        ? input.operatingArea.kind === "polygon"
+          ? {
+              kind: "polygon",
+              boundary: input.operatingArea.boundary.map((point) => ({ ...point })),
+              label: input.operatingArea.label,
+            }
+          : {
+              kind: "bounds",
+              bounds: { ...input.operatingArea.bounds },
+              label: input.operatingArea.label,
+            }
+        : undefined,
     });
   }
   return createEitFaridabadScenario(input.hazard, {

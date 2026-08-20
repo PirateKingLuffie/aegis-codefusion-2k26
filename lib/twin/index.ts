@@ -840,7 +840,11 @@ function buildingStates(
     const currentExternalDepthM = interpolatedDepthAt(result, building.centroid, minute);
     let peakExternalDepthM = 0;
     let peakMinute = 0;
+    // Damage is cumulative only through the selected minute. Looking across
+    // the complete future timeline made buildings appear fully damaged before
+    // the water arrived and defeated playback as an explanatory sequence.
     for (const frame of result.timeline) {
+      if (frame.minute > minute) break;
       const depth = interpolatedDepthAt(result, building.centroid, frame.minute);
       if (depth > peakExternalDepthM) {
         peakExternalDepthM = depth;
@@ -913,8 +917,8 @@ function buildingStates(
       confidence01,
       recommendedAction: action,
       explanation: [
-        `Peak external depth ${round(peakExternalDepthM, 2)} m minus estimated ${building.plinthHeightM} m plinth gives ${round(peakInternalDepthM, 2)} m potential internal depth.`,
-        `Damage index ${round(index * 100, 0)}% combines internal depth and ${round(building.vulnerability * 100, 0)}% prototype vulnerability.`,
+        `Peak-to-date external depth ${round(peakExternalDepthM, 2)} m minus estimated ${building.plinthHeightM} m plinth gives ${round(peakInternalDepthM, 2)} m potential internal depth.`,
+        `Cumulative damage index ${round(index * 100, 0)}% combines peak-to-date internal depth and ${round(building.vulnerability * 100, 0)}% prototype vulnerability.`,
         `Nearest route ${access.roadId ?? "unavailable"} is ${access.status} at T+${round(minute, 1)} min with ${round(access.depthM, 2)} m modelled carriageway depth.`,
         `${occupantsInExposureEnvelope} daytime occupants are inside a planning exposure envelope; this is not an injury or casualty estimate.`,
       ],

@@ -324,6 +324,15 @@ export interface ScenarioDefinition {
   durationMinutes: number;
   stepMinutes: number;
   area: BoundingBox;
+  /** Optional operator-drawn planning area; never an observed hazard boundary. */
+  operatingArea?: {
+    label: string;
+    boundary: Coordinate[];
+    bounds: BoundingBox;
+    classification: "scenario-input";
+    geometryTreatment: "scaled-prototype-to-bounds" | "reference-only-import-preserved";
+    notice: string;
+  };
   gridRows: number;
   gridColumns: number;
   hazardSource: Coordinate;

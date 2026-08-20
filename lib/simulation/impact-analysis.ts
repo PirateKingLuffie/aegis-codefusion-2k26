@@ -155,6 +155,43 @@ function damageStateFor(index: number, physicalDamage: boolean): DamageState {
   return "exposed";
 }
 
+function buildingImpactForSample(
+  sample: HazardCellSample,
+  building: BuildingAsset,
+): { impactIndex: number; internalDepthM?: number } {
+  if (sample.hazard === "flood") {
+    const internalDepthM = Math.max(0, sample.depthM - building.groundFloorElevationM);
+    return {
+      impactIndex: clamp(
+        internalDepthM / 1.2 * (0.55 + building.vulnerability * 0.65),
+        0,
+        1,
+      ),
+      internalDepthM,
+    };
+  }
+  return {
+    impactIndex: clamp(riskFor(sample) * (0.55 + building.vulnerability * 0.72), 0, 1),
+  };
+}
+
+function cumulativeBuildingDamageIndex(
+  series: SpatialCellSeries,
+  minute: number,
+  building: BuildingAsset,
+): number | null {
+  // A chemical plume changes occupancy/access but does not physically damage a
+  // building in this model. Other hazard damage is cumulative: receding water,
+  // a passed fire front or the end of shaking must not visually repair assets.
+  if (series.samples[0]?.hazard === "chemical") return null;
+  return series.samples
+    .filter((candidate) => candidate.minute <= minute)
+    .reduce(
+      (maximum, candidate) => Math.max(maximum, buildingImpactForSample(candidate, building).impactIndex),
+      0,
+    );
+}
+
 function operationalStatus(index: number): OperationalStatus {
   if (index >= 0.78) return "unavailable";
   if (index >= 0.34) return "degraded";
@@ -341,13 +378,13 @@ function buildingSnapshot(
 ): ImpactAssetSnapshot {
   const series = nearestSeries(result, building.coordinate);
   const sample = sampleAt(series, minute);
-  let index = clamp(riskFor(sample) * (0.55 + building.vulnerability * 0.72), 0, 1);
-  let internalDepthM: number | undefined;
-  if (sample.hazard === "flood") {
-    internalDepthM = Math.max(0, sample.depthM - building.groundFloorElevationM);
-    index = clamp(internalDepthM / 1.2 * (0.55 + building.vulnerability * 0.65), 0, 1);
-  }
-  const people = Math.round(building.occupantsDay * clamp(index * 1.2, 0, 1));
+  const current = buildingImpactForSample(sample, building);
+  const cumulativeDamageIndex = cumulativeBuildingDamageIndex(series, minute, building);
+  const physicalDamage = cumulativeDamageIndex !== null;
+  const index = physicalDamage
+    ? Math.max(current.impactIndex, cumulativeDamageIndex)
+    : current.impactIndex;
+  const people = Math.round(building.occupantsDay * clamp(current.impactIndex * 1.2, 0, 1));
   const status = operationalStatus(index);
   return {
     id: `impact-building-${building.id}-${minute}`,
@@ -358,8 +395,8 @@ function buildingSnapshot(
     minute,
     timestampIso,
     severity: severityFor(index),
-    damageState: damageStateFor(index, true),
-    damageIndex: round(index, 3),
+    damageState: damageStateFor(physicalDamage ? cumulativeDamageIndex : current.impactIndex, physicalDamage),
+    damageIndex: physicalDamage ? round(cumulativeDamageIndex, 3) : null,
     impactIndex: round(index, 3),
     functionalityPct: round(clamp(100 - index * 100, 0, 100), 1),
     operationalStatus: status,
@@ -371,18 +408,18 @@ function buildingSnapshot(
     dependentPopulationEstimate: null,
     capacity: building.occupantsDay,
     projectedOccupancy: null,
-    internalFloodDepthM: internalDepthM === undefined ? undefined : round(internalDepthM, 3),
+    internalFloodDepthM: current.internalDepthM === undefined ? undefined : round(current.internalDepthM, 3),
     hazard: exposureFor(sample, series),
-    recovery: recoveryPriority(index, building.use === "public" || building.use === "academic" ? 0.72 : 0.5, people, series, minute, index >= 0.14, [
+    recovery: recoveryPriority(index, building.use === "public" || building.use === "academic" ? 0.72 : 0.5, people, series, minute, physicalDamage && cumulativeDamageIndex >= 0.14, [
       `${severityFor(index)} simulated building-impact band.`,
-      index >= 0.14 ? "Inspection is required before re-entry." : "Continue monitoring as the hazard evolves.",
+      physicalDamage && cumulativeDamageIndex >= 0.14 ? "Inspection is required before re-entry." : "Continue monitoring as the hazard evolves.",
     ]),
     confidence: confidenceFrom(series.confidence, 0.1, ["building vulnerability", "assumed floor elevation"], ["No surveyed floor elevation, BIM fragility or engineering inspection."]),
     evidence: evidenceFor(scenario, result, ["hazard sample", "scenario building vulnerability"], ["Damage is a simulated screening band, not an observed structural condition."]),
     explanation: [
-      internalDepthM === undefined
-        ? `Current vulnerability-adjusted impact index is ${round(index, 2)}.`
-        : `Potential internal water depth is ${round(internalDepthM, 2)} m after the scenario floor-elevation allowance.`,
+      current.internalDepthM === undefined
+        ? `Current vulnerability-adjusted exposure is ${round(current.impactIndex, 2)}${physicalDamage ? `; cumulative simulated damage is ${round(cumulativeDamageIndex, 2)}` : "; no physical building damage is modelled for this hazard"}.`
+        : `Potential internal water depth is ${round(current.internalDepthM, 2)} m; cumulative simulated water-damage index is ${round(cumulativeDamageIndex ?? 0, 2)}.`,
       `${people} occupants fall inside a planning exposure envelope; this is not an injury or casualty estimate.`,
     ],
   };

@@ -14,8 +14,8 @@ Cost policy: zero-paid-key deterministic core, no billing-required map path; opt
 Primary demo target: Lenovo LOQ, i5-12450HX, RTX 4050, 24 GB DDR5, 1366 x 768
 Live command center: https://aegis-codefusion-2k26.guptashivaani233.workers.dev
 Dedicated Agent Ledger: https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
-Main Worker version: 58accdae-9be1-440c-b7f2-3cec0ff45e86
-Ledger Worker version: af5d0e22-9ed7-4e83-b0ff-ea62a312114f
+Previously accepted main Worker version: 58accdae-9be1-440c-b7f2-3cec0ff45e86
+Previously accepted ledger Worker version: af5d0e22-9ed7-4e83-b0ff-ea62a312114f
 Ledger date: 21 August 2026
 
 
@@ -38,6 +38,49 @@ structural, casualty or evacuation-ordering system. Imported context, estimated 
 simulated consequences remain visibly separated. Remaining external items at the end of this ledger
 require official EIT records, an owner-controlled Oracle full-stack deployment or optional distribution
 credentials/artwork; they cannot be fabricated in code.
+
+
+1A. CURRENT URGENT REHAUL - SOURCE STATUS, FINAL RELEASE PENDING
+================================================================
+
+[IMPLEMENTED IN SOURCE] Opaque keyless CARTO/OSM-derived street raster under the independent labels
+                        overlay through high zoom, preventing the dated-imagery-to-street handoff from
+                        exposing a black provider background.
+[IMPLEMENTED IN SOURCE] Country, city, road, street and available building context remains visible through
+                        provider vectors/labels; a selected search result receives a persistent named focus
+                        marker so a successful world search cannot visually disappear.
+[IMPLEMENTED IN SOURCE] Slightly tilted world framing with slow 0.5 degrees/second idle orbit, short initial
+                        delay, interaction pause and idle resume only at compatible globe-overview zoom.
+[IMPLEMENTED IN SOURCE] Red animated incident halo for current/live source-labelled records and clusters;
+                        this is provider-derived context, not an AEGIS field observation.
+[IMPLEMENTED IN SOURCE] Hazard-specific, timeline-selected map/twin primitives for flood, earthquake,
+                        wildfire, cyclone/surge and chemical release, with SIMULATED truth labels.
+[IMPLEMENTED IN SOURCE] Arbitrary valid world search/map coordinate plus hazard-source, origin, destination
+                        and operating-area workflow for the five executable hazard plugins. Local accuracy
+                        remains bounded by available public map, terrain and input data.
+[IMPLEMENTED IN SOURCE] Scenario panel X/Y/terrain-derived Z context and three primary loaded cases:
+                        EIT Campus Flood Exercise, Guwahati Urban Flood and Miami Cyclone and Surge.
+[IMPLEMENTED IN SOURCE] A separate Tokyo coastal-inundation demonstration is visibly disclosed as a
+                        cyclone/surge-engine tsunami proxy. It is not calibrated tsunami wave propagation,
+                        run-up or official evacuation modelling.
+[IMPLEMENTED IN SOURCE] Main World map, Incident, Scenarios, Impacts, Sources and Analysis navigation
+                        destinations expose short purpose briefings; panel sections retain concise notes.
+[IMPLEMENTED IN SOURCE] Decision support action Explain evacuation procedure is grounded in the current
+                        departure minute, staged demand, screened route, destinations, capacity/coverage,
+                        remaining exposure and plan warning.
+
+CURRENT-REHAUL RELEASE RECORD - ROOT MUST COMPLETE AFTER BUILD/DEPLOY/REMOTE REPLAY:
+  Final commit:                 [ROOT: INSERT FINAL COMMIT]
+  Main Worker version:         [ROOT: INSERT FINAL MAIN WORKER VERSION]
+  Ledger Worker version:       [ROOT: INSERT FINAL LEDGER WORKER VERSION OR "UNCHANGED"]
+  Canonical verify totals:     [ROOT: INSERT EXACT TOTAL/PASS/FAIL/SKIP]
+  Remote globe/search proof:   [ROOT: INSERT QUERIES, ZOOM STEPS, ORBIT PAUSE/RESUME AND CONSOLE RESULT]
+  Hazard animation proof:      [ROOT: INSERT FIVE-HAZARD RESULTS]
+  AI evacuation proof:         [ROOT: INSERT CURRENT-PLAN RESPONSE RESULT]
+  Lenovo LOQ manual check:     [ROOT: INSERT PASS/FAIL OR "OWNER CHECK REMAINS"]
+
+The verification and Worker IDs later in this ledger belong to the preceding accepted release. They
+must not be reused as proof of the current rehaul without a fresh build, deployment and browser replay.
 
 
 2. USER EXPERIENCE AND VISUAL SYSTEM
@@ -67,15 +110,21 @@ credentials/artwork; they cannot be fabricated in code.
 
 [IMPLEMENTED] MapLibre GL global globe and pitched local/site modes.
 [IMPLEMENTED] Slow automatic idle globe rotation.
-[IMPLEMENTED] Rotation pauses after interaction, during incompatible work, in hidden tabs and for reduced motion.
+[IMPLEMENTED] Rotation pauses after interaction, during incompatible work, in hidden tabs and for reduced motion;
+              it resumes without a longitude jump only at compatible globe-overview zoom.
 [IMPLEMENTED] Globe atmosphere, dark-space treatment, city-light points and available 3D base-building extrusion.
 [IMPLEMENTED] Terrain-RGB relief and hillshade with terrain failure isolated from basemap failure.
 [IMPLEMENTED] World search through Nominatim and coordinate selection by map click.
 [IMPLEMENTED] Smooth world-to-location and world-to-EIT camera transitions.
 [IMPLEMENTED] Explicit globe-to-Mercator handoff for high-zoom landmark/street focus and local twin views
               before terrain and 3D detail, avoiding the globe/terrain black-canvas descent.
+[IMPLEMENTED] Opaque keyless CARTO/OSM-derived street safety layer plus separate country/city/road/street
+              label overlay through zoom 20, underneath AEGIS operational layers.
+[IMPLEMENTED] Persistent named focus marker for the selected country, city, address, street, building,
+              landmark or coordinate result.
 [IMPLEMENTED] Current coordinates, scale, compass/reset and zoom/tilt controls.
-[IMPLEMENTED] Incident clustering, incident fly-to, bookmarks and recent operational context.
+[IMPLEMENTED] Incident clustering, incident fly-to, bookmarks and recent operational context; source-labelled
+              current/live events and clusters use a red animated halo without being relabelled as observed.
 [IMPLEMENTED] Origin, safe destination, hazard source and operating-area placement tools.
 [IMPLEMENTED] Distance and area measurement plus map annotations.
 [IMPLEMENTED] Layer search, presets, solo mode, visibility switches and threshold filtering.
@@ -124,6 +173,14 @@ engineering-grade drainage twin. AEGIS labels it accordingly.
 [IMPLEMENTED] Hazard source, operating area, location, start/end context and scenario parameter controls.
 [IMPLEMENTED] Generic world-location scenarios are deterministic and explicitly estimated.
 [IMPLEMENTED] Provenance-backed imported geometry replaces only the matching estimate labels.
+[IMPLEMENTED] Time-selected hazard visual vocabulary:
+              flood             = wet/deeper-water extents and net-flow direction;
+              earthquake        = isoseismal bands and symbolic pulse outlines;
+              wildfire          = active perimeter, smoke envelope and wind-aligned spread axis;
+              cyclone/surge     = wind field, coastal/surface-water proxy and scenario track;
+              chemical release  = plume, threshold zone and direction axis.
+[TRUTH LIMIT] The coastal-inundation/tsunami demonstration reuses the cyclone/surge low-point engine as a
+              disclosed screening proxy. There is no calibrated tsunami propagation/run-up solver.
 
 Flood flagship outputs:
 
@@ -233,6 +290,8 @@ Public upstreams can throttle, revise or become unavailable; AEGIS reports this 
 
 [IMPLEMENTED] Instant deterministic brief built from the current simulation and evacuation state.
 [IMPLEMENTED] Summary, evidence, operational priority, risks, alternatives and uncertainty limits.
+[IMPLEMENTED] Explain evacuation procedure action composed from the current plan's departure stages,
+              screened route, destination/capacity, coverage, remaining exposure and warning.
 [IMPLEMENTED] Deterministic analysis always executes before any optional hosted narrative.
 [IMPLEMENTED] Hosted narrative order: Workers AI, configured OpenAI-compatible provider, one Groq key,
               then a visibly disclosed deterministic-only fallback.
@@ -247,6 +306,8 @@ Public upstreams can throttle, revise or become unavailable; AEGIS reports this 
 ==================================
 
 [IMPLEMENTED] Scenario presets, save/load, deletion and named versions.
+[IMPLEMENTED] Three primary loaded cross-location cases in the Scenario panel plus one separately labelled
+              coastal-inundation/tsunami proxy demonstration.
 [IMPLEMENTED] Stable deterministic seed and scenario revision history.
 [IMPLEMENTED] Incident-to-simulation conversion and mission replay.
 [IMPLEMENTED] Bookmarks, annotations and workspace layouts.
@@ -386,10 +447,11 @@ No fixed FPS guarantee is claimed because performance varies with GPU driver, br
 provider tiles and selected layers. The code is tuned for the stated Lenovo LOQ and 1366 x 768 demo target.
 
 
-16. VERIFICATION RECORD
-=======================
+16. PREVIOUSLY ACCEPTED RELEASE VERIFICATION RECORD
+===================================================
 
-The following records separate source checks, deployed HTTP checks and visual acceptance:
+The following records separate source checks, deployed HTTP checks and visual acceptance for the
+preceding accepted Worker versions. They are historical baseline evidence, not current-rehaul proof:
 
 [PASS] Final canonical npm run verify: 67 total, 66 passed, 0 failed and 1 intentionally skipped
        optional-network test. TypeScript typecheck, ESLint and production build passed; the build emitted

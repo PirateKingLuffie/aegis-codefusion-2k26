@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -12,9 +13,13 @@ import {
   WORLD_CONTEXT_LAYER_IDS,
   WORLD_GLOBE_EXIT_ZOOM,
   WORLD_GLOBE_REENTRY_ZOOM,
+  WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS,
+  WORLD_GLOBE_DEFAULT_ORBIT_SPEED,
+  WORLD_GLOBE_INITIAL_ORBIT_DELAY_MS,
   WORLD_IMAGERY_LAYER_IDS,
   WORLD_IMAGERY_SOURCES,
   WORLD_RASTER_LABELS,
+  WORLD_RASTER_STREETS,
   initialOrbitResumeDeadline,
   isProviderContextLabelLayer,
   nextOrbitLongitude,
@@ -117,6 +122,51 @@ test("glyph-free CARTO label tiles cover world through street zoom and degrade i
   }), "optional");
 });
 
+test("keyless CARTO/OSM no-label street base replaces satellite overzoom at every location", () => {
+  assert.equal(WORLD_RASTER_STREETS.layerMinzoom, 5);
+  assert.equal(WORLD_RASTER_STREETS.maxzoom, 20);
+  assert.equal(WORLD_RASTER_STREETS.tiles.length, 4);
+  assert.ok(WORLD_RASTER_STREETS.tiles.every((url) => (
+    new URL(url).hostname.endsWith("basemaps.cartocdn.com")
+      && url.includes("/dark_nolabels/")
+      && !/[?&](?:key|token)=/i.test(url)
+  )));
+  const streetOpacityByZoom = new Map(
+    Array.from({ length: WORLD_RASTER_STREETS.opacityStops.length / 2 }, (_, index) => [
+      WORLD_RASTER_STREETS.opacityStops[index * 2],
+      WORLD_RASTER_STREETS.opacityStops[index * 2 + 1],
+    ]),
+  );
+  assert.equal(streetOpacityByZoom.get(5.5), 0);
+  assert.ok(streetOpacityByZoom.get(11) >= 0.9);
+  assert.equal(classifyMapFailure({
+    sourceId: WORLD_RASTER_STREETS.sourceId,
+    message: "street tile request failed",
+    styleReady: true,
+  }), "optional");
+});
+
+test("style reload reinstalls street, label, marker and pulse layers below operations", async () => {
+  const source = await readFile(new URL("../components/map/AegisMap.tsx", import.meta.url), "utf8");
+  const styleLoadStart = source.indexOf('map.on("style.load"');
+  const styleLoadEnd = source.indexOf('map.on("mousedown"', styleLoadStart);
+  const reloadPath = source.slice(styleLoadStart, styleLoadEnd);
+  assert.ok(styleLoadStart > 0 && styleLoadEnd > styleLoadStart);
+  assert.match(reloadPath, /installWorldImagery\(map\)/);
+  assert.match(reloadPath, /installRasterStreetFallback\(map\)/);
+  assert.match(reloadPath, /enableProviderVectorContext\(map\)/);
+  assert.match(reloadPath, /installRasterLabelFallback\(map\)/);
+  assert.match(reloadPath, /promoteOperationalPriorityMarkers\(map\)/);
+  assert.ok(reloadPath.indexOf("installRasterStreetFallback(map)") < reloadPath.indexOf("addMapLayers(map"));
+  assert.ok(reloadPath.indexOf("installRasterLabelFallback(map)") < reloadPath.indexOf("addMapLayers(map"));
+  assert.match(source, /aegis-selection-focus-halo/);
+  assert.match(source, /aegis-incident-live-pulse/);
+  assert.match(source, /aegis-hazard-footprint-fill/);
+  assert.match(source, /aegis-hazard-vector-line/);
+  assert.match(source, /hazardFootprints: asAny\(layers\.hazardFootprints\)/);
+  assert.match(source, /hazardVectors: asAny\(layers\.hazardVectors\)/);
+});
+
 test("world camera keeps a restrained presentation tilt and orbit pauses then wraps smoothly", () => {
   const laptop = worldCameraForViewport(1366, 768);
   const compact = worldCameraForViewport(900, 520);
@@ -125,7 +175,11 @@ test("world camera keeps a restrained presentation tilt and orbit pauses then wr
   assert.ok(laptop.zoom > compact.zoom);
   assert.equal(worldPitchForFocus(1.84, 0), 12);
   assert.equal(worldPitchForFocus(12.2, 42), 42);
-  assert.equal(initialOrbitResumeDeadline(1_000), 1_850);
+  assert.equal(WORLD_GLOBE_DEFAULT_ORBIT_SPEED, 0.5);
+  assert.equal(WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS, 3_200);
+  assert.equal(WORLD_GLOBE_INITIAL_ORBIT_DELAY_MS, 650);
+  assert.equal(initialOrbitResumeDeadline(1_000), 1_650);
+  assert.equal(orbitResumeDeadline(1_000, WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS), 4_200);
   assert.equal(orbitResumeDeadline(1_000, 6_500, 2_400), 9_900);
   assert.equal(nextOrbitLongitude(179.99, 1.25, 0.1) < -179, true);
   assert.equal(shouldAdvanceOrbit({

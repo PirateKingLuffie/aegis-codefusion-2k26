@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   incidentsToGeoJSON,
   relocateLegacyEitCollection,
+  selectionToGeoJSON,
 } from "../components/map/geometry.ts";
 
 test("legacy EIT relocation is explicit and does not mutate source geometry", () => {
@@ -45,6 +46,7 @@ test("incident GeoJSON preserves the active status and live provider attribution
     occurredAt: "2026-08-15T09:30:00.000Z",
     description: "Current GDACS alert",
     source: "Global Disaster Alert and Coordination System",
+    live: true,
   }]);
 
   assert.equal(incidents.features.length, 1);
@@ -53,10 +55,25 @@ test("incident GeoJSON preserves the active status and live provider attribution
     title: "Active flood alert",
     type: "flood",
     severity: "critical",
-    live: false,
+    live: true,
     status: "active",
     occurredAt: "2026-08-15T09:30:00.000Z",
     description: "Current GDACS alert",
     source: "Global Disaster Alert and Coordination System",
   });
+});
+
+test("world search selection preserves its exact coordinate and visible place label", () => {
+  const selected = selectionToGeoJSON({
+    points: [{
+      id: "search-new-delhi",
+      role: "hazard-source",
+      coordinates: [77.209, 28.6139],
+      label: "New Delhi · imported open-map context",
+    }],
+  }, []);
+  assert.equal(selected.features.length, 1);
+  assert.deepEqual(selected.features[0].geometry.coordinates, [77.209, 28.6139]);
+  assert.equal(selected.features[0].properties.label, "New Delhi · imported open-map context");
+  assert.equal(selected.features[0].properties.role, "hazard-source");
 });

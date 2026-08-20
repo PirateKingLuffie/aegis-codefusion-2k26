@@ -13,6 +13,9 @@ export const WORLD_GLOBE_BEARING = -8;
 export const WORLD_GLOBE_EXIT_ZOOM = 5.25;
 export const WORLD_GLOBE_REENTRY_ZOOM = 4.7;
 export const WORLD_GLOBE_ORBIT_MAX_ZOOM = 3.6;
+export const WORLD_GLOBE_DEFAULT_ORBIT_SPEED = 0.5;
+export const WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS = 3_200;
+export const WORLD_GLOBE_INITIAL_ORBIT_DELAY_MS = 650;
 export const WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM = 20;
 export const WORLD_DETAIL_IMAGERY_OPACITY_STOPS = [
   0, 0.92,
@@ -46,6 +49,30 @@ export const WORLD_RASTER_LABELS = {
   minzoom: 0,
   maxzoom: 20,
   attribution: "CARTO / OpenStreetMap contributors",
+} as const;
+
+/** Keyless high-zoom streets/buildings safety net; labels are a separate layer. */
+export const WORLD_RASTER_STREETS = {
+  sourceId: "aegis-world-carto-streets",
+  layerId: "aegis-world-carto-streets-layer",
+  tiles: [
+    "https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png",
+    "https://b.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png",
+    "https://c.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png",
+    "https://d.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png",
+  ],
+  minzoom: 0,
+  maxzoom: 20,
+  layerMinzoom: 5,
+  attribution: "CARTO / OpenStreetMap contributors",
+  opacityStops: [
+    0, 0,
+    5.5, 0,
+    7, 0.28,
+    9, 0.76,
+    11, 0.94,
+    20, 0.99,
+  ],
 } as const;
 
 export const WORLD_IMAGERY_SOURCES = [
@@ -170,7 +197,10 @@ export function orbitResumeDeadline(
 }
 
 /** Initial orbit starts promptly; the longer idle delay is reserved for real interaction. */
-export function initialOrbitResumeDeadline(nowMs: number, startupDelayMs = 850): number {
+export function initialOrbitResumeDeadline(
+  nowMs: number,
+  startupDelayMs = WORLD_GLOBE_INITIAL_ORBIT_DELAY_MS,
+): number {
   return nowMs + Math.min(1_500, Math.max(250, startupDelayMs));
 }
 

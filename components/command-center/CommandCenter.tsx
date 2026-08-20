@@ -77,6 +77,7 @@ import {
   runSimulation,
   rankInterventions,
   summarizeForClient,
+  type ScenarioOperatingAreaInput,
 } from "@/lib/simulation";
 import { buildAegisMapLayers } from "@/lib/simulation/map-adapter";
 import {
@@ -418,6 +419,12 @@ type OperationsDecision = {
   latencyMs: number;
 };
 
+type DecisionExecution = {
+  mode: "hosted-model" | "deterministic-fallback";
+  provider: string;
+  model: string;
+};
+
 type LiveIncidentSummary = {
   id: string;
   title: string;
@@ -524,6 +531,58 @@ const QUICK_LOCATIONS: ActiveLocation[] = [
   { id: "guwahati", name: "Guwahati", region: "Assam, India", latitude: 26.1445, longitude: 91.7362, fidelity: "GLOBAL PROTOTYPE" },
   { id: "tokyo", name: "Tokyo", region: "Japan", latitude: 35.6762, longitude: 139.6503, fidelity: "GLOBAL PROTOTYPE" },
   { id: "miami", name: "Miami", region: "Florida, USA", latitude: 25.7617, longitude: -80.1918, fidelity: "GLOBAL PROTOTYPE" },
+  { id: "sendai", name: "Sendai", region: "Miyagi, Japan", latitude: 38.2682, longitude: 140.8694, fidelity: "GLOBAL PROTOTYPE" },
+];
+
+type LoadedPlanningScenario = {
+  id: string;
+  name: string;
+  brief: string;
+  locationId: ActiveLocation["id"];
+  hazard: HazardId;
+  strength: number;
+  minute: number;
+  proxyLabel?: string;
+};
+
+const LOADED_PLANNING_SCENARIOS: LoadedPlanningScenario[] = [
+  {
+    id: "eit-campus-flood",
+    name: "EIT Campus Flood Exercise",
+    brief: "Campus access, building exposure and staged evacuation",
+    locationId: "eit",
+    hazard: "flood",
+    strength: 82,
+    minute: 35,
+  },
+  {
+    id: "tokyo-earthquake",
+    name: "Tokyo Earthquake Access Exercise",
+    brief: "Shaking, structural screening, debris and emergency access",
+    locationId: "tokyo",
+    hazard: "earthquake",
+    strength: 106,
+    minute: 60,
+  },
+  {
+    id: "miami-cyclone-surge",
+    name: "Miami Cyclone and Surge",
+    brief: "Wind, rainfall, surge and constrained coastal movement",
+    locationId: "miami",
+    hazard: "cyclone",
+    strength: 90,
+    minute: 60,
+  },
+  {
+    id: "sendai-tsunami-proxy",
+    name: "Sendai Coastal-Inundation Screen",
+    brief: "Tsunami surge proxy for coastal access screening; not calibrated tsunami physics",
+    locationId: "sendai",
+    hazard: "cyclone",
+    strength: 104,
+    minute: 45,
+    proxyLabel: "Cyclone surge engine proxy",
+  },
 ];
 
 function createFieldOverlays(location: ActiveLocation): AegisExternalOverlay[] {
@@ -568,9 +627,10 @@ function runLocationDemonstration(
   parameterOverrides: Record<string, string | number | boolean>,
   hazardSource?: { lat: number; lon: number },
   surgeCapacity = false,
+  operatingArea?: ScenarioOperatingAreaInput,
 ) {
   const seed = `AEGIS-${location.id}-${hazard}-2026`;
-  const baseScenario = location.id === "eit"
+  const baseScenario = location.id === "eit" && !operatingArea
     ? createEitFaridabadScenario(hazard, { seed, parameterOverrides })
     : createLocationScenario({
         hazard,
@@ -578,6 +638,7 @@ function runLocationDemonstration(
         locationLabel: `${location.name}, ${location.region}`,
         seed,
         parameterOverrides,
+        operatingArea,
       });
   const locatedScenario = hazardSource ? { ...baseScenario, hazardSource } : baseScenario;
   const scenario = surgeCapacity
@@ -754,13 +815,19 @@ function deterministicDecision(input: {
 }
 
 const NAV_ITEMS = [
-  { id: "global", label: "World map", icon: Globe2 },
-  { id: "incident", label: "Incident", icon: MapPinned },
-  { id: "simulation", label: "Scenarios", icon: Boxes },
-  { id: "cascade", label: "Impacts", icon: Network },
-  { id: "evidence", label: "Sources", icon: Eye },
-  { id: "analytics", label: "Analysis", icon: BarChart3 },
+  { id: "global", label: "World map", brief: "Search, rotate and inspect global incident context", icon: Globe2 },
+  { id: "incident", label: "Incident", brief: "Review calculated effects at the selected time", icon: MapPinned },
+  { id: "simulation", label: "Scenarios", brief: "Load locations, hazards and model inputs", icon: Boxes },
+  { id: "cascade", label: "Impacts", brief: "Trace infrastructure dependencies and service loss", icon: Network },
+  { id: "evidence", label: "Sources", brief: "Inspect source-labelled reports and data classes", icon: Eye },
+  { id: "analytics", label: "Analysis", brief: "Compare risk, capacity and response options", icon: BarChart3 },
 ];
+
+const PANEL_TAB_BRIEFS: Record<PanelTab, string> = {
+  impact: "Physical effects",
+  intelligence: "Model context",
+  resources: "Response assets",
+};
 
 function formatClock(date: Date) {
   return new Intl.DateTimeFormat("en-IN", {
@@ -934,6 +1001,12 @@ export function CommandCenter() {
   const [layerThreshold, setLayerThreshold] = useState(0);
   const [question, setQuestion] = useState("What is our biggest risk in the next 30 minutes?");
   const [decision, setDecision] = useState<OperationsDecision>(fallbackDecision);
+  const [decisionNarrative, setDecisionNarrative] = useState<string | null>(null);
+  const [decisionExecution, setDecisionExecution] = useState<DecisionExecution>({
+    mode: "deterministic-fallback",
+    provider: "AEGIS local engine",
+    model: "deterministic-operations-v1",
+  });
   const [asking, setAsking] = useState(false);
   const [planState, setPlanState] = useState<"idle" | "calculating" | "ready" | "accepted">("idle");
   const [planDepartureMinute, setPlanDepartureMinute] = useState(0);
@@ -991,10 +1064,39 @@ export function CommandCenter() {
     () => HAZARDS.find((item) => item.id === hazard) ?? HAZARDS[0],
     [hazard],
   );
+  const activeSection = NAV_ITEMS.find((item) => item.id === activeNav) ?? NAV_ITEMS[0];
   const SelectedHazardIcon = selectedHazard.icon;
   const coreHazard: HazardKind = hazard === "industrial" ? "chemical" : hazard;
   const control = useMemo(() => scenarioControl(hazard, scenarioStrength), [hazard, scenarioStrength]);
   const selectedHazardSource = mapSelection.points.find((point) => point.role === "hazard-source");
+  const selectedOperatingArea = useMemo<ScenarioOperatingAreaInput | undefined>(() => {
+    const boundary = mapSelection.area?.geometry.coordinates[0];
+    if (!boundary || boundary.length < 4) return undefined;
+    const latitudes = boundary.map(([, lat]) => lat);
+    const longitudes = boundary.map(([lon]) => lon);
+    const centerLatitude = latitudes.reduce((sum, latitude) => sum + latitude, 0) / latitudes.length;
+    const northSouthM = (Math.max(...latitudes) - Math.min(...latitudes)) * 111_320;
+    const eastWestM = (Math.max(...longitudes) - Math.min(...longitudes))
+      * 111_320
+      * Math.max(0.2, Math.cos(centerLatitude * Math.PI / 180));
+    if (Math.min(northSouthM, eastWestM) < 120 || Math.max(northSouthM, eastWestM) > 100_000) {
+      return undefined;
+    }
+    return {
+      kind: "polygon",
+      boundary: boundary.map(([lon, lat]) => ({ lon, lat })),
+      label: mapSelection.area?.properties.name ?? "Operator-drawn operating area",
+    };
+  }, [mapSelection.area]);
+  const operatingAreaMessage = useMemo(() => {
+    if (!mapSelection.area) {
+      return "Search or select any world location to recalculate the same hazard workflow; local detail follows the available open-map and terrain context.";
+    }
+    if (selectedOperatingArea) {
+      return "Operator-drawn area is active: the deterministic local model is bounded to this selected region. Geometry and exposure inputs remain provenance-labelled estimates unless imported.";
+    }
+    return "The drawn area is outside the local model limit (120 m–100 km in both dimensions), so AEGIS is using the selected center point instead. Adjust the region to activate bounded simulation.";
+  }, [mapSelection.area, selectedOperatingArea]);
   const demonstration = useMemo(
     () => runLocationDemonstration(
       activeLocation,
@@ -1004,8 +1106,9 @@ export function CommandCenter() {
         ? { lat: selectedHazardSource.coordinates[1], lon: selectedHazardSource.coordinates[0] }
         : undefined,
       surgeCapacity,
+      selectedOperatingArea,
     ),
-    [activeLocation, control.parameterOverrides, coreHazard, selectedHazardSource, surgeCapacity],
+    [activeLocation, control.parameterOverrides, coreHazard, selectedHazardSource, selectedOperatingArea, surgeCapacity],
   );
   const currentFrame = useMemo(() => {
     const timeline = demonstration.result.timeline;
@@ -1062,6 +1165,32 @@ export function CommandCenter() {
     }
   }, [demonstration, evacuationMode, mapSelection.points, planDepartureMinute]);
 
+  const evacuationProcedure = useMemo(() => {
+    const primaryRoute = evacuationPlan.routes.find((route) => route.status === "recommended") ?? evacuationPlan.routes[0];
+    const firstStage = evacuationPlan.stages.reduce<(typeof evacuationPlan.stages)[number] | undefined>(
+      (earliest, stage) => !earliest || stage.order < earliest.order ? stage : earliest,
+      undefined,
+    );
+    const destinationLabels = evacuationPlan.endPoints.map((point) => point.label).slice(0, 3);
+    const originLabels = evacuationPlan.startPoints.map((point) => point.label).slice(0, 3);
+    const steps = [
+      `Begin the ${evacuationMode} procedure at T+${evacuationPlan.departureMinute} min from ${originLabels.join(", ") || "the modelled origin zones"}.`,
+      firstStage
+        ? `Move ${firstStage.zoneName} first during T+${firstStage.departureWindow.startMinute}–${firstStage.departureWindow.endMinute} min; ${firstStage.populationAssigned.toLocaleString("en-IN")} people are assigned and ${firstStage.assistanceRequired.toLocaleString("en-IN")} require assistance.`
+        : "Confirm the first departure stage after route and capacity screening.",
+      primaryRoute
+        ? `Use ${primaryRoute.id} as the ${primaryRoute.status} route: ${Math.round(primaryRoute.distanceM).toLocaleString("en-IN")} m, ${Math.round(primaryRoute.etaMinutes)} min estimated travel, ${Math.round(primaryRoute.reliability * 100)}% model reliability.`
+        : "No passable model route is available; hold movement and dispatch field reconnaissance.",
+      `Receive evacuees at ${destinationLabels.join(", ") || "the screened safe destinations"}; current model coverage is ${Math.round(evacuationPlan.after.coveragePct)}% with ${Math.round(evacuationPlan.after.estimatedClearanceMinutes)} min estimated clearance.`,
+    ];
+    return {
+      steps,
+      warning: evacuationPlan.warnings[0] ?? "Field teams must confirm route passability and destination capacity before dispatch.",
+      remaining: evacuationPlan.after.peopleRemainingExposed,
+      source: evacuationPlan.generatedBy,
+    };
+  }, [evacuationMode, evacuationPlan]);
+
   useEffect(() => {
     if (!evacuationVisible || planState === "calculating") return;
     const route = evacuationPlan.routes[0];
@@ -1111,7 +1240,11 @@ export function CommandCenter() {
   }), [baseMapLayers, evacuationVisible, liveRoadRoutes, minute]);
   const visibleMapLayers = useMemo<AegisMapLayers>(() => {
     const visible = { ...mapLayers };
-    if (!layerVisibility.hazard) delete visible.floodDepth;
+    if (!layerVisibility.hazard) {
+      delete visible.floodDepth;
+      delete visible.hazardFootprints;
+      delete visible.hazardVectors;
+    }
     if (!layerVisibility.flow) delete visible.floodFlow;
     if (!layerVisibility.damage) {
       delete visible.impactZones;
@@ -1365,9 +1498,9 @@ export function CommandCenter() {
     // landmark to the full rotating Earth.
     setFocusRequest({
       center: [24, 16],
-      zoom: 1.84,
-      pitch: 0,
-      bearing: 0,
+      zoom: 1.96,
+      pitch: 12,
+      bearing: -8,
       durationMs: 1_900,
       label: "Global operations overview",
       requestId: `world-overview-${Date.now()}`,
@@ -1749,21 +1882,22 @@ export function CommandCenter() {
     setProviderPanelOpen(false);
   }, [commandPanel, newsPanel, planPanel, providerPanel, scenarioPanel]);
 
-  const askCopilot = useCallback(async () => {
-    if (!question.trim()) return;
+  const askCopilot = useCallback(async (requestedQuestion?: string) => {
+    const resolvedQuestion = (requestedQuestion ?? question).trim();
+    if (!resolvedQuestion) return;
     setAsking(true);
     try {
-      const response = await fetch("/api/operations", {
+      const response = await fetch("/api/agent-activity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          query: question,
+          query: resolvedQuestion,
           state: {
             incident: {
-              id: "INC-EIT-FLD-01",
-              name: "EIT Faridabad flood exercise",
+              id: `INC-${activeLocation.id}-${coreHazard}`,
+              name: `${activeLocation.name} ${selectedHazard.label} planning scenario`,
               dataClass: "SIMULATED",
-              location: [77.4398682, 28.3912265],
+              location: [activeLocation.longitude, activeLocation.latitude],
             },
             simulation: {
               minute,
@@ -1776,9 +1910,26 @@ export function CommandCenter() {
             },
             evacuation: {
               status: planState,
+              movementProfile: evacuationMode,
+              departureMinute: evacuationPlan?.departureMinute ?? null,
               totalMinutes: evacuationPlan?.after.estimatedClearanceMinutes ?? null,
-              routes: evacuationPlan?.routes.slice(0, 3).map((route) => route.id) ?? [],
+              routes: evacuationPlan?.routes.slice(0, 3).map((route) => ({
+                id: route.id,
+                status: route.status,
+                etaMinutes: route.etaMinutes,
+                riskScore: route.riskScore,
+                reliability: route.reliability,
+              })) ?? [],
               coveragePct: evacuationPlan?.after.coveragePct ?? null,
+              peopleRemainingExposed: evacuationPlan?.after.peopleRemainingExposed ?? null,
+              destinations: evacuationPlan?.endPoints.slice(0, 4).map((point) => point.label) ?? [],
+              stages: evacuationPlan?.stages.slice(0, 4).map((stage) => ({
+                order: stage.order,
+                zone: stage.zoneName,
+                population: stage.populationAssigned,
+                assistanceRequired: stage.assistanceRequired,
+                departureWindow: stage.departureWindow,
+              })) ?? [],
             },
             infrastructure: {
               hospitalLoadPct,
@@ -1786,10 +1937,23 @@ export function CommandCenter() {
               shelterLoadPct,
             },
           },
+          evidence: [],
+          approvalRequired: true,
         }),
       });
       if (!response.ok) throw new Error("Analysis failed");
-      setDecision((await response.json()) as OperationsDecision);
+      const payload = await response.json() as {
+        decision: OperationsDecision;
+        narrative?: string;
+        activity?: { execution?: Partial<DecisionExecution> };
+      };
+      setDecision(payload.decision);
+      setDecisionNarrative(typeof payload.narrative === "string" && payload.narrative.trim() ? payload.narrative.trim() : null);
+      setDecisionExecution({
+        mode: payload.activity?.execution?.mode === "hosted-model" ? "hosted-model" : "deterministic-fallback",
+        provider: payload.activity?.execution?.provider ?? "AEGIS local engine",
+        model: payload.activity?.execution?.model ?? "deterministic-operations-v1",
+      });
     } catch {
       setDecision(deterministicDecision({
         location: activeLocation.name,
@@ -1804,10 +1968,16 @@ export function CommandCenter() {
         topAction: impactSnapshot.recoveryPlan.actions[0]?.action,
         remainingExposure: impactSnapshot.humanImpact.peopleRemainingInPlanningEnvelope,
       }));
+      setDecisionNarrative(null);
+      setDecisionExecution({
+        mode: "deterministic-fallback",
+        provider: "AEGIS local engine",
+        model: "deterministic-operations-v1",
+      });
     } finally {
       setAsking(false);
     }
-  }, [activeLocation.name, averageConfidence, bridgeRiskPct, coreHazard, demonstration.result.metrics, evacuationPlan, hospitalLoadPct, impactSnapshot, minute, planState, question, selectedHazard.label, shelterLoadPct]);
+  }, [activeLocation, averageConfidence, bridgeRiskPct, coreHazard, demonstration.result.metrics, evacuationMode, evacuationPlan, hospitalLoadPct, impactSnapshot, minute, planState, question, selectedHazard.label, shelterLoadPct]);
 
   const recordAudit = useCallback((
     action: string,
@@ -1840,6 +2010,58 @@ export function CommandCenter() {
     }).catch(() => undefined);
   }, []);
 
+  const loadPlanningScenario = useCallback((preset: LoadedPlanningScenario) => {
+    const location = QUICK_LOCATIONS.find((candidate) => candidate.id === preset.locationId);
+    if (!location) return;
+    setScenarioName(preset.name);
+    setActiveLocation(location);
+    setHazard(preset.hazard);
+    setScenarioStrength(preset.strength);
+    setMinute(preset.minute);
+    setPlaying(false);
+    setViewMode("simulate");
+    setSceneView("twin");
+    setActiveNav("simulation");
+    setRightPanelOpen(true);
+    setPanelTab("impact");
+    setScenarioMenuOpen(false);
+    setPlanState("idle");
+    setEvacuationVisible(false);
+    setSurgeCapacity(false);
+    setLiveRoadRoutes(null);
+    setSourceIncident(undefined);
+    setWeatherContext(null);
+    setFieldOverlays(createFieldOverlays(location));
+    setMapSelection({
+      points: [{
+        id: `hazard-${preset.id}`,
+        coordinates: [location.longitude, location.latitude],
+        role: "hazard-source",
+        label: `${preset.name} hazard origin`,
+      }],
+    });
+    setFocusRequest({
+      center: [location.longitude, location.latitude],
+      zoom: location.fidelity === "EIT SITE MODEL" ? 17.2 : 15.4,
+      pitch: 62,
+      bearing: -26,
+      durationMs: 1_500,
+      label: `${preset.name} · loaded planning inputs`,
+      requestId: `scenario-${preset.id}-${Date.now()}`,
+    });
+    recordAudit(
+      "Planning scenario loaded",
+      `${preset.name} · ${location.name} · ${preset.hazard} · input strength ${preset.strength}`,
+    );
+  }, [recordAudit]);
+
+  const explainEvacuationProcedure = useCallback(() => {
+    const prompt = `Explain the current evacuation procedure for ${activeLocation.name} at T+${minute} minutes, including departure stages, preferred route, destination capacity, assistance demand and remaining exposure.`;
+    setQuestion(prompt);
+    setCopilotOpen(true);
+    void askCopilot(prompt);
+  }, [activeLocation.name, askCopilot, minute]);
+
   const saveCurrentWorkspace = useCallback(() => {
     const previous = savedWorkspaces
       .filter((workspace) => workspace.name === scenarioName)
@@ -1863,6 +2085,10 @@ export function CommandCenter() {
       layerThreshold,
       selection: {
         points: mapSelection.points.map((point) => ({ ...point })),
+        area: mapSelection.area ? {
+          name: mapSelection.area.properties.name,
+          coordinates: mapSelection.area.geometry.coordinates[0].map(([lon, lat]) => [lon, lat] as [number, number]),
+        } : undefined,
       },
       annotations: annotations.map((annotation) => ({ ...annotation })),
       sourceIncident,
@@ -1886,7 +2112,7 @@ export function CommandCenter() {
         actor: "operator",
       }),
     }).catch(() => undefined);
-  }, [activeLocation, annotations, demonstration.scenario.seed, hazard, layerThreshold, layerVisibility, mapSelection.points, minute, recordAudit, savedWorkspaces, scenarioName, scenarioStrength, sourceIncident, viewMode, workspaceLayout]);
+  }, [activeLocation, annotations, demonstration.scenario.seed, hazard, layerThreshold, layerVisibility, mapSelection.area, mapSelection.points, minute, recordAudit, savedWorkspaces, scenarioName, scenarioStrength, sourceIncident, viewMode, workspaceLayout]);
 
   const loadWorkspace = useCallback((workspace: ScenarioWorkspace) => {
     setScenarioName(workspace.name);
@@ -1902,7 +2128,21 @@ export function CommandCenter() {
     setLayerVisibility((current) => ({ ...current, ...workspace.layerVisibility }));
     setLayerThreshold(workspace.layerThreshold);
     setSourceIncident(workspace.sourceIncident);
-    setMapSelection({ points: workspace.selection.points.map((point) => ({ ...point })) });
+    const savedOperatingArea = workspace.selection.area;
+    const restoredOperatingArea = savedOperatingArea && savedOperatingArea.coordinates.length >= 4
+      ? {
+        type: "Feature" as const,
+        properties: { name: savedOperatingArea.name },
+        geometry: {
+          type: "Polygon" as const,
+          coordinates: [savedOperatingArea.coordinates.map(([lon, lat]) => [lon, lat] as [number, number])],
+        },
+      }
+      : undefined;
+    setMapSelection({
+      points: workspace.selection.points.map((point) => ({ ...point })),
+      area: restoredOperatingArea,
+    });
     setAnnotations(workspace.annotations.map((annotation) => ({ ...annotation })));
     setSceneView(workspace.viewMode === "monitor" ? "world" : "twin");
     setFocusRequest({
@@ -2341,8 +2581,8 @@ export function CommandCenter() {
             return (
               <button
                 key={item.id}
-                title={item.label}
-                aria-label={item.label}
+                title={`${item.label} — ${item.brief}`}
+                aria-label={`${item.label}: ${item.brief}`}
                 className={activeNav === item.id ? styles.railActive : ""}
                 onClick={() => {
                   setActiveNav(item.id);
@@ -2365,6 +2605,7 @@ export function CommandCenter() {
               >
                 <Icon size={18} />
                 <span className={styles.railLabel}>{item.label}</span>
+                <span className={styles.railBrief} aria-hidden="true"><strong>{item.label}</strong><small>{item.brief}</small></span>
               </button>
             );
           })}
@@ -2416,8 +2657,9 @@ export function CommandCenter() {
             <div className={styles.locationIdentity}>
               <div className={styles.livePulse}><i /></div>
               <div>
-                <span>{sceneView === "world" ? "Global map" : "Site analysis"}</span>
+                <span>{activeSection.label}</span>
                 <strong>{sceneView === "world" ? "Worldwide incident overview" : `${activeLocation.name} · ${activeLocation.region}`}</strong>
+                <small>{activeSection.brief}</small>
               </div>
             </div>
             {sceneView === "world" ? (
@@ -2577,8 +2819,8 @@ export function CommandCenter() {
             </button>
             <div className={styles.scenarioHeader}>
               <div>
-                <span>Scenario settings</span>
-                <StatusTag tone="blue">Planning model</StatusTag>
+                <span>Scenario settings <StatusTag tone="blue">Planning model</StatusTag></span>
+                <small>Hazard inputs and saved planning cases</small>
               </div>
               <button onClick={() => setScenarioMenuOpen((value) => !value)} aria-expanded={scenarioMenuOpen}>
                 <SelectedHazardIcon size={16} />
@@ -2640,6 +2882,38 @@ export function CommandCenter() {
                 {control.detail.map((item) => <span key={item}>{item}</span>)}
               </div>
             </div>
+
+            <div className={styles.scenarioContext}>
+              <span>Current map selection</span>
+              <strong>{activeLocation.name} · {activeLocation.region}</strong>
+              <small>X {activeLocation.longitude.toFixed(5)} · Y {activeLocation.latitude.toFixed(5)} · Z terrain-derived · {selectedHazard.shortLabel} · T+{minute} min</small>
+              <p>{operatingAreaMessage}</p>
+            </div>
+
+            <section className={styles.scenarioLibrary} aria-label="Loaded planning scenarios">
+              <header><span>Loaded scenarios</span><small>Three primary presets plus one clearly labelled proxy</small></header>
+              <div>
+                {LOADED_PLANNING_SCENARIOS.map((preset) => {
+                  const location = QUICK_LOCATIONS.find((candidate) => candidate.id === preset.locationId);
+                  const hazardDefinition = HAZARDS.find((candidate) => candidate.id === preset.hazard);
+                  const presetControl = scenarioControl(preset.hazard, preset.strength);
+                  if (!location || !hazardDefinition) return null;
+                  return (
+                    <button
+                      type="button"
+                      key={preset.id}
+                      aria-pressed={scenarioName === preset.name}
+                      onClick={() => loadPlanningScenario(preset)}
+                    >
+                      <span><strong>{preset.name}</strong><small>{preset.brief}</small></span>
+                      {preset.proxyLabel ? <i>{preset.proxyLabel}</i> : null}
+                      <em>X {location.longitude.toFixed(4)} · Y {location.latitude.toFixed(4)} · Z terrain-derived</em>
+                      <b>{hazardDefinition.shortLabel} · {presetControl.label}: {presetControl.value} · T+{preset.minute} min</b>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
 
             <button className={styles.branchButton} onClick={() => setComparisonOpen(true)}>
               <Zap size={14} />
@@ -2781,6 +3055,7 @@ export function CommandCenter() {
             <div>
               <span>Incident</span>
               <strong>INC-EIT-{coreHazard.toUpperCase()}-01</strong>
+              <small className={styles.panelBrief}>Calculated effects and access state at T+{minute} min</small>
             </div>
             <StatusTag tone={currentFrame.severity === "minimal" || currentFrame.severity === "minor" ? "amber" : "red"}>
               {currentFrame.severity.toUpperCase()}
@@ -2816,7 +3091,8 @@ export function CommandCenter() {
                 className={panelTab === tab ? styles.tabActive : ""}
                 onClick={() => setPanelTab(tab)}
               >
-                {tab}
+                <span>{tab}</span>
+                <small>{PANEL_TAB_BRIEFS[tab]}</small>
               </button>
             ))}
           </div>
@@ -2827,7 +3103,7 @@ export function CommandCenter() {
                 {priorityBuilding ? (
                   <section className={styles.buildingXray}>
                     <div className={styles.sectionTitle}>
-                      <span>3D building impact</span>
+                      <span><b>3D building impact</b><small>External depth, floor exposure and access screening</small></span>
                       <StatusTag tone={priorityBuilding.accessStatus === "closed" ? "red" : "amber"}>
                         {priorityBuilding.damageBand.toUpperCase()}
                       </StatusTag>
@@ -2844,7 +3120,7 @@ export function CommandCenter() {
                   </section>
                 ) : null}
                 <section className={styles.casualtySection}>
-                  <div className={styles.sectionTitle}><span>Human impact</span><StatusTag tone="red">Simulated</StatusTag></div>
+                  <div className={styles.sectionTitle}><span><b>Human impact</b><small>Exposure and mobility-support estimates, not casualties</small></span><StatusTag tone="red">Simulated</StatusTag></div>
                   <div className={styles.casualtyGrid}>
                     <div><span>People inside impact envelope</span><strong>{impactSnapshot.humanImpact.peopleWithinExposureEnvelope.toLocaleString("en-IN")}</strong><small>Aggregate scenario exposure</small></div>
                     <div><span>Mobility-assistance demand</span><strong>{impactSnapshot.humanImpact.mobilityAssistanceEstimate.toLocaleString("en-IN")}</strong><small>Planning estimate; field confirmation required</small></div>
@@ -2854,7 +3130,7 @@ export function CommandCenter() {
                   <p className={styles.humanImpactNotice}>{impactSnapshot.humanImpact.notice}</p>
                 </section>
                 <section className={styles.secondaryConsequences}>
-                  <div><span>Secondary consequences</span><small>Deterministic screening · T+{minute} min</small></div>
+                  <div><span><b>Secondary consequences</b><small>Contamination, erosion, debris and service effects</small></span><small>Calculated · T+{minute} min</small></div>
                   <div>
                     {secondaryConsequenceSummary.map((item) => (
                       <article key={item.kind}>
@@ -2867,7 +3143,7 @@ export function CommandCenter() {
                   </div>
                 </section>
                 <section className={styles.riskSection}>
-                  <div className={styles.sectionTitle}><span>Cascade</span><button onClick={() => setCascadeOpen(true)}><Network size={13} /> Open graph</button></div>
+                  <div className={styles.sectionTitle}><span><b>Infrastructure dependencies</b><small>Hazard-to-road-to-critical-access service chain</small></span><button onClick={() => setCascadeOpen(true)}><Network size={13} /> Open graph</button></div>
                   <div className={styles.cascadeLine}>
                     <div className={styles.cascadeNode}><SelectedHazardIcon size={15} /><span>{selectedHazard.shortLabel}</span></div>
                     <i />
@@ -2878,7 +3154,7 @@ export function CommandCenter() {
                 </section>
 
                 <section className={styles.riskSection}>
-                  <div className={styles.sectionTitle}><span>Road impact</span><small>T+{minute} min</small></div>
+                  <div className={styles.sectionTitle}><span><b>Road impact</b><small>Open, restricted and closed links at this time</small></span><small>T+{minute} min</small></div>
                   <div className={styles.effectList}>
                     {roadEffects.map((impact) => {
                       const tone = impact.status === "closed" ? "red" : impact.status === "open" ? "blue" : "amber";
@@ -2892,7 +3168,7 @@ export function CommandCenter() {
                 </section>
 
                 <section className={styles.capacitySection}>
-                  <div className={styles.sectionTitle}><span>Critical capacity</span></div>
+                  <div className={styles.sectionTitle}><span><b>Critical capacity</b><small>Projected hospital and shelter occupancy</small></span></div>
                   <div className={styles.capacityRow}><Hospital size={15} /><span><b>{hospitalImpact?.facilityName ?? "Hospital H-01"}</b><small>Projected emergency load</small></span><strong>{hospitalLoadPct}%</strong></div>
                   <MiniBar value={hospitalLoadPct} tone={hospitalLoadPct >= 80 ? "amber" : "green"} />
                   <div className={styles.capacityRow}><Warehouse size={15} /><span><b>{shelterImpact?.facilityName ?? "Shelter S-02"}</b><small>Projected occupancy</small></span><strong>{shelterLoadPct}%</strong></div>
@@ -2904,7 +3180,7 @@ export function CommandCenter() {
             {panelTab === "intelligence" && (
               <>
                 <section className={styles.riskSection}>
-                  <div className={styles.sectionTitle}><span>Operational assessments</span><StatusTag tone="amber">Modelled</StatusTag></div>
+                  <div className={styles.sectionTitle}><span><b>Operational assessments</b><small>Current access, facilities and population-support findings</small></span><StatusTag tone="amber">Modelled</StatusTag></div>
                   <div className={styles.agentList}>
                     {[
                       {
@@ -2929,7 +3205,7 @@ export function CommandCenter() {
                   </div>
                 </section>
                 <section className={styles.evidenceSummary}>
-                  <div className={styles.sectionTitle}><span>Data classification</span></div>
+                  <div className={styles.sectionTitle}><span><b>Data classification</b><small>Separates imported context from calculated estimates</small></span></div>
                   <div><StatusTag tone="green">Imported</StatusTag><span>Open map, terrain and weather context</span></div>
                   <div><StatusTag tone="blue">Simulated</StatusTag><span>Flood depth, impacts and response</span></div>
                   <div><StatusTag tone="neutral">Estimated</StatusTag><span>Population and facility capacity</span></div>
@@ -2939,6 +3215,7 @@ export function CommandCenter() {
 
             {panelTab === "resources" && (
               <section className={styles.resourceList}>
+                <div className={styles.sectionTitle}><span><b>Response resources</b><small>Assigned transport, role, dispatch and arrival timing</small></span></div>
                 {evacuationVisible && evacuationPlan.resourceAssignments.length ? (
                   evacuationPlan.resourceAssignments.slice(0, 8).map((assignment) => (
                     <div key={`${assignment.unitId}-${assignment.stageId}`}>
@@ -2966,10 +3243,15 @@ export function CommandCenter() {
               <span>Evacuation planning</span>
               <small>Routes · resources · capacity · constraints</small>
             </div>
-            <button onClick={generatePlan} disabled={planState === "calculating"}>
-              {planState === "calculating" ? <RefreshCw size={16} className={styles.spin} /> : <Route size={16} />}
-              Generate evacuation plan
-            </button>
+            <div className={styles.responseButtons}>
+              <button type="button" onClick={explainEvacuationProcedure}>
+                <MessageSquareText size={15} /> Explain procedure
+              </button>
+              <button type="button" onClick={generatePlan} disabled={planState === "calculating"}>
+                {planState === "calculating" ? <RefreshCw size={16} className={styles.spin} /> : <Route size={16} />}
+                Generate evacuation plan
+              </button>
+            </div>
           </div>
         </aside>
       </main>
@@ -3051,7 +3333,7 @@ export function CommandCenter() {
           <section className={styles.comparisonPanel} role="dialog" aria-modal="true" aria-label="Scenario comparison">
             <div className={styles.modalHeader}>
               <div><span>Scenario comparison</span><strong>{selectedHazard.label} · {activeLocation.name}</strong></div>
-              <StatusTag tone="blue">Calculated</StatusTag>
+              <StatusTag tone="blue">{decisionExecution.mode === "hosted-model" ? decisionExecution.provider : "Local deterministic fallback"}</StatusTag>
               <button onClick={() => setComparisonOpen(false)} aria-label="Close scenario comparison"><X size={17} /></button>
             </div>
             <div className={styles.comparisonModeBar} role="group" aria-label="Comparison display mode">
@@ -3332,7 +3614,22 @@ export function CommandCenter() {
               </div>
               <div className={styles.copilotAnswer}>
                 <div className={styles.answerSection}><span>SUMMARY</span><p>{decision.summary}</p></div>
+                {decisionNarrative ? (
+                  <div className={styles.modelNarrative}>
+                    <span>Model-authored explanation · human review required</span>
+                    <p>{decisionNarrative}</p>
+                    <small>{decisionExecution.provider} · {decisionExecution.model}</small>
+                  </div>
+                ) : null}
                 <div className={styles.answerEvidence}><span>Supporting evidence</span>{decision.evidence.map((item) => <p key={item}><Check size={12} />{item}</p>)}</div>
+                {question.toLowerCase().includes("evacuat") ? (
+                  <div className={styles.evacuationProcedure}>
+                    <div><span>Current evacuation procedure</span><StatusTag tone="blue">Calculated plan</StatusTag></div>
+                    <ol>{evacuationProcedure.steps.map((step) => <li key={step}>{step}</li>)}</ol>
+                    <p><Info size={13} /> {evacuationProcedure.warning}</p>
+                    <small>{evacuationProcedure.source} · {evacuationProcedure.remaining.toLocaleString("en-IN")} people remain exposed in the current model state.</small>
+                  </div>
+                ) : null}
                 <div className={styles.answerSection}><span>PREDICTION</span><p>{decision.prediction}</p></div>
                 <div className={styles.recommendationBlock}>
                   <div><span>RECOMMENDATION</span><StatusTag tone="green">{Math.round(decision.confidence * 100)}% CONFIDENCE</StatusTag></div>
@@ -3342,8 +3639,11 @@ export function CommandCenter() {
               </div>
             </div>
             <div className={styles.copilotPrompts}>
-              {["What if Bridge B fails?", "Prioritize hospitals", "Explain the latest change"].map((prompt) => (
-                <button key={prompt} onClick={() => setQuestion(prompt)}>{prompt}</button>
+              {["Explain evacuation procedure", "What if Bridge B fails?", "Prioritize hospitals", "Explain the latest change"].map((prompt) => (
+                <button key={prompt} onClick={() => {
+                  setQuestion(prompt);
+                  if (prompt === "Explain evacuation procedure") void askCopilot(prompt);
+                }}>{prompt}</button>
               ))}
             </div>
             <form className={styles.copilotInput} onSubmit={(event) => { event.preventDefault(); void askCopilot(); }}>

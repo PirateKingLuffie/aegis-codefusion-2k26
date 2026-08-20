@@ -91,10 +91,13 @@ import {
   WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM,
   WORLD_DETAIL_IMAGERY_OPACITY_STOPS,
   WORLD_CONTEXT_LAYER_IDS,
+  WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS,
+  WORLD_GLOBE_DEFAULT_ORBIT_SPEED,
   WORLD_GLOBE_ORBIT_MAX_ZOOM,
   WORLD_IMAGERY_LAYER_IDS,
   WORLD_IMAGERY_SOURCES,
   WORLD_RASTER_LABELS,
+  WORLD_RASTER_STREETS,
   initialOrbitResumeDeadline,
   nextOrbitLongitude,
   orbitResumeDeadline,
@@ -142,6 +145,8 @@ type SourceKey =
   | "hospitals"
   | "shelters"
   | "impactSamples"
+  | "hazardFootprints"
+  | "hazardVectors"
   | "damage"
   | "populationSamples"
   | "utilityImpact"
@@ -180,6 +185,8 @@ const SOURCE_IDS: Record<SourceKey, string> = {
   hospitals: "aegis-hospitals-source",
   shelters: "aegis-shelters-source",
   impactSamples: "aegis-impact-samples-source",
+  hazardFootprints: "aegis-hazard-footprints-source",
+  hazardVectors: "aegis-hazard-vectors-source",
   damage: "aegis-damage-source",
   populationSamples: "aegis-population-impact-source",
   utilityImpact: "aegis-utility-impact-source",
@@ -229,7 +236,15 @@ const LAYER_IDS: Record<AegisMapLayerKey, string[]> = {
   resources: ["aegis-resource-ring", "aegis-resource-core", "aegis-resource-label"],
   hospitals: ["aegis-hospital-ring", "aegis-hospital-core", "aegis-hospital-label"],
   shelters: ["aegis-shelter-ring", "aegis-shelter-core", "aegis-shelter-label"],
-  impactZones: ["aegis-impact-field"],
+  impactZones: [
+    "aegis-impact-field",
+    "aegis-hazard-footprint-fill",
+    "aegis-hazard-footprint-outline",
+    "aegis-hazard-footprint-label",
+    "aegis-hazard-vector-casing",
+    "aegis-hazard-vector-line",
+    "aegis-hazard-vector-label",
+  ],
   damage: [
     "aegis-damage-fill",
     "aegis-damage-outline",
@@ -282,6 +297,8 @@ const INTERACTIVE_LAYER_IDS = [
   "aegis-water-volume",
   "aegis-water-sheen",
   "aegis-water-shoreline",
+  "aegis-hazard-footprint-fill",
+  "aegis-hazard-vector-line",
   "aegis-damage-fill",
   "aegis-safe-fill",
   "aegis-unavailable-fill",
@@ -453,6 +470,8 @@ function emptySourceData(): SourceData {
     hospitals: EMPTY_FEATURE_COLLECTION,
     shelters: EMPTY_FEATURE_COLLECTION,
     impactSamples: EMPTY_FEATURE_COLLECTION,
+    hazardFootprints: EMPTY_FEATURE_COLLECTION,
+    hazardVectors: EMPTY_FEATURE_COLLECTION,
     damage: EMPTY_FEATURE_COLLECTION,
     populationSamples: EMPTY_FEATURE_COLLECTION,
     utilityImpact: EMPTY_FEATURE_COLLECTION,
@@ -501,6 +520,8 @@ function buildSourceData(
     hospitals: asAny(layers.hospitals),
     shelters: asAny(layers.shelters),
     impactSamples: polygonCollectionToPoints(layers.impactZones),
+    hazardFootprints: asAny(layers.hazardFootprints),
+    hazardVectors: asAny(layers.hazardVectors),
     damage: combineCollections(
       twin?.damage as FeatureCollection<Geometry, unknown> | undefined,
       layers.damagedBuildings as FeatureCollection<Geometry, unknown> | undefined,
@@ -580,6 +601,25 @@ function promoteProviderContextLabels(map: MapLibreMap): number {
     }
   });
   return labels.length;
+}
+
+function promoteOperationalPriorityMarkers(map: MapLibreMap): void {
+  [
+    "aegis-incident-live-pulse",
+    "aegis-incident-core",
+    "aegis-incident-cluster-core",
+    "aegis-incident-cluster-count",
+    "aegis-incident-label",
+    "aegis-selection-focus-halo",
+    "aegis-selection-points",
+    "aegis-selection-labels",
+  ].forEach((id) => {
+    try {
+      if (map.getLayer(id)) map.moveLayer(id);
+    } catch {
+      // A style reload may temporarily remove a generated layer.
+    }
+  });
 }
 
 function stabilizeWorldCountryLabels(map: MapLibreMap): number {
@@ -674,7 +714,7 @@ function addSources(map: MapLibreMap, data: SourceData, enableTerrain: boolean):
       type: "geojson",
       data: data[key],
       generateId: true,
-      lineMetrics: key === "flow" || key === "routes",
+      lineMetrics: key === "flow" || key === "routes" || key === "hazardVectors",
       ...(key === "incidents" ? {
         cluster: true,
         clusterMaxZoom: 7,
@@ -763,6 +803,28 @@ function addMapLayers(
   enableTerrain: boolean,
 ): void {
   const beforeLabels = firstSymbolLayerId(map);
+  const hazardFootprintColor: ExpressionSpecification = [
+    "match", ["get", "visualRole"],
+    "flood-extent", "#187fb8",
+    "flood-deep-water", "#07598f",
+    "earthquake-isoseismal", "#e7763e",
+    "wildfire-active-perimeter", "#e13e32",
+    "wildfire-smoke-envelope", "#8a7771",
+    "cyclone-wind-field", "#4288a7",
+    "cyclone-surface-water", "#257cb4",
+    "chemical-plume", "#a9b843",
+    "chemical-threshold-zone", "#d2a23f",
+    "#c85b45",
+  ] as ExpressionSpecification;
+  const hazardVectorColor: ExpressionSpecification = [
+    "match", ["get", "visualRole"],
+    "flood-net-flow", "#7fd9ec",
+    "earthquake-pulse-outline", "#ff9a59",
+    "wildfire-spread-axis", "#ff5547",
+    "cyclone-track", "#78c7dc",
+    "chemical-plume-axis", "#d8df65",
+    "#f1b25d",
+  ] as ExpressionSpecification;
 
   if (enableTerrain && map.getSource("aegis-terrain-hillshade-dem")) {
     addLayer(map, {
@@ -865,6 +927,103 @@ function addMapLayers(
       "heatmap-opacity": 0.72,
     },
   } as LayerSpecification, beforeLabels);
+
+  addLayer(map, {
+    id: "aegis-hazard-footprint-fill",
+    type: "fill",
+    source: SOURCE_IDS.hazardFootprints,
+    paint: {
+      "fill-color": hazardFootprintColor,
+      "fill-opacity": [
+        "*",
+        ["interpolate", ["linear"], ["to-number", ["coalesce", ["get", "intensity01"], 0.3]], 0, 0.08, 1, 0.36],
+        ["interpolate", ["linear"], ["to-number", ["coalesce", ["get", "animationProgress01"], 1]], 0, 0.68, 1, 1],
+      ],
+    },
+  } as LayerSpecification, beforeLabels);
+  addLayer(map, {
+    id: "aegis-hazard-footprint-outline",
+    type: "line",
+    source: SOURCE_IDS.hazardFootprints,
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: {
+      "line-color": hazardFootprintColor,
+      "line-width": [
+        "interpolate", ["linear"],
+        ["to-number", ["coalesce", ["get", "intensity01"], 0.3]],
+        0, 1.2,
+        1, 3.4,
+      ],
+      "line-opacity": 0.86,
+    },
+  } as LayerSpecification, beforeLabels);
+  addLayer(map, {
+    id: "aegis-hazard-footprint-label",
+    type: "symbol",
+    source: SOURCE_IDS.hazardFootprints,
+    minzoom: 2,
+    layout: {
+      "text-field": ["coalesce", ["get", "displayLabel"], ["get", "metric"], "SIMULATED HAZARD"],
+      "text-font": MAP_FONT_STACK,
+      "text-size": ["interpolate", ["linear"], ["zoom"], 2, 9, 12, 11.5, 18, 13],
+      "text-max-width": 16,
+      "text-padding": 5,
+      "text-optional": true,
+    },
+    paint: {
+      "text-color": "#f5efe6",
+      "text-halo-color": "rgba(9,12,12,0.96)",
+      "text-halo-width": 1.45,
+    },
+  } as LayerSpecification);
+  addLayer(map, {
+    id: "aegis-hazard-vector-casing",
+    type: "line",
+    source: SOURCE_IDS.hazardVectors,
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: {
+      "line-color": "rgba(7,10,10,0.92)",
+      "line-width": ["interpolate", ["linear"], ["zoom"], 2, 2.6, 16, 7],
+      "line-opacity": 0.84,
+    },
+  } as LayerSpecification, beforeLabels);
+  addLayer(map, {
+    id: "aegis-hazard-vector-line",
+    type: "line",
+    source: SOURCE_IDS.hazardVectors,
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: {
+      "line-color": hazardVectorColor,
+      "line-width": [
+        "interpolate", ["linear"],
+        ["to-number", ["coalesce", ["get", "intensity01"], 0.3]],
+        0, 1.4,
+        1, 4.2,
+      ],
+      "line-opacity": 0.94,
+      "line-dasharray": [3, 1.4],
+    },
+  } as LayerSpecification, beforeLabels);
+  addLayer(map, {
+    id: "aegis-hazard-vector-label",
+    type: "symbol",
+    source: SOURCE_IDS.hazardVectors,
+    minzoom: 6,
+    layout: {
+      "symbol-placement": "line",
+      "symbol-spacing": 360,
+      "text-field": ["coalesce", ["get", "displayLabel"], ["get", "phase"], "SIMULATED VECTOR"],
+      "text-font": MAP_FONT_STACK,
+      "text-size": 10,
+      "text-padding": 4,
+      "text-optional": true,
+    },
+    paint: {
+      "text-color": hazardVectorColor,
+      "text-halo-color": "rgba(7,10,10,0.96)",
+      "text-halo-width": 1.35,
+    },
+  } as LayerSpecification);
 
   addLayer(map, {
     id: "aegis-safe-fill",
@@ -1550,12 +1709,12 @@ function addMapLayers(
       ],
     ],
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 8, 10, 15],
-      "circle-color": "rgba(255, 38, 69, 0.12)",
-      "circle-opacity": 0.72,
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 0, 12, 10, 20],
+      "circle-color": "#ff263f",
+      "circle-opacity": 0.48,
       "circle-stroke-color": "#ff263f",
-      "circle-stroke-width": 1.5,
-      "circle-stroke-opacity": 0.92,
+      "circle-stroke-width": 2.2,
+      "circle-stroke-opacity": 0.96,
     },
   } as LayerSpecification);
   addLayer(map, {
@@ -1662,12 +1821,35 @@ function addMapLayers(
     paint: { "line-color": "#68e6f8", "line-width": 2, "line-dasharray": [2, 1.5] },
   } as LayerSpecification);
   addLayer(map, {
+    id: "aegis-selection-focus-halo",
+    type: "circle",
+    source: SOURCE_IDS.selection,
+    filter: [
+      "all",
+      ["==", ["geometry-type"], "Point"],
+      ["==", ["get", "role"], "hazard-source"],
+    ],
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 0, 10, 8, 15, 16, 22],
+      "circle-color": "#ff3b4f",
+      "circle-opacity": 0.22,
+      "circle-blur": 0.5,
+      "circle-stroke-color": "#ff5b6c",
+      "circle-stroke-width": 1.5,
+      "circle-stroke-opacity": 0.9,
+    },
+  } as LayerSpecification);
+  addLayer(map, {
     id: "aegis-selection-points",
     type: "circle",
     source: SOURCE_IDS.selection,
     filter: ["==", ["geometry-type"], "Point"],
     paint: {
-      "circle-radius": ["case", ["boolean", ["get", "draft"], false], 4.5, 7.5],
+      "circle-radius": [
+        "case",
+        ["boolean", ["get", "draft"], false], 4.5,
+        ["interpolate", ["linear"], ["zoom"], 0, 6.5, 8, 8.5, 16, 10.5],
+      ],
       "circle-color": [
         "match", ["get", "role"],
         "origin", "#51d8f1",
@@ -1687,12 +1869,19 @@ function addMapLayers(
     layout: {
       "text-field": ["coalesce", ["get", "label"], "POINT"],
       "text-font": MAP_FONT_STACK,
-      "text-size": 9,
-      "text-offset": [0, 1.3],
+      "text-size": ["interpolate", ["linear"], ["zoom"], 0, 10.5, 10, 12, 18, 13.5],
+      "text-offset": [0, 1.5],
       "text-anchor": "top",
       "text-allow-overlap": true,
+      "text-ignore-placement": true,
+      "text-optional": false,
     },
-    paint: { "text-color": "#effcff", "text-halo-color": "#061117", "text-halo-width": 1.2 },
+    paint: {
+      "text-color": "#fff8f1",
+      "text-halo-color": "rgba(5,8,8,0.98)",
+      "text-halo-width": 1.8,
+      "text-halo-blur": 0.25,
+    },
   } as LayerSpecification);
 }
 
@@ -1808,6 +1997,44 @@ function installWorldImagery(map: MapLibreMap): boolean {
     // Vector land remains visible if a limited WebGL runtime rejects raster reprojection.
   }
   return installed;
+}
+
+/**
+ * Crisp street/building fallback for every searched location. It takes over
+ * as dated satellite imagery approaches its native limit and stays below all
+ * explicit context, label and AEGIS operational layers.
+ */
+function installRasterStreetFallback(map: MapLibreMap): boolean {
+  try {
+    if (!map.getSource(WORLD_RASTER_STREETS.sourceId)) {
+      map.addSource(WORLD_RASTER_STREETS.sourceId, {
+        type: "raster",
+        tiles: [...WORLD_RASTER_STREETS.tiles],
+        tileSize: 256,
+        minzoom: WORLD_RASTER_STREETS.minzoom,
+        maxzoom: WORLD_RASTER_STREETS.maxzoom,
+        attribution: WORLD_RASTER_STREETS.attribution,
+      });
+    }
+    addLayer(map, {
+      id: WORLD_RASTER_STREETS.layerId,
+      type: "raster",
+      source: WORLD_RASTER_STREETS.sourceId,
+      minzoom: WORLD_RASTER_STREETS.layerMinzoom,
+      maxzoom: WORLD_RASTER_STREETS.maxzoom,
+      paint: {
+        "raster-opacity": [
+          "interpolate", ["linear"], ["zoom"],
+          ...WORLD_RASTER_STREETS.opacityStops,
+        ],
+        "raster-fade-duration": 0,
+      },
+    } as LayerSpecification, firstSymbolLayerId(map));
+    return true;
+  } catch {
+    // EOX and both vector providers remain independent fallbacks.
+    return false;
+  }
 }
 
 /**
@@ -2344,8 +2571,8 @@ export function AegisMap({
   initialCamera,
   autoFlyToEit = true,
   autoRotateGlobe = true,
-  autoRotateSpeedDegPerSecond = 0.65,
-  globeIdleResumeMs = 6_500,
+  autoRotateSpeedDegPerSecond = WORLD_GLOBE_DEFAULT_ORBIT_SPEED,
+  globeIdleResumeMs = WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS,
   defaultTool = "inspect",
   initialLayerVisibility,
   externalOverlays = EMPTY_OVERLAYS,
@@ -2445,6 +2672,8 @@ export function AegisMap({
       hospitals: relocateLegacyEitCollection(layers.hospitals),
       shelters: relocateLegacyEitCollection(layers.shelters),
       impactZones: relocateLegacyEitCollection(layers.impactZones),
+      hazardFootprints: relocateLegacyEitCollection(layers.hazardFootprints),
+      hazardVectors: relocateLegacyEitCollection(layers.hazardVectors),
       damage: relocateLegacyEitCollection(layers.damage),
       populationImpact: relocateLegacyEitCollection(layers.populationImpact),
       utilityImpact: relocateLegacyEitCollection(layers.utilityImpact),
@@ -2859,6 +3088,7 @@ export function AegisMap({
           setAtmosphere(map, globeOverview);
           stabilizeProviderStreetContext(map);
           installWorldImagery(map);
+          installRasterStreetFallback(map);
           enableWorldBoundaries(map);
           enableCityLights(map);
           enableProviderVectorContext(map);
@@ -2870,6 +3100,7 @@ export function AegisMap({
           addMapLayers(map, waterVerticalExaggeration, enableTerrain);
           promoteProviderContextLabels(map);
           stabilizeWorldCountryLabels(map);
+          promoteOperationalPriorityMarkers(map);
           if (!showCampusMassing) {
             [
               "aegis-campus-building-shadow",
@@ -3112,10 +3343,25 @@ export function AegisMap({
               map.setPaintProperty(
                 "aegis-incident-live-pulse",
                 "circle-radius",
-                ["interpolate", ["linear"], ["zoom"], 1, 7 + pulse * 7, 10, 13 + pulse * 10],
+                ["interpolate", ["linear"], ["zoom"], 0, 10 + pulse * 18, 10, 16 + pulse * 24],
               );
-              map.setPaintProperty("aegis-incident-live-pulse", "circle-opacity", 0.72 - pulse * 0.5);
-              map.setPaintProperty("aegis-incident-live-pulse", "circle-stroke-opacity", 0.95 - pulse * 0.72);
+              map.setPaintProperty("aegis-incident-live-pulse", "circle-opacity", 0.52 - pulse * 0.38);
+              map.setPaintProperty("aegis-incident-live-pulse", "circle-stroke-opacity", 0.96 - pulse * 0.72);
+            }
+            if (map.getLayer("aegis-selection-focus-halo")) {
+              map.setPaintProperty(
+                "aegis-selection-focus-halo",
+                "circle-radius",
+                ["interpolate", ["linear"], ["zoom"], 0, 9 + pulse * 8, 10, 13 + pulse * 11, 18, 18 + pulse * 15],
+              );
+              map.setPaintProperty("aegis-selection-focus-halo", "circle-opacity", 0.3 - pulse * 0.18);
+              map.setPaintProperty("aegis-selection-focus-halo", "circle-stroke-opacity", 0.9 - pulse * 0.5);
+            }
+            if (map.getLayer("aegis-hazard-footprint-outline")) {
+              map.setPaintProperty("aegis-hazard-footprint-outline", "line-opacity", 0.68 + pulse * 0.24);
+            }
+            if (map.getLayer("aegis-hazard-vector-line")) {
+              map.setPaintProperty("aegis-hazard-vector-line", "line-opacity", 0.7 + pulse * 0.26);
             }
             if (activeViewRef.current === "twin") {
               if (map.getLayer("aegis-water-shoreline")) {
@@ -3559,7 +3805,7 @@ export function AegisMap({
               {providerState.providerId === "openfreemap-dark" ? (
                 <>{" / "}<a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap / OpenMapTiles</a></>
               ) : null}
-              {" / "}<a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO labels</a>
+              {" / "}<a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO basemap / labels</a>
               {" / "}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>
             </>
           ) : providerState.providerId === "carto-dark" ? (

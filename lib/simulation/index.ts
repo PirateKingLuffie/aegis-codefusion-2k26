@@ -2840,6 +2840,18 @@ export interface LocationScenarioImportedData {
   assets?: ImportedAssetsBundle;
 }
 
+export type ScenarioOperatingAreaInput =
+  | {
+      kind: "polygon";
+      boundary: Coordinate[];
+      label?: string;
+    }
+  | {
+      kind: "bounds";
+      bounds: ScenarioDefinition["area"];
+      label?: string;
+    };
+
 export interface CreateLocationScenarioInput {
   hazard: HazardKind;
   center: Coordinate;
@@ -2847,6 +2859,7 @@ export interface CreateLocationScenarioInput {
   seed: string;
   parameterOverrides?: Record<string, string | number | boolean>;
   importedData?: LocationScenarioImportedData;
+  operatingArea?: ScenarioOperatingAreaInput;
 }
 
 function normalizeLongitude(longitude: number): number {
@@ -2861,6 +2874,128 @@ function unwrapLongitude(longitude: number, reference: number): number {
   while (unwrapped - reference > 180) unwrapped -= 360;
   while (unwrapped - reference < -180) unwrapped += 360;
   return unwrapped;
+}
+
+type ResolvedOperatingArea = {
+  center: Coordinate;
+  bounds: ScenarioDefinition["area"];
+  boundary: Coordinate[];
+  label: string;
+};
+
+function coordinateWithinMapLimits(value: Coordinate): boolean {
+  return Number.isFinite(value.lat) && value.lat >= -84 && value.lat <= 84 &&
+    Number.isFinite(value.lon) && value.lon >= -180 && value.lon <= 180;
+}
+
+function polygonCentroid(points: Coordinate[], referenceLongitude: number): Coordinate {
+  const ring = points.at(-1)?.lat === points[0].lat && points.at(-1)?.lon === points[0].lon
+    ? points.slice(0, -1)
+    : points;
+  const projected = ring.map((point) => ({
+    x: unwrapLongitude(point.lon, referenceLongitude),
+    y: point.lat,
+  }));
+  let twiceArea = 0;
+  let longitudeMoment = 0;
+  let latitudeMoment = 0;
+  for (let index = 0; index < projected.length; index += 1) {
+    const current = projected[index];
+    const next = projected[(index + 1) % projected.length];
+    const cross = current.x * next.y - next.x * current.y;
+    twiceArea += cross;
+    longitudeMoment += (current.x + next.x) * cross;
+    latitudeMoment += (current.y + next.y) * cross;
+  }
+  if (Math.abs(twiceArea) < 1e-12) {
+    return {
+      lat: ring.reduce((sum, point) => sum + point.lat, 0) / ring.length,
+      lon: normalizeLongitude(projected.reduce((sum, point) => sum + point.x, 0) / projected.length),
+    };
+  }
+  return {
+    lat: latitudeMoment / (3 * twiceArea),
+    lon: normalizeLongitude(longitudeMoment / (3 * twiceArea)),
+  };
+}
+
+function validateOperatingAreaSize(
+  bounds: ScenarioDefinition["area"],
+  center: Coordinate,
+): void {
+  const northSouthM = distanceMeters(
+    { lat: bounds.south, lon: center.lon },
+    { lat: bounds.north, lon: center.lon },
+  );
+  const eastWestM = distanceMeters(
+    { lat: center.lat, lon: normalizeLongitude(bounds.west) },
+    { lat: center.lat, lon: normalizeLongitude(bounds.east) },
+  );
+  const minimumDimensionM = Math.min(northSouthM, eastWestM);
+  const maximumDimensionM = Math.max(northSouthM, eastWestM);
+  if (minimumDimensionM < 120) {
+    throw new Error("Operating area must be at least 120 m wide and tall for the bounded simulation grid.");
+  }
+  if (maximumDimensionM > 100_000) {
+    throw new Error("Operating area cannot exceed 100 km in either dimension for this local deterministic model.");
+  }
+}
+
+function resolveOperatingArea(
+  input: ScenarioOperatingAreaInput | undefined,
+  requestedCenter: Coordinate,
+): ResolvedOperatingArea | undefined {
+  if (!input) return undefined;
+  if (input.kind === "polygon") {
+    if (input.boundary.length < 3 || input.boundary.length > 128) {
+      throw new Error("Operating-area polygon requires between 3 and 128 coordinates.");
+    }
+    if (!input.boundary.every(coordinateWithinMapLimits)) {
+      throw new Error("Operating-area polygon contains a coordinate outside the supported map limits.");
+    }
+    const boundary = input.boundary.map((point) => ({ ...point }));
+    const unwrappedLongitudes = boundary.map((point) => unwrapLongitude(point.lon, requestedCenter.lon));
+    const center = polygonCentroid(boundary, requestedCenter.lon);
+    const bounds = {
+      north: Math.max(...boundary.map((point) => point.lat)),
+      south: Math.min(...boundary.map((point) => point.lat)),
+      east: Math.max(...unwrappedLongitudes),
+      west: Math.min(...unwrappedLongitudes),
+    };
+    validateOperatingAreaSize(bounds, center);
+    return {
+      center,
+      bounds,
+      boundary,
+      label: input.label?.trim() || "Operator-drawn simulation area",
+    };
+  }
+
+  const supplied = input.bounds;
+  if (![supplied.north, supplied.south, supplied.east, supplied.west].every(Number.isFinite) ||
+    supplied.north > 84 || supplied.south < -84 || supplied.north <= supplied.south ||
+    supplied.east < -180 || supplied.east > 180 || supplied.west < -180 || supplied.west > 180) {
+    throw new Error("Operating-area bounds are invalid or outside the supported map limits.");
+  }
+  let east = unwrapLongitude(supplied.east, supplied.west);
+  if (east <= supplied.west) east += 360;
+  const bounds = { ...supplied, east };
+  const center = {
+    lat: (bounds.north + bounds.south) / 2,
+    lon: normalizeLongitude((bounds.east + bounds.west) / 2),
+  };
+  validateOperatingAreaSize(bounds, center);
+  return {
+    center,
+    bounds,
+    boundary: [
+      { lat: bounds.south, lon: normalizeLongitude(bounds.west) },
+      { lat: bounds.south, lon: normalizeLongitude(bounds.east) },
+      { lat: bounds.north, lon: normalizeLongitude(bounds.east) },
+      { lat: bounds.north, lon: normalizeLongitude(bounds.west) },
+    ],
+    label: input.label?.trim() || "Operator-selected simulation bounds",
+  };
 }
 
 function validateLocationInput(input: CreateLocationScenarioInput): void {
@@ -3004,6 +3139,87 @@ function translatedTerrain(
 
 function cloneTerrain(cells: TerrainCell[]): TerrainCell[] {
   return cells.map((cell) => ({ ...cell, center: { ...cell.center } }));
+}
+
+function scaleCoordinateBetweenAreas(
+  value: Coordinate,
+  sourceArea: ScenarioDefinition["area"],
+  destinationArea: ScenarioDefinition["area"],
+): Coordinate {
+  const sourceLongitude = unwrapLongitude(value.lon, sourceArea.west);
+  const sourceLongitudeSpan = Math.max(1e-9, sourceArea.east - sourceArea.west);
+  const sourceLatitudeSpan = Math.max(1e-9, sourceArea.north - sourceArea.south);
+  const horizontal = clamp((sourceLongitude - sourceArea.west) / sourceLongitudeSpan, 0, 1);
+  const vertical = clamp((value.lat - sourceArea.south) / sourceLatitudeSpan, 0, 1);
+  return {
+    lat: round(destinationArea.south + vertical * (destinationArea.north - destinationArea.south), 7),
+    lon: round(destinationArea.west + horizontal * (destinationArea.east - destinationArea.west), 7),
+  };
+}
+
+function scaledTerrain(
+  cells: TerrainCell[],
+  sourceArea: ScenarioDefinition["area"],
+  destinationArea: ScenarioDefinition["area"],
+): TerrainCell[] {
+  return cells.map((cell) => ({
+    ...cell,
+    center: scaleCoordinateBetweenAreas(cell.center, sourceArea, destinationArea),
+  }));
+}
+
+function scaledPrototypeAssets(
+  assets: ScenarioAssets,
+  sourceArea: ScenarioDefinition["area"],
+  destinationArea: ScenarioDefinition["area"],
+): ScenarioAssets {
+  const scale = (value: Coordinate) => scaleCoordinateBetweenAreas(value, sourceArea, destinationArea);
+  const typeCounts = new Map<string, number>();
+  return {
+    roads: assets.roads.map((road, index) => ({
+      ...road,
+      name: `Estimated ${road.classification} route ${index + 1} (area-scaled prototype)`,
+      geometry: road.geometry.map(scale),
+    })),
+    bridges: assets.bridges.map((bridge, index) => ({
+      ...bridge,
+      name: `Estimated crossing ${index + 1} (area-scaled prototype)`,
+      coordinate: scale(bridge.coordinate),
+    })),
+    buildings: assets.buildings.map((building, index) => ({
+      ...building,
+      name: `Estimated ${building.use} building ${index + 1} (area-scaled prototype)`,
+      coordinate: scale(building.coordinate),
+      footprint: building.footprint?.map(scale),
+    })),
+    facilities: assets.facilities.map((facility) => {
+      const count = (typeCounts.get(facility.type) ?? 0) + 1;
+      typeCounts.set(facility.type, count);
+      return {
+        ...facility,
+        name: `Estimated ${facility.type.replaceAll("_", " ")} facility ${count} (area-scaled prototype)`,
+        coordinate: scale(facility.coordinate),
+      };
+    }),
+    populationZones: assets.populationZones.map((zone, index) => ({
+      ...zone,
+      name: `Estimated population zone ${index + 1} (area-scaled prototype)`,
+      center: scale(zone.center),
+    })),
+    responders: assets.responders.map((unit, index) => ({
+      ...unit,
+      name: `Scenario ${unit.type.replaceAll("_", " ")} unit ${index + 1}`,
+      capabilities: [...unit.capabilities],
+    })),
+    network: {
+      nodes: assets.network.nodes.map((node, index) => ({
+        ...node,
+        name: `Estimated network node ${index + 1} (area-scaled prototype)`,
+        coordinate: scale(node.coordinate),
+      })),
+      edges: assets.network.edges.map((edge) => ({ ...edge })),
+    },
+  };
 }
 
 function translateAssetsPreservingNames(
@@ -3181,9 +3397,11 @@ export function createLocationScenario(
   input: CreateLocationScenarioInput,
 ): ScenarioDefinition {
   validateLocationInput(input);
+  const resolvedOperatingArea = resolveOperatingArea(input.operatingArea, input.center);
+  const requestedCenter = resolvedOperatingArea?.center ?? input.center;
   const center = {
-    lat: round(input.center.lat, 7),
-    lon: round(normalizeLongitude(input.center.lon), 7),
+    lat: round(requestedCenter.lat, 7),
+    lon: round(normalizeLongitude(requestedCenter.lon), 7),
   };
   const terrainImport = input.importedData?.terrain;
   const assetImport = input.importedData?.assets;
@@ -3198,17 +3416,21 @@ export function createLocationScenario(
     lat: (prototype.area.north + prototype.area.south) / 2,
     lon: (prototype.area.east + prototype.area.west) / 2,
   };
-  const terrain = terrainImport
-    ? cloneTerrain(terrainImport.cells)
-    : translatedTerrain(prototype.terrain, sourceCenter, center);
   const gridRows = terrainImport?.gridRows ?? prototype.gridRows;
   const gridColumns = terrainImport?.gridColumns ?? prototype.gridColumns;
-  const assets = assetImport
-    ? cloneImportedAssets(assetImport.assets)
-    : translatedPrototypeAssets(prototype.assets, sourceCenter, center);
+  const terrain = terrainImport
+    ? cloneTerrain(terrainImport.cells)
+    : resolvedOperatingArea
+      ? scaledTerrain(prototype.terrain, prototype.area, resolvedOperatingArea.bounds)
+      : translatedTerrain(prototype.terrain, sourceCenter, center);
   const area = terrainImport
     ? areaFromTerrain(terrain, gridRows, gridColumns, center)
-    : translateArea(prototype.area, sourceCenter, center);
+    : resolvedOperatingArea?.bounds ?? translateArea(prototype.area, sourceCenter, center);
+  const assets = assetImport
+    ? cloneImportedAssets(assetImport.assets)
+    : resolvedOperatingArea
+      ? scaledPrototypeAssets(prototype.assets, prototype.area, area)
+      : translatedPrototypeAssets(prototype.assets, sourceCenter, center);
 
   const terrainImported = Boolean(terrainImport);
   const assetsImported = Boolean(assetImport);
@@ -3219,6 +3441,11 @@ export function createLocationScenario(
       : assetsImported
         ? "Assets and population are provenance-backed imported data; terrain remains a translated prototype estimate."
         : "Terrain, buildings, infrastructure and population are translated prototype estimates, not local records.";
+  const operatingAreaState = resolvedOperatingArea
+    ? terrainImported || assetsImported
+      ? `The operator-selected area '${resolvedOperatingArea.label}' is retained as planning context; provenance-backed imported geometry is preserved rather than warped.`
+      : `The operator-selected area '${resolvedOperatingArea.label}' deterministically scales the prototype grid and assets to its bounding envelope. Irregular polygon edges are retained as context but are not a hydraulic or physics boundary.`
+    : "No operator-drawn operating area was supplied.";
   const estimateLabel = terrainImported && assetsImported
     ? "Imported local-data scenario — hazard effects remain simulated prototype estimates"
     : terrainImported
@@ -3230,7 +3457,7 @@ export function createLocationScenario(
   const coordinateKey = `${center.lat.toFixed(6)},${center.lon.toFixed(6)}`;
   const scenarioId = stableId(
     `location-${locationSlug(locationLabel)}-${input.hazard}`,
-    `${coordinateKey}:${input.seed}:${terrainImported}:${assetsImported}`,
+    `${coordinateKey}:${input.seed}:${terrainImported}:${assetsImported}:${JSON.stringify(resolvedOperatingArea?.boundary ?? [])}`,
   );
   const provenance: DataProvenance[] = [
     {
@@ -3243,15 +3470,21 @@ export function createLocationScenario(
       ? terrainImport.provenance.map((source) => ({ ...source }))
       : [{
           id: `${scenarioId}-terrain-prototype`,
-          label: "Translated synthetic terrain and drainage proxy",
+          label: resolvedOperatingArea
+            ? "Operating-area-scaled synthetic terrain and drainage proxy"
+            : "Translated synthetic terrain and drainage proxy",
           kind: "prototype" as const,
-          note: "Relocated from the AEGIS demonstration scaffold; no claim of local elevation or drainage fidelity.",
+          note: resolvedOperatingArea
+            ? "Scaled to the operator-area bounding envelope from the AEGIS demonstration scaffold; no claim of local elevation, drainage or irregular-boundary physics fidelity."
+            : "Relocated from the AEGIS demonstration scaffold; no claim of local elevation or drainage fidelity.",
         }]),
     ...(assetImport
       ? assetImport.provenance.map((source) => ({ ...source }))
       : [{
           id: `${scenarioId}-assets-prototype`,
-          label: "Translated prototype buildings, network, facilities and population",
+          label: resolvedOperatingArea
+            ? "Operating-area-scaled prototype buildings, network, facilities and population"
+            : "Translated prototype buildings, network, facilities and population",
           kind: "prototype" as const,
           note: "Demonstration inventory only; names are generic and every entity is labelled estimated.",
         }]),
@@ -3261,6 +3494,14 @@ export function createLocationScenario(
       kind: "derived",
       note: "Model outputs remain simulated estimates even when imported local source data is supplied.",
     },
+    ...(resolvedOperatingArea
+      ? [{
+          id: `${scenarioId}-operating-area`,
+          label: resolvedOperatingArea.label,
+          kind: "scenario-input" as const,
+          note: `${operatingAreaState} This geometry is operator-supplied planning context, not an observed hazard perimeter.`,
+        }]
+      : []),
   ];
 
   return {
@@ -3268,12 +3509,12 @@ export function createLocationScenario(
       id: scenarioId,
       name: `${locationLabel} ${input.hazard} planning scenario`,
       locationName: locationLabel,
-      description: `A deterministic 120-minute ${input.hazard} scenario centred at ${coordinateKey}. ${sourceState}`,
+      description: `A deterministic 120-minute ${input.hazard} scenario centred at ${coordinateKey}. ${sourceState} ${operatingAreaState}`,
       startTimeIso: prototype.metadata.startTimeIso,
       isPrototype: true,
       estimateLabel,
       disclaimer:
-        `This generic-location AEGIS scenario is not a report of a real disaster, local survey, engineering certification or evacuation order. ${sourceState} Validate all operational decisions with authorities and field observations.`,
+        `This generic-location AEGIS scenario is not a report of a real disaster, local survey, engineering certification or evacuation order. ${sourceState} ${operatingAreaState} Validate all operational decisions with authorities and field observations.`,
       tags: [
         "CodeFusion EIT Hackathon",
         "AEGIS",
@@ -3282,6 +3523,7 @@ export function createLocationScenario(
         input.hazard,
         terrainImported ? "imported terrain" : "estimated terrain",
         assetsImported ? "imported assets" : "estimated assets",
+        ...(resolvedOperatingArea ? ["operator-defined operating area"] : []),
       ],
     },
     hazard: input.hazard,
@@ -3289,6 +3531,18 @@ export function createLocationScenario(
     durationMinutes: prototype.durationMinutes,
     stepMinutes: prototype.stepMinutes,
     area,
+    operatingArea: resolvedOperatingArea
+      ? {
+          label: resolvedOperatingArea.label,
+          boundary: resolvedOperatingArea.boundary.map((point) => ({ ...point })),
+          bounds: { ...resolvedOperatingArea.bounds },
+          classification: "scenario-input",
+          geometryTreatment: terrainImported || assetsImported
+            ? "reference-only-import-preserved"
+            : "scaled-prototype-to-bounds",
+          notice: `${operatingAreaState} All hazard consequences remain simulated planning estimates.`,
+        }
+      : undefined,
     gridRows,
     gridColumns,
     hazardSource: center,
