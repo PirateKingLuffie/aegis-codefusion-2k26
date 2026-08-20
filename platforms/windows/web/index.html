@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src http://127.0.0.1:* http://localhost:* https:;" />
+  <title>AEGIS</title>
+  <style>
+    :root{color-scheme:dark;font-family:"Segoe UI",Arial,sans-serif;background:#030404;color:#f0f1f1}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 50% 32%,#171919 0,#050606 44%,#010101 100%)}main{width:min(560px,calc(100vw - 48px));padding:38px;border:1px solid #272a2a;background:rgba(7,8,8,.96);box-shadow:0 28px 90px #000}header{display:flex;align-items:center;gap:16px;margin-bottom:30px}.mark{display:grid;width:54px;height:62px;place-items:center;border:1px solid #4a4e4e;clip-path:polygon(50% 0,92% 17%,84% 78%,50% 100%,16% 78%,8% 17%);background:#111313;font-weight:900;letter-spacing:-.08em}h1{margin:0;font-size:29px;letter-spacing:.16em}header p{margin:6px 0 0;color:#858a8a;font-size:12px;line-height:1.45}.status{display:flex;gap:9px;align-items:center;margin:0 0 16px;color:#a7aaaa;font-size:12px}.status i{width:7px;height:7px;border-radius:50%;background:#c9a55a;box-shadow:0 0 12px #c9a55a66}.row{display:grid;grid-template-columns:1fr auto;gap:8px}input,button{min-height:44px;border:1px solid #303434;border-radius:0;font:inherit}input{min-width:0;padding:0 12px;color:#e9ebeb;background:#0d0f0f;outline:0}input:focus{border-color:#6c7272}button{padding:0 20px;color:#070808;background:#e2e5e5;font-weight:800;cursor:pointer}small{display:block;margin-top:16px;color:#6f7474;font-size:11px;line-height:1.55}code{color:#b9bdbd}
+  </style>
+</head>
+<body>
+<main>
+  <header><div class="mark" aria-hidden="true">A</div><div><h1>AEGIS</h1><p>Emergency geospatial intelligence and simulation</p></div></header>
+  <p class="status" role="status" aria-live="polite"><i></i><span id="status">Checking the AEGIS operations service...</span></p>
+  <form id="form"><div class="row"><input id="url" type="url" required inputmode="url" autocomplete="url" aria-label="Command center address" /><button type="submit">Connect</button></div></form>
+  <small>Start AEGIS at <code>127.0.0.1:4173</code>, or enter the deployed HTTPS address. The launcher stores only the selected origin.</small>
+</main>
+<script>
+  const key="aegis.server-url",field=document.querySelector("#url"),status=document.querySelector("#status"),form=document.querySelector("#form");
+  const requested=new URLSearchParams(location.search).get("server")||localStorage.getItem(key)||"http://127.0.0.1:4173";
+  function normalized(value){const url=new URL(value.trim());if(!["http:","https:"].includes(url.protocol))throw new Error("Use an HTTP or HTTPS address.");return url.origin}
+  let initial="http://127.0.0.1:4173";try{initial=normalized(requested)}catch{localStorage.removeItem(key)}field.value=initial;
+  function connect(value){try{const target=normalized(value);localStorage.setItem(key,target);status.textContent=`Connecting to ${target}...`;location.assign(target)}catch(error){status.textContent=error instanceof Error?error.message:"Enter a valid server address."}}
+  form.addEventListener("submit",event=>{event.preventDefault();connect(field.value)});
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),2500);
+  fetch(`${initial}/api/health`,{cache:"no-store",mode:"no-cors",signal:controller.signal}).then(()=>connect(initial)).catch(()=>{status.textContent="AEGIS is not running. Start the local service or enter its deployed address."}).finally(()=>clearTimeout(timeout));
+</script>
+</body>
+</html>

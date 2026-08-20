@@ -1,0 +1,15 @@
+AEGIS deck design
+
+Communication job:
+By the end, CodeFusion judges should believe AEGIS is an innovative yet feasible emergency decision-support system because the prototype closes the loop from real geospatial context to deterministic simulation, cascading impact, optimized response, grounded explanation, and human approval.
+
+Narrative:
+Problem -> missing capability -> AEGIS loop -> concrete EIT scenario -> technical engines -> live/AI layers -> architecture -> measured prototype proof -> feasibility -> close.
+
+Visual system:
+- 16:9, 1280x720.
+- Matte black/graphite background, off-white type.
+- Red = damage/critical; blue = evacuation/selection; green = safe/approved; gray = unavailable/secondary; amber = warning.
+- Actual AEGIS screenshots only. No stock disaster imagery and no invented EIT render.
+- Flat geometry, thin rules, restrained accents, large readable typography.
+- No generic AI gradients, glassmorphism, decorative card grids, or fake UI.

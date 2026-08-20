@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 190" role="img" aria-labelledby="title desc">
+  <title id="title">AEGIS</title>
+  <desc id="desc">Original AEGIS command shield emblem</desc>
+  <path fill="#050606" d="M80 4 148 28v53c0 47-28 84-68 105C40 165 12 128 12 81V28L80 4Z"/>
+  <path fill="none" stroke="#f4f5f5" stroke-width="6" d="M80 15 137 35v46c0 40-22 71-57 91-35-20-57-51-57-91V35l57-20Z"/>
+  <path fill="none" stroke="#777d80" stroke-width="2" d="M80 26 127 42v39c0 33-17 59-47 78-30-19-47-45-47-78V42l47-16Z"/>
+  <path fill="#f4f5f5" d="m80 47 34 70H95l-5-14H69l-5 14H45l34-70h1Zm0 30-7 18h14l-7-18Z"/>
+  <circle cx="80" cy="135" r="5" fill="#45d17f"/>
+</svg>

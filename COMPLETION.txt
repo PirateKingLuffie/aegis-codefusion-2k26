@@ -1,0 +1,525 @@
+AEGIS - FINAL COMPLETION AND HANDOFF LEDGER
+============================================
+
+Project: AEGIS - Adaptive Emergency Geospatial Intelligence & Simulation
+Event: CodeFusion 2K26
+Team: X
+Leader: Sankalp Gupta
+Institution: Echelon Institute of Technology, Faridabad
+Repository: E:\CodeFusion EIT Hackathon\AEGIS
+Active targets: responsive web command center and Windows desktop client
+Deferred target: phone application (documentation only)
+Operating model: single operator, no login, online-first
+Cost policy: zero-paid-key deterministic core, no billing-required map path; optional free-allocation Workers AI narrative
+Primary demo target: Lenovo LOQ, i5-12450HX, RTX 4050, 24 GB DDR5, 1366 x 768
+Live command center: https://aegis-codefusion-2k26.guptashivaani233.workers.dev
+Dedicated Agent Ledger: https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
+Main Worker version: e0b147fe-0219-4193-ad09-b402aa498170
+Ledger Worker version: 4a840328-2982-4761-940b-95cb127c583b
+Ledger date: 21 August 2026
+
+
+1. FINAL STATUS
+===============
+
+[COMPLETE] The AEGIS source rehaul is implemented.
+[COMPLETE] The responsive web production build is implemented.
+[COMPLETE] The deterministic simulation and evacuation engine is implemented.
+[COMPLETE] The zero-cost live-data and map-provider stack is implemented.
+[COMPLETE] The FastAPI durable operations service is implemented.
+[COMPLETE] The PostgreSQL/PostGIS, Redis, nginx and Oracle deployment package is implemented.
+[COMPLETE] The Windows Tauri x64 portable executable and current-user NSIS installer have been built.
+[COMPLETE] The Cloudflare command center and separate Agent Ledger deployments are live.
+[COMPLETE] Cloudflare D1 migration and cross-deployment Agent Ledger GET/POST/PATCH are verified.
+[COMPLETE] Phone development is deliberately deferred and documented; it is not an active deliverable.
+
+AEGIS is a prototype emergency decision-support system, not an engineering-certified hydraulic,
+structural, casualty or evacuation-ordering system. Imported context, estimated inputs and
+simulated consequences remain visibly separated. Remaining external items at the end of this ledger
+require official EIT records, an owner-controlled Oracle full-stack deployment or optional distribution
+credentials/artwork; they cannot be fabricated in code.
+
+
+2. USER EXPERIENCE AND VISUAL SYSTEM
+====================================
+
+[IMPLEMENTED] Predominantly black, map-first command-center interface with restrained semantic colour.
+[IMPLEMENTED] Original AEGIS shield identity and short entry sequence; no large CodeFusion header branding.
+[IMPLEMENTED] Compact MONITOR, SIMULATE and RESPOND operating modes.
+[IMPLEMENTED] Readable professional typography, tabular operational values and high-contrast controls.
+[IMPLEMENTED] Semantic map convention:
+              red   = damaged, critical or conflict;
+              blue  = evacuation route/navigation;
+              green = safe, available or cleared;
+              gray  = unsafe, unavailable or unknown;
+              amber = warning, uncertainty or capacity pressure.
+[IMPLEMENTED] Draggable, resizable, minimizable, closeable and dockable operational panels.
+[IMPLEMENTED] Panel position persistence, viewport clamping, stacking, default restore and Reset Workspace.
+[IMPLEMENTED] Named focused, map-only, response and analysis layouts.
+[IMPLEMENTED] Context-sensitive panels and internally scrolling content for the 1366 x 768 target.
+[IMPLEMENTED] Command palette and keyboard shortcuts.
+[IMPLEMENTED] Global error boundary, map/provider states, retry controls, empty states and safe reset.
+[IMPLEMENTED] Desktop responsive rules; phone UI remains outside the active scope.
+
+
+3. GLOBAL MAP, GLOBE AND LOCATION WORKFLOW
+==========================================
+
+[IMPLEMENTED] MapLibre GL global globe and pitched local/site modes.
+[IMPLEMENTED] Slow automatic idle globe rotation.
+[IMPLEMENTED] Rotation pauses after interaction, during incompatible work, in hidden tabs and for reduced motion.
+[IMPLEMENTED] Globe atmosphere, dark-space treatment, city-light points and available 3D base-building extrusion.
+[IMPLEMENTED] Terrain-RGB relief and hillshade with terrain failure isolated from basemap failure.
+[IMPLEMENTED] World search through Nominatim and coordinate selection by map click.
+[IMPLEMENTED] Smooth world-to-location and world-to-EIT camera transitions.
+[IMPLEMENTED] Explicit globe-to-Mercator handoff for high-zoom landmark/street focus and local twin views
+              before terrain and 3D detail, avoiding the globe/terrain black-canvas descent.
+[IMPLEMENTED] Current coordinates, scale, compass/reset and zoom/tilt controls.
+[IMPLEMENTED] Incident clustering, incident fly-to, bookmarks and recent operational context.
+[IMPLEMENTED] Origin, safe destination, hazard source and operating-area placement tools.
+[IMPLEMENTED] Distance and area measurement plus map annotations.
+[IMPLEMENTED] Layer search, presets, solo mode, visibility switches and threshold filtering.
+[IMPLEMENTED] Side-by-side and swipe-oriented comparison layouts.
+[IMPLEMENTED] Independent keyless basemaps with automatic failover:
+              primary  = OpenFreeMap;
+              fallback = CARTO Dark Matter.
+[IMPLEMENTED] Provider failure classification prevents optional terrain or AEGIS overlay errors from
+              incorrectly ejecting a healthy basemap.
+[IMPLEMENTED] Interactive continuity state and Retry live globe when both public styles are unavailable.
+[IMPLEMENTED] No Google Maps, Google Photorealistic 3D, Mapbox or billing-required map control remains.
+
+
+4. ECHELON INSTITUTE OF TECHNOLOGY SITE TWIN
+============================================
+
+[IMPLEMENTED] EIT preset anchored to the institute's published contact-page map reference:
+              latitude 28.3912265, longitude 77.4398682.
+[IMPLEMENTED] Nearby bundled OpenStreetMap/Overpass footprints rendered as geospatial 3D massing.
+[IMPLEMENTED] OSM levels used where present; otherwise building height/use/occupancy remains estimated.
+[IMPLEMENTED] Public Copernicus GLO-90 elevation context requested through Open-Meteo as a 7 x 7 grid.
+[IMPLEMENTED] Bundled estimated terrain remains the honest degraded fallback.
+[IMPLEMENTED] Validated JSON campus-import contract, example dataset and downloadable template.
+[IMPLEMENTED] Verified imports can replace corresponding prototype buildings, terrain and landmarks.
+[IMPLEMENTED] Campus status endpoint exposes fidelity and exact missing authoritative inputs.
+[IMPLEMENTED] EIT geometry is refused at unrelated global locations instead of being falsely translated.
+
+Truth limit: the current EIT scene is OSM footprint context with imported regional elevation and
+estimated attributes. It is not a surveyed campus boundary, exact BIM, architectural model or
+engineering-grade drainage twin. AEGIS labels it accordingly.
+
+
+5. DETERMINISTIC HAZARD SIMULATION
+==================================
+
+[IMPLEMENTED] Stable explicit seed, model version, scenario assumptions and reproducible run identifier.
+[IMPLEMENTED] Shared 120-minute timeline with 25 five-minute frames.
+[IMPLEMENTED] Play, pause, seek, step, speed, reset and comparison controls.
+[IMPLEMENTED] Five executable hazard plugins using one result contract:
+              1. Surface-water flood - flagship detailed model.
+              2. Earthquake cascade screening.
+              3. Wildfire spread and smoke screening.
+              4. Cyclone, rainfall and storm-surge screening.
+              5. Chemical-release plume screening.
+[IMPLEMENTED] Additional hazards shown as coming-soon to demonstrate plugin scalability.
+[IMPLEMENTED] Hazard source, operating area, location, start/end context and scenario parameter controls.
+[IMPLEMENTED] Generic world-location scenarios are deterministic and explicitly estimated.
+[IMPLEMENTED] Provenance-backed imported geometry replaces only the matching estimate labels.
+
+Flood flagship outputs:
+
+[IMPLEMENTED] Continuous, non-square water surface and changing shoreline.
+[IMPLEMENTED] Depth, maximum depth, rise/recession phase, arrival, peak and recession minute.
+[IMPLEMENTED] Velocity, direction and time-specific cell samples.
+[IMPLEMENTED] Depth bands, water surface, waterlines and current/maximum extent layers.
+[IMPLEMENTED] Building external depth, estimated internal depth and affected-floor screening.
+[IMPLEMENTED] Building damage, functionality, access and recovery-priority state through time.
+[IMPLEMENTED] Road/bridge passability and closure state through time.
+[IMPLEMENTED] Rainfall/drainage assumptions, confidence and missing-data limits.
+
+Cross-hazard consequence engine:
+
+[IMPLEMENTED] Buildings, roads, bridges, hospitals, shelters, utilities and population zones.
+[IMPLEMENTED] Time-specific damage/impact layers and object inspection explanations.
+[IMPLEMENTED] Debris, contamination, sewage overflow, erosion, smoke, surface water and utility-failure screens.
+[IMPLEMENTED] Mode-specific passability for pedestrian, car, bus, ambulance and heavy rescue.
+[IMPLEMENTED] Exposed-population planning envelope, mobility-assistance demand and isolated zones.
+[IMPLEMENTED] Uncertainty envelopes, confidence heatmap/summary and assumption notices.
+[IMPLEMENTED] Recovery priorities, re-entry holds, restoration actions and qualified-authority notices.
+[IMPLEMENTED] First-failure and configurable threshold alerts.
+[IMPLEMENTED] Reverse-cascade intervention ranking with simulated and advisory actions kept distinct.
+[IMPLEMENTED] Deterministic baseline/contained/severe and intervention what-if comparisons with deltas.
+
+[SAFETY] Observed fatalities remain null for rehearsals.
+[SAFETY] Exposure and assistance demand are never relabelled as casualties.
+[SAFETY] Monetary damage remains null without verified asset values and validated damage curves.
+[SAFETY] Results are planning estimates, not measurements, forecasts, inspections or official closures.
+
+
+6. EVACUATION AND RESPONSE PLANNING
+===================================
+
+[IMPLEMENTED] One-click deterministic evacuation generation for the selected scenario and minute.
+[IMPLEMENTED] Multiple origin and destination points with shelter/safe-destination context.
+[IMPLEMENTED] Departure time and transport-mode selection.
+[IMPLEMENTED] Pedestrian, car, bus, ambulance and heavy-rescue access restrictions.
+[IMPLEMENTED] Primary and alternate routes with directional geometry.
+[IMPLEMENTED] Public OSRM road candidates screened against current simulated hazard polygons.
+[IMPLEMENTED] Prototype route-network fallback remains explicitly estimated.
+[IMPLEMENTED] Closed/restricted road avoidance, time-screened segments and conflict detection.
+[IMPLEMENTED] Route ETA, clearance, throughput/capacity and risk explanations.
+[IMPLEMENTED] Staged departures and population assignment.
+[IMPLEMENTED] Shelter baseline occupancy, assignable capacity, reserved capacity, remaining capacity and residual demand.
+[IMPLEMENTED] Remaining/unroutable demand and isolated-zone explanations instead of impossible routing.
+[IMPLEMENTED] Vehicle/team resource assignments derived from the current plan.
+[IMPLEMENTED] Before/after coverage and exposed-population planning metrics.
+[IMPLEMENTED] Generate, regenerate, modify, compare and approve workflow.
+[IMPLEMENTED] Human approval creates a decision receipt and never issues a real-world order automatically.
+
+
+7. LIVE INTELLIGENCE AND MEDIA CONTEXT
+======================================
+
+[IMPLEMENTED] Global, bounding-box and proximity incident queries.
+[IMPLEMENTED] Normalized incident type, source, source time, update age, coordinates and severity/context.
+[IMPLEMENTED] Incident clustering, bookmarking, change detection and fly-to-incident.
+[IMPLEMENTED] Source incident to simulation conversion while preserving evidence separation.
+[IMPLEMENTED] Movable live-intelligence panel and contextual publisher/open-media links.
+[IMPLEMENTED] Link-only fallback with explicit source metadata.
+[IMPLEMENTED] Provider refresh, timeout, bounded caching, retries and partial-source degradation.
+[IMPLEMENTED] No generic video or search result is labelled a verified live camera.
+[IMPLEMENTED] No simulated fixture is silently merged into imported incident context.
+
+Active zero-key sources:
+
+[IMPLEMENTED] NASA EONET natural-event records.
+[IMPLEMENTED] USGS earthquake feed.
+[IMPLEMENTED] GDACS multi-hazard alerts and event geometry.
+[IMPLEMENTED] Google News RSS publisher-indexed headline metadata.
+[IMPLEMENTED] Wikimedia Commons keyless open-media search.
+[IMPLEMENTED] Official, publisher and safe search links.
+
+Optional adapters retained but not required by the zero-cost demo:
+
+[OPTIONAL] ReliefWeb when a legitimate application name is supplied.
+[OPTIONAL] YouTube Data metadata when a legitimate API key is supplied.
+
+
+8. ZERO-COST PROVIDER STACK
+===========================
+
+[ACTIVE] MapLibre GL - WebGL globe and local 3D rendering.
+[ACTIVE] OpenFreeMap - primary keyless basemap.
+[ACTIVE] CARTO Dark Matter - independent keyless basemap fallback.
+[ACTIVE] OpenStreetMap/OpenMapTiles - map, road and building context.
+[ACTIVE] Overpass - public building-footprint retrieval.
+[ACTIVE] Nominatim - public world geocoding.
+[ACTIVE] OSRM - public road-route candidates.
+[ACTIVE] Public Terrarium/SRTM-derived Terrain-RGB - global terrain relief.
+[ACTIVE] Open-Meteo Forecast - weather-model context.
+[ACTIVE] Open-Meteo Elevation/Copernicus GLO-90 - regional elevation context.
+[ACTIVE] NASA EONET, USGS and GDACS - source-labelled incident context.
+[ACTIVE] Google News RSS and Wikimedia Commons - publisher/open-media discovery.
+[ACTIVE] Deterministic Operations Brief - structured state explanation without a hosted model.
+[ACTIVE] Cloudflare Workers AI - optional zero-secret grounded narrative using @cf/meta/llama-3.2-3b-instruct.
+[ACTIVE] Cloudflare D1 - immutable Agent Ledger receipt revisions only.
+
+No payment card, billable map token, AI Gateway, hosted LLM key or rotated-key scheme is needed for the core workflow.
+Workers AI uses Cloudflare's current free allocation and can degrade to the deterministic brief; external quotas may change.
+Public upstreams can throttle, revise or become unavailable; AEGIS reports this rather than inventing data.
+
+
+9. OPERATIONS BRIEF AND DECISION SUPPORT
+========================================
+
+[IMPLEMENTED] Instant deterministic brief built from the current simulation and evacuation state.
+[IMPLEMENTED] Summary, evidence, operational priority, risks, alternatives and uncertainty limits.
+[IMPLEMENTED] Deterministic analysis always executes before any optional hosted narrative.
+[IMPLEMENTED] Hosted narrative order: Workers AI, configured OpenAI-compatible provider, one Groq key,
+              then a visibly disclosed deterministic-only fallback.
+[IMPLEMENTED] Agent Ledger records actual executions, provider attempts, latency, evidence, human review
+              and SHA-256 hash-linked integrity receipts; no demonstration activity is pre-seeded.
+[IMPLEMENTED] Agent Ledger D1 storage is durable across the main and separate ledger deployments.
+[IMPLEMENTED] No independent invention of numerical depth, damage, casualty or live-event facts.
+[IMPLEMENTED] Human approval remains required for operational decisions.
+
+
+10. PRODUCT WORKSPACE CAPABILITIES
+==================================
+
+[IMPLEMENTED] Scenario presets, save/load, deletion and named versions.
+[IMPLEMENTED] Stable deterministic seed and scenario revision history.
+[IMPLEMENTED] Incident-to-simulation conversion and mission replay.
+[IMPLEMENTED] Bookmarks, annotations and workspace layouts.
+[IMPLEMENTED] Local browser fallback for scenario history and decision receipts.
+[IMPLEMENTED] Durable service integration when FastAPI is available.
+[IMPLEMENTED] JSON workspace/scenario export including visible layers.
+[IMPLEMENTED] Visible-data CSV export.
+[IMPLEMENTED] Printable incident summary.
+[IMPLEMENTED] Classified state snapshot export.
+[IMPLEMENTED] Local audit history and decision receipts.
+[IMPLEMENTED] Layer presets, search, solo and threshold filtering.
+[IMPLEMENTED] Comparison, cascade, intervention, uncertainty and recovery views.
+[IMPLEMENTED] Resource staging, shelter/service-gap and threshold alerts.
+
+
+11. WEB API SURFACE
+===================
+
+[IMPLEMENTED] GET  /api/health
+[IMPLEMENTED] GET  /api/providers
+[IMPLEMENTED] GET  /api/map-config
+[IMPLEMENTED] GET  /api/geocode
+[IMPLEMENTED] GET  /api/buildings
+[IMPLEMENTED] GET  /api/terrain
+[IMPLEMENTED] GET  /api/weather
+[IMPLEMENTED] GET  /api/live
+[IMPLEMENTED] GET  /api/live/media
+[IMPLEMENTED] POST /api/simulation
+[IMPLEMENTED] GET  /api/simulation/catalog
+[IMPLEMENTED] POST /api/simulation/interventions
+[IMPLEMENTED] POST /api/evacuation
+[IMPLEMENTED] POST /api/operations
+[IMPLEMENTED] GET/POST/PATCH /api/agent-activity
+[IMPLEMENTED] GET/POST/PUT /api/persistence proxy operations
+[IMPLEMENTED] GET  /api/routing
+[IMPLEMENTED] GET  /api/campus/eit
+[IMPLEMENTED] GET  /api/campus/eit/template
+
+[IMPLEMENTED] Bounded request bodies, schema validation, safe coordinates, timeouts and structured failures.
+[IMPLEMENTED] Stale-request cancellation and bounded public queries where applicable.
+
+
+12. DURABLE FASTAPI SERVICE
+===========================
+
+[IMPLEMENTED] FastAPI operations service with no-login hackathon mode.
+[IMPLEMENTED] Pydantic validation for records, spatial assets, geometry, time and safe source URLs.
+[IMPLEMENTED] Versioned incidents, scenarios, simulations, recommendations and audit-capable records.
+[IMPLEMENTED] Optimistic version conflict handling and no-op update detection.
+[IMPLEMENTED] Revision history.
+[IMPLEMENTED] Ordered event stream and reconnect replay using `after=<sequence>`.
+[IMPLEMENTED] WebSocket snapshot, event, ping/pong and allowed-origin guard.
+[IMPLEMENTED] SHA-256 hash-linked audit receipts with record-change and revision-link integrity checks;
+              this is not a digital signature or proof that source evidence is true.
+[IMPLEMENTED] Health/live endpoints and request IDs.
+[IMPLEMENTED] Payload-size limits, sliding-window rate limit, CORS and structured errors.
+[IMPLEMENTED] SQLite local persistence fallback located on E.
+[IMPLEMENTED] PostgreSQL/PostGIS production persistence and indexed WGS84 spatial assets.
+[IMPLEMENTED] Redis production cache with no-cache local fallback.
+
+
+13. ORACLE / CONTAINER DEPLOYMENT PACKAGE
+==========================================
+
+[LIVE] Cloudflare command center Worker version e0b147fe-0219-4193-ad09-b402aa498170.
+[LIVE] Dedicated Agent Ledger Worker version 4a840328-2982-4761-940b-95cb127c583b.
+[LIVE] D1 migration applied in APAC; cross-deployment create, read, human review and verified revision 2 passed.
+
+Cloudflare is the immediate public web/Agent Ledger deployment. It does not include FastAPI, PostGIS,
+Redis, nginx or WebSocket replay; the following package is the separate Oracle full-stack option.
+
+[IMPLEMENTED IN SOURCE] Dockerfiles for web and API.
+[IMPLEMENTED IN SOURCE] Docker Compose topology: web, FastAPI, PostGIS, Redis and nginx.
+[IMPLEMENTED IN SOURCE] Service health checks, restart policies, no-new-privileges and bounded log rotation.
+[IMPLEMENTED IN SOURCE] nginx HTTP and HTTPS configurations including API/WebSocket proxying.
+[IMPLEMENTED IN SOURCE] Strict environment template and secret placeholders.
+[IMPLEMENTED IN SOURCE] Oracle Ubuntu bootstrap and firewall baseline.
+[IMPLEMENTED IN SOURCE] PostGIS initialization and migration script.
+[IMPLEMENTED IN SOURCE] Preflight validation.
+[IMPLEMENTED IN SOURCE] Health-check, backup, checksum, explicit restore, update and rollback scripts.
+[IMPLEMENTED IN SOURCE] TLS overlay and owner-supplied public-origin configuration.
+
+The local machine has no Docker installation, so the complete container topology was not launched locally.
+The intended Oracle host bootstrap installs the required container runtime.
+
+
+14. WINDOWS DESKTOP RELEASE
+===========================
+
+[IMPLEMENTED] Tauri 2 Windows client with a dark resizable command-center window.
+[IMPLEMENTED] Configurable local or HTTPS AEGIS server origin.
+[IMPLEMENTED] Production launcher checks health and starts the local web service when needed.
+[IMPLEMENTED] Current-user English NSIS installer; no administrator install requirement.
+[IMPLEMENTED] WebView2 bootstrap behavior and restricted Tauri capabilities.
+[IMPLEMENTED] E-only Rustup, Cargo, npm, target, temp and release workflow.
+[IMPLEMENTED] E-only Rust stable MSVC toolchain installed.
+[BUILT] AEGIS-Windows-x64-Portable-v0.1.0.exe
+        Manifest size: 3,277,312 bytes
+        Manifest SHA-256: 7d22992055d7b23b0137a72c0e4c1733d37ecc6b66f46ee07e4c962a7c1a7d2b
+[BUILT] AEGIS-Windows-x64-Setup-v0.1.0.exe
+        Manifest size: 1,077,555 bytes
+        Manifest SHA-256: 2979c098c451c324944458d134760183a7ee7669bc07ae573a665f9fd8d1858f
+[BUILT] AEGIS-Windows-SHA256SUMS.txt
+[BUILT] AEGIS-Windows-release.json
+
+Final rebuild generated: 2026-08-20T21:29:16.744481Z.
+Independent manifest/hash comparison matched both files. Authenticode status is NotSigned as declared.
+Windows code signing requires a team-owned certificate.
+The Windows client uses the shared AEGIS service; it does not silently install a database or server service.
+
+
+15. PERFORMANCE AND RELIABILITY WORK
+====================================
+
+[IMPLEMENTED] Dynamically imported map chunk and lazy-loaded product panels.
+[IMPLEMENTED] Stable MapLibre sources with `setData` updates rather than full map recreation.
+[IMPLEMENTED] Bounded globe rotation and campus animation cadence.
+[IMPLEMENTED] Hidden-tab animation suspension and reduced-motion handling.
+[IMPLEMENTED] Building/scene level-of-detail controls and bounded twin agent counts.
+[IMPLEMENTED] Incident clustering and bounded live/building queries.
+[IMPLEMENTED] Terrain and optional layers isolated from basemap failover.
+[IMPLEMENTED] Independent basemap fallback and continuity recovery.
+[IMPLEMENTED] Abort/timeouts for stale or slow public requests.
+[IMPLEMENTED] No paid AI bundle or competing second map engine.
+[IMPLEMENTED] Map-only/presentation layouts to reduce simultaneous UI work.
+[IMPLEMENTED] Global and map-level runtime recovery paths.
+
+Latest production bundle inventory:
+  total dist output        = approximately 5.31 MiB;
+  MapLibre client chunk    = 949.4 KiB raw / 242.1 KiB gzip;
+  EIT OSM geometry         = 313.0 KiB raw / 64.8 KiB gzip;
+  CommandCenter chunk      = 320.7 KiB raw / 93.2 KiB gzip;
+  React/framework chunk    = 185.7 KiB raw / 57.7 KiB gzip;
+  main index chunk         = 172.0 KiB raw / 48.1 KiB gzip.
+
+No fixed FPS guarantee is claimed because performance varies with GPU driver, browser, internet latency,
+provider tiles and selected layers. The code is tuned for the stated Lenovo LOQ and 1366 x 768 demo target.
+
+
+16. VERIFICATION RECORD
+=======================
+
+The following records separate source checks, deployed HTTP checks and visual acceptance:
+
+[PASS] Final canonical npm run verify: 64 total, 63 passed, 0 failed and 1 intentionally skipped
+       optional-network test. TypeScript typecheck, ESLint and production build passed; the build emitted
+       only the documented large-chunk performance advisory.
+[PASS] FastAPI/backend suite: 7 of 7.
+[PASS] Opt-in public-feed suite: 6 of 6.
+[PASS] npm audit: 0 vulnerabilities reported.
+[PASS] Backend coverage includes version conflicts, revision history, validation, structured errors,
+       payload limits, request IDs, hash-chain integrity verification, WebSocket replay/origin checks
+       and rate limiting.
+
+[PASS] Main Worker version e0b147fe-0219-4193-ad09-b402aa498170 is deployed over HTTPS.
+[PASS] Ledger Worker version 4a840328-2982-4761-940b-95cb127c583b is deployed over HTTPS.
+[PASS] D1 migration applied in APAC; Agent Ledger GET/POST/PATCH worked across both deployments.
+[PASS] Workers AI returned a grounded narrative in approximately 1.94 seconds; the approved revision 2
+       persisted in D1 and its retained SHA-256 receipt/revision links verified.
+[PASS] Five public simulation hazard requests returned HTTP 200 in 100-420 ms with 25 frames each.
+       The flood sample returned 41 route candidates. Other hazards may correctly return zero routes when
+       no destination remains feasible; AEGIS does not fabricate an available route.
+[PASS] Unique cold live-intelligence query: 4,559 ms, 3 live sources, 1 degraded source, 9 incidents.
+[PASS] Immediate cached repeat of the same live query: 169 ms.
+[PASS] Final Windows rebuild generated 2026-08-20T21:29:16.744481Z; manifest/hash comparison matched,
+       with Authenticode NotSigned as declared.
+
+[LIMIT / MANUAL CHECK] The Chrome browser-control extension was unavailable. Source, unit, API and public
+       HTTP acceptance is complete, but the final visual judge flow was not replayed through public Chrome.
+       Manually verify globe interaction, world search, Site 3D, 1366 x 768 layouts, simulation playback,
+       evacuation, Agent Ledger and external links on the target Lenovo LOQ before judging.
+[LIMIT] No local host was started during this final public-release pass.
+
+
+17. ARTIFACT LOCATIONS
+======================
+
+Project source:
+  E:\CodeFusion EIT Hackathon\AEGIS
+
+Completion ledger:
+  E:\CodeFusion EIT Hackathon\AEGIS\COMPLETION.txt
+
+Windows release:
+  E:\CodeFusion EIT Hackathon\AEGIS\artifacts\releases\AEGIS-Windows-x64-Portable-v0.1.0.exe
+  E:\CodeFusion EIT Hackathon\AEGIS\artifacts\releases\AEGIS-Windows-x64-Setup-v0.1.0.exe
+  E:\CodeFusion EIT Hackathon\AEGIS\artifacts\releases\AEGIS-Windows-SHA256SUMS.txt
+  E:\CodeFusion EIT Hackathon\AEGIS\artifacts\releases\AEGIS-Windows-release.json
+
+Final QA captures:
+  E:\CodeFusion EIT Hackathon\AEGIS\artifacts\qa-final
+
+Presentation:
+  E:\AEGIS_codefusion2k26.pptx
+  E:\CodeFusion EIT Hackathon\AEGIS\artifacts\presentation\AEGIS_CodeFusion_2K26.pptx
+
+Runtime logs and process record:
+  E:\CodeFusion EIT Hackathon\AEGIS\artifacts\runtime
+
+Authoritative EIT import guidance:
+  E:\CodeFusion EIT Hackathon\AEGIS\docs\EIT_DATA_IMPORT.md
+
+Deployment guide:
+  E:\CodeFusion EIT Hackathon\AEGIS\deployment\README.md
+
+Historical Android APK:
+  E:\CodeFusion EIT Hackathon\AEGIS\artifacts\releases\AEGIS-CodeFusion-2K26-debug.apk
+  Status: retained history only; unsigned, unvalidated and not an active deliverable.
+
+
+18. ONLY REMAINING EXTERNAL INPUTS
+==================================
+
+A. Official EIT fidelity package - requires EIT/user-supplied authoritative records
+
+[EXTERNAL] Surveyed campus boundary or official georeferenced site plan.
+[EXTERNAL] CAD/BIM/GLB or verified building register.
+[EXTERNAL] Building names, functions, heights, floors and entrances.
+[EXTERNAL] Gates, evacuation exits, assembly areas and designated safe zones.
+[EXTERNAL] Surveyed DEM/spot levels, fine surface slopes and finished-floor elevations.
+[EXTERNAL] Drainage lines, catchments, culverts, pumps and water channels.
+[EXTERNAL] Verified road widths, pedestrian paths and bridge/culvert positions.
+[EXTERNAL] Occupancy, accessibility, timetable and facility-capacity records.
+[EXTERNAL] Power, water, medical and communications dependencies.
+[EXTERNAL] Campus photographs/drone imagery for validation.
+
+Until these are supplied, OSM geometry, GLO-90 regional elevation and estimated attributes remain the
+truthful maximum fidelity. AEGIS will not fabricate an exact EIT BIM or confirmed local damage.
+
+B. Optional Oracle full-stack deployment - requires owner-controlled infrastructure
+
+[EXTERNAL] Oracle account/tenancy and an available Free Tier compute instance.
+[EXTERNAL] Public IP, VCN/security-list access and SSH ownership.
+[EXTERNAL] Final public domain/DNS decision and domain control.
+[EXTERNAL] TLS certificate issuance for that domain.
+[EXTERNAL] Production secrets/origins placed in the uncommitted deployment environment file.
+
+The public Cloudflare command center and Agent Ledger are already live. Oracle is the separate path for
+FastAPI/PostGIS/Redis/nginx persistence and WebSocket replay; the deployment package cannot create or
+control those owner resources without Oracle and domain access.
+
+C. Optional Windows distribution trust
+
+[OPTIONAL EXTERNAL] Team-owned Windows code-signing certificate and final owned icon artwork.
+The unsigned build is usable for the hackathon; signing is a distribution-trust improvement.
+
+
+19. NON-CLAIMS FOR THE DEMO
+===========================
+
+- Do not call the EIT model a surveyed BIM.
+- Do not call GLO-90 or Terrarium terrain an engineering survey.
+- Do not call simulated damage real observed damage.
+- Do not call exposure or assistance demand casualties.
+- Do not quote economic damage; it is deliberately disabled.
+- Do not call a news/search/video link a verified live camera.
+- Do not call a current basemap live satellite imagery.
+- Do not present AEGIS routes as an official evacuation order.
+- Do not present the historical Android APK as an active deliverable.
+- Do not claim the unsigned Windows installer is code-signed.
+
+
+20. DEMO HANDOFF
+================
+
+Use `docs\DEMO_RUNBOOK.md` for the judge flow. Open
+`https://aegis-codefusion-2k26.guptashivaani233.workers.dev` in a clean browser session, confirm one basemap
+reports ready, show WORLD rotation, enter SITE 3D, play flood depth/damage through time, inspect one
+building/road, generate and approve an evacuation plan, compare interventions, show cascade/recovery,
+then open source-labelled live intelligence and provider readiness. Open the dedicated Agent Ledger at
+`https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger` and show a real
+execution plus human review. Use the exact phrases IMPORTED, ESTIMATED and SIMULATED shown by AEGIS.
+
+
+END OF LEDGER
+=============

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "institution": {
+    "officialName": "Echelon Institute of Technology",
+    "address": "Kabulpur, Kheri-Manjhawali Road, Naharpar, Faridabad, Haryana 121101, India",
+    "reportedCampusAreaAcres": 17.5,
+    "mapReference": {
+      "latitude": 28.3912265,
+      "longitude": 77.4398682,
+      "meaning": "Official contact-page map reference; not a surveyed campus centroid or boundary"
+    }
+  },
+  "officialSources": [
+    {
+      "id": "eit-contact",
+      "label": "EIT official contact page",
+      "url": "https://eitfaridabad.com/contact-us.php",
+      "supports": ["institution name", "postal address", "map reference"]
+    },
+    {
+      "id": "eit-mandatory-disclosure",
+      "label": "EIT mandatory disclosure",
+      "url": "https://eitfaridabad.com/blog/mandatory-disclosure/",
+      "supports": ["reported campus area", "institutional context"]
+    }
+  ],
+  "operationalDataStatus": {
+    "surveyedCampusBoundary": "not supplied",
+    "cadBimOrGlb": "not supplied",
+    "verifiedBuildingRegister": "not supplied",
+    "verifiedGatesAndAssemblyAreas": "not supplied",
+    "surveyedDemOrLevels": "not supplied",
+    "drainageAndCulverts": "not supplied",
+    "verifiedRoadWidthsAndFootpaths": "not supplied",
+    "occupancyAndAccessibility": "not supplied",
+    "utilityDependencies": "not supplied",
+    "validationPhotography": "not supplied"
+  },
+  "activePrototypeContext": {
+    "buildingFootprints": "bundled OpenStreetMap snapshot; campus membership not verified",
+    "buildingHeights": "estimated unless an OSM level tag exists",
+    "terrain": "estimated control surface",
+    "occupancy": "estimated planning envelope",
+    "hazardEffects": "deterministic simulated prototype results"
+  }
+}

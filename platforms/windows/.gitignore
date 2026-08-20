@@ -1,0 +1,5 @@
+node_modules/
+src-tauri/target/
+.tmp/
+.local-app-data/
+*.log

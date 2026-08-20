@@ -1,0 +1,50 @@
+.root { position: absolute; inset: 0; }
+.providerLoading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #aeb4b7;
+  background: #020303;
+  font: 650 10px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: 0.12em;
+}
+.provider {
+  position: absolute;
+  z-index: 40;
+  top: 92px;
+  right: 18px;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.78);
+  box-shadow: 0 10px 32px rgba(0,0,0,0.32);
+  backdrop-filter: none;
+}
+.provider button {
+  min-height: 32px;
+  padding: 0 10px;
+  color: #858c91;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font: 650 10px/1 Inter, "Segoe UI", sans-serif;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.provider button:hover { color: #fff; }
+.provider .active { color: #f7f8f8; background: #202326; }
+.provider .locked { color: #686d71; cursor: help; }
+.provider span {
+  align-self: center;
+  padding: 0 7px;
+  color: #979da0;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+@media (max-width: 760px) {
+  .provider { top: 72px; right: 10px; }
+  .provider span { display: none; }
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "aegis-codefusion-2k26",
+  "compatibility_date": "2026-08-20",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "main": "vinext/server/fetch-handler",
+  "assets": {
+    "directory": "dist/client",
+    "not_found_handling": "none",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "AEGIS_LEDGER_DB",
+      "database_name": "aegis-agent-ledger",
+      "database_id": "7002cac6-920f-4766-8847-94bf70418ca2",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+  "cache": {
+    "enabled": true
+  }
+}

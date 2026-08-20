@@ -1,0 +1,7 @@
+services:
+  proxy:
+    ports:
+      - "443:443"
+    volumes:
+      - ./deployment/nginx/https.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./deployment/certs:/etc/nginx/certs:ro

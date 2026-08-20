@@ -1,0 +1,20 @@
+{
+  "id": "eit-verified-campus-v1",
+  "version": "1.0.0",
+  "label": "EIT verified campus dataset",
+  "center": { "lat": 28.3912265, "lon": 77.4398682 },
+  "bounds": { "north": 28.392, "south": 28.39, "east": 77.441, "west": 77.439 },
+  "buildings": [],
+  "terrainControlPoints": [],
+  "landmarks": [],
+  "provenance": [
+    {
+      "classification": "IMPORTED",
+      "sourceId": "replace-with-authoritative-source-id",
+      "sourceLabel": "Replace with survey, CAD, BIM or facilities-register source",
+      "note": "Example only. Do not mark estimated or traced data as surveyed."
+    }
+  ],
+  "prototypeLabel": "VERIFIED CAMPUS DATASET IMPORT",
+  "disclaimer": "Replace this example with validated campus records before operational use."
+}

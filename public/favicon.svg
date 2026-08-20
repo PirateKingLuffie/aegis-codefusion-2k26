@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AEGIS shield">
+  <path fill="#050606" d="M32 2 56 10v18c0 15.9-9.8 27.9-24 34C17.8 55.9 8 43.9 8 28V10L32 2Z"/>
+  <path fill="none" stroke="#f4f5f5" stroke-width="3" d="M32 7.5 51 14v14c0 12.6-7.3 22.5-19 28.1C20.3 50.5 13 40.6 13 28V14l19-6.5Z"/>
+  <path fill="#f4f5f5" d="M31.9 15.5 44.8 42h-7.1l-2.1-5.3h-8.1L25.4 42h-7.1l13-26.5h.6Zm.1 11.3-2.4 5.9h4.8L32 26.8Z"/>
+  <circle cx="32" cy="47.8" r="2.2" fill="#45d17f"/>
+</svg>

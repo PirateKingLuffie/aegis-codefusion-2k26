@@ -1,0 +1,22 @@
+{
+  "name": "@aegis/windows",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tauri 2 desktop wrapper for the AEGIS command center",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "web:dev": "npm --prefix ../.. run dev -- --hostname 127.0.0.1 --port 4173",
+    "web:verify": "npm --prefix ../.. run build",
+    "dev": "tauri dev",
+    "build": "tauri build --ci --no-sign",
+    "toolchain": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/Test-Toolchain.ps1",
+    "rust:install:e": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/Install-Rust-On-E.ps1",
+    "release": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/Build-Release.ps1"
+  },
+  "devDependencies": {
+    "@resvg/resvg-wasm": "2.4.0",
+    "@tauri-apps/cli": "2.11.4"
+  }
+}

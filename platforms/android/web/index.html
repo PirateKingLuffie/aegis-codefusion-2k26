@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#061116" />
+    <title>AEGIS Field</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, Roboto, Arial, sans-serif; background: #061116; color: #edf7f8; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+        background: radial-gradient(circle at 75% 15%, rgba(44, 196, 207, 0.17), transparent 34%), #061116;
+      }
+      main { width: min(100%, 430px); }
+      .mark { color: #5dd5dd; font: 800 12px/1.2 ui-monospace, monospace; letter-spacing: 0.18em; text-transform: uppercase; }
+      h1 { margin: 12px 0 4px; font-size: 42px; letter-spacing: -0.04em; }
+      .subtitle { margin: 0 0 30px; color: #93aeb4; line-height: 1.55; }
+      .panel { border: 1px solid #1e3d45; border-radius: 14px; padding: 20px; background: rgba(6, 22, 28, 0.9); }
+      .status { margin: 0 0 18px; color: #f2c66d; font-size: 13px; line-height: 1.5; }
+      label { display: block; margin-bottom: 8px; color: #86a2a8; font-size: 11px; font-weight: 800; letter-spacing: 0.11em; text-transform: uppercase; }
+      input, button { width: 100%; min-height: 50px; border-radius: 8px; font: inherit; }
+      input { border: 1px solid #294850; padding: 0 13px; background: #071b22; color: #edf7f8; }
+      button { margin-top: 10px; border: 1px solid #61d8de; background: #3ec2ca; color: #031113; font-weight: 850; }
+      .note { margin: 16px 0 0; color: #718c92; font-size: 12px; line-height: 1.55; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="mark">AEGIS · Field Client</div>
+      <h1>Command link</h1>
+      <p class="subtitle">Connect this phone to the AEGIS server running on the presentation laptop or the future Oracle deployment.</p>
+      <section class="panel">
+        <p id="status" class="status" role="status">No server is packaged in the phone client.</p>
+        <form id="form">
+          <label for="url">AEGIS server address</label>
+          <input id="url" type="url" inputmode="url" value="http://10.0.2.2:4173" required />
+          <button type="submit">Open AEGIS</button>
+        </form>
+        <p class="note">For a physical phone, configure <strong>AEGIS_APP_URL</strong> before syncing the native project. Use the laptop's LAN address and keep both devices on the same network.</p>
+      </section>
+    </main>
+    <script>
+      const form = document.querySelector("#form");
+      const field = document.querySelector("#url");
+      const status = document.querySelector("#status");
+      const saved = localStorage.getItem("aegis.server-url");
+      if (saved) field.value = saved;
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        try {
+          const target = new URL(field.value.trim());
+          if (target.protocol !== "http:" && target.protocol !== "https:") throw new Error();
+          localStorage.setItem("aegis.server-url", target.origin);
+          status.textContent = `Connecting to ${target.origin}…`;
+          location.assign(target.origin);
+        } catch {
+          status.textContent = "Enter a valid HTTP or HTTPS server address.";
+        }
+      });
+    </script>
+  </body>
+</html>

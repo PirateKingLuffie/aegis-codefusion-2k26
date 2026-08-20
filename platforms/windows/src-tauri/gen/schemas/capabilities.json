@@ -1,0 +1,1 @@
+{"main-window":{"identifier":"main-window","description":"Minimum permissions for the AEGIS command-center window.","local":true,"windows":["main"],"permissions":["core:default"]}}

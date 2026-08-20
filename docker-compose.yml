@@ -1,0 +1,112 @@
+name: aegis
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      AEGIS_OPERATIONS_API_URL: http://api:8080
+      AEGIS_PUBLIC_DATA_USER_AGENT: ${AEGIS_PUBLIC_DATA_USER_AGENT:-AEGIS/1.0}
+      RELIEFWEB_APPNAME: ${RELIEFWEB_APPNAME:-}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-20b}
+      OPENAI_COMPATIBLE_PROVIDER: ${OPENAI_COMPATIBLE_PROVIDER:-}
+      OPENAI_COMPATIBLE_BASE_URL: ${OPENAI_COMPATIBLE_BASE_URL:-}
+      OPENAI_COMPATIBLE_API_KEY: ${OPENAI_COMPATIBLE_API_KEY:-}
+      OPENAI_COMPATIBLE_MODEL: ${OPENAI_COMPATIBLE_MODEL:-}
+    depends_on:
+      api:
+        condition: service_healthy
+    expose:
+      - "4173"
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    logging: &default-logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      AEGIS_ENVIRONMENT: production
+      AEGIS_DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-aegis}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deployment/.env}@db:5432/${POSTGRES_DB:-aegis}
+      AEGIS_REDIS_URL: redis://cache:6379/0
+      AEGIS_ALLOWED_ORIGINS: ${AEGIS_ALLOWED_ORIGINS:-http://localhost}
+      AEGIS_RATE_LIMIT_PER_MINUTE: ${AEGIS_RATE_LIMIT_PER_MINUTE:-240}
+      AEGIS_MAX_PAYLOAD_BYTES: ${AEGIS_MAX_PAYLOAD_BYTES:-2000000}
+      AEGIS_WEBSOCKET_REPLAY_LIMIT: ${AEGIS_WEBSOCKET_REPLAY_LIMIT:-1000}
+      AEGIS_LOG_LEVEL: ${AEGIS_LOG_LEVEL:-INFO}
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    expose:
+      - "8080"
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+  db:
+    image: postgis/postgis:16-3.5-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aegis}
+      POSTGRES_USER: ${POSTGRES_USER:-aegis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deployment/.env}
+    volumes:
+      - aegis-postgres:/var/lib/postgresql/data
+      - ./deployment/postgres/init.sql:/docker-entrypoint-initdb.d/001-aegis.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aegis} -d ${POSTGRES_DB:-aegis}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    stop_grace_period: 30s
+    shm_size: 128mb
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+  cache:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "96mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+  proxy:
+    image: nginx:1.27-alpine
+    depends_on:
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    volumes:
+      - ./deployment/nginx/http.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+volumes:
+  aegis-postgres:

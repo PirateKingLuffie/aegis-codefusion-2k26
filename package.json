@@ -1,0 +1,58 @@
+{
+  "name": "aegis-codefusion",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AEGIS emergency geospatial intelligence, deterministic simulation and evacuation command center for CodeFusion 2K26.",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "vinext dev",
+    "build": "vinext build",
+    "start": "vinext start",
+    "demo": "vinext dev --host 0.0.0.0 --port 4173",
+    "test": "npm run build && tsx --test tests/*.test.mjs",
+    "test:unit": "tsx --test tests/*.test.mjs",
+    "verify": "npm run typecheck && npm run lint && npm run test:unit && npm run build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "dev:vinext": "vinext dev --port 3001",
+    "build:vinext": "vinext build",
+    "start:vinext": "wrangler dev --config dist/server/wrangler.json",
+    "deploy:vinext": "vinext-cloudflare deploy --config dist/server/wrangler.json",
+    "deploy:ledger": "wrangler deploy --config dist/server/wrangler.json --name aegis-agent-ledger-codefusion-2k26"
+  },
+  "dependencies": {
+    "lucide-react": "^1.30.0",
+    "maplibre-gl": "^6.2.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.53.1",
+    "@eslint/js": "9.39.4",
+    "@next/eslint-plugin-next": "16.2.6",
+    "@tailwindcss/postcss": "4.2.1",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vinext/cloudflare": "^1.0.0-beta.6",
+    "@vitejs/plugin-react": "6.0.2",
+    "@vitejs/plugin-rsc": "^0.5.34",
+    "eslint": "9.39.4",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "16.4.0",
+    "react-server-dom-webpack": "^19.2.8",
+    "tailwindcss": "4.2.1",
+    "tsx": "^4.23.11",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.59.3",
+    "vinext": "^1.0.0-beta.6",
+    "vite": "^8.2.2",
+    "wrangler": "^4.125.0"
+  },
+  "type": "module"
+}

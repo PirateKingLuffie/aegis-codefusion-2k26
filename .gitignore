@@ -1,0 +1,68 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+**/node_modules/
+/.npm-cache/
+/.pip-cache/
+/.tmp/
+/.gradle-user-home/
+/.gradle-cache/
+/platforms/*/node_modules/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/.vinext/
+/out/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+# vercel
+.vercel
+
+/dist/
+/.wrangler/
+/outputs/
+/work/
+/artifacts/qa/
+*.tsbuildinfo
+/platforms/windows/src-tauri/target/
+/platforms/android/android/.gradle/
+/platforms/android/android/**/build/
+/deployment/.env
+/deployment/.previous-release
+/deployment/backups/
+/deployment/certs/
+/deployment/rollback-worktree/
+/backend/**/__pycache__/
+/backend/.venv/
+/backend/tests/.test-data/
+/backend/data/*.db*
+/artifacts/runtime/
+/artifacts/ppt-build/final-render*/
+/artifacts/ppt-build/rendered*/
+
+# local Codex/agent routing notes are not product source
+/AGENTROUTER-QUICK-START.md

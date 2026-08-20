@@ -1,0 +1,143 @@
+AEGIS — CODEFUSION 2K26 JUDGE NOTES
+====================================
+
+Project: AEGIS — Adaptive Emergency Geospatial Intelligence & Simulation
+Team: X
+Lead: Sankalp Gupta
+Institution: Echelon Institute of Technology, Faridabad
+Command center: https://aegis-codefusion-2k26.guptashivaani233.workers.dev
+Agent Ledger: https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
+
+ONE LINE
+--------
+AEGIS turns source-labelled disaster signals into a time-specific, explainable
+and human-approved action plan on one 3D geospatial command surface.
+
+OPENING (30 SECONDS)
+--------------------
+“During a disaster, the hard problem is not seeing another red dot on a map.
+It is deciding what that signal means for buildings, roads, utilities, shelters
+and people over time. AEGIS connects global intelligence, deterministic hazard
+simulation, consequence analysis and capacity-aware evacuation, while keeping
+every observation, import, estimate and simulation clearly separated.”
+
+THE FOUR THINGS TO PROVE
+------------------------
+1. WORLD → SCENARIO
+   Search any location or select a source-labelled incident; create a scenario
+   without claiming the imported event is observed local damage.
+
+2. TIME-SPECIFIC 3D IMPACT
+   At EIT, show flood rise/peak/recession, building waterlines, affected floors,
+   red damage screening, blue routes, green safe areas and grey unavailable areas.
+
+3. EVACUATION IS NOT SHORTEST PATH
+   Roads are screened at expected traversal time and by movement mode; capacity,
+   staged demand, resources, remaining exposure and isolated zones stay visible.
+
+4. DECISION SYSTEM, NOT ONLY SIMULATOR
+   Show what-if branches, reverse-cascade intervention ranking, recovery/re-entry,
+   approval receipt, version history and classified export.
+
+BEST DIFFERENTIATOR
+-------------------
+“Most simulators stop at the hazard. AEGIS continues from evidence to consequence,
+route feasibility, resource and shelter capacity, intervention priority, recovery
+and an auditable human decision.”
+
+AI ANSWER
+---------
+“The numerical path is deterministic so it is reproducible and testable. AI is
+an explanation and operator-interface layer grounded in the current structured
+state; it cannot invent depth, casualty or closure figures. External model activity
+is logged. Workers AI is the first zero-secret narrative path on Cloudflare, and
+the deterministic brief remains available if every model provider fails.”
+
+AGENT LEDGER PROOF
+------------------
+Open the dedicated Agent Ledger. It records real executions only; identify the
+existing release-acceptance record honestly, then create a new judge-flow record. Show:
+- deterministic analysis first;
+- hosted provider/model or disclosed fallback;
+- every attempt and latency;
+- evidence and verification status;
+- SHA-256 receipt;
+- human approve/reject and the next hash-linked revision.
+
+SAFE WORDING — USE THIS
+-----------------------
+- Deterministic prototype planning scenario — not a forecast or evacuation order.
+- Imported map/event context — not AEGIS observation.
+- Simulated damage-screening state — not confirmed real structural damage.
+- Population exposure envelope — not casualties.
+- Weather-model context — not an on-site sensor.
+- Current/recent source-labelled feed — not necessarily a currently occurring event.
+- Context imagery — not live satellite.
+- EIT map reference + nearby OSM footprints + public regional elevation + estimates
+  — not surveyed BIM or exact campus engineering data.
+- Advisory recommendation — operator and competent-authority approval required.
+
+DO NOT SAY
+----------
+- exact prediction
+- exact EIT digital twin
+- real casualties or confirmed damage
+- live camera/live satellite unless the original authoritative source proves it
+- autonomous evacuation order
+- calibrated hydraulic model
+- guaranteed-free-forever hosting
+
+SIX-MINUTE CLOCK
+----------------
+0:00  Globe + problem statement
+0:35  Source-labelled incident/search → scenario
+1:10  EIT Site 3D flood timeline and building/road impact
+2:25  Generate evacuation, change mode/time, approve receipt
+3:25  Compare branches + Cascade best intervention
+4:20  Recovery/re-entry + decision history
+5:05  Decision brief + AI boundary/activity log
+5:40  Provider resilience, save/export, close
+
+QUICK Q&A
+---------
+Why not Google Maps? OpenFreeMap/OSM + CARTO fallback + MapLibre provide a
+zero-paid-key, controllable 3D stack. The decision engine is provider-independent.
+
+Can it run anywhere? Any valid coordinate can be selected. Engineering fidelity
+depends on verified local assets; absent data is labelled as translated prototype
+or estimated, never silently presented as exact.
+
+Are these casualties? No. Exposure and mobility-assistance estimates only.
+
+How is routing special? Candidate geometry is checked at traversal minute, by
+mode and against capacity; AEGIS recomputes when time or conditions change.
+
+What if data/API fails? Independent map fallback, visible degraded state,
+source timestamps, deterministic core and browser-local workspace continuity.
+
+How is it hosted? Cloudflare Workers is the immediate public command center and
+Agent Ledger; D1 can durably store the ledger's receipt revisions only. Oracle is
+the separate durable FastAPI/PostGIS/Redis/nginx target for full operational data.
+Do not claim the Cloudflare-only deployment includes the Oracle backend.
+
+Who decides? Human operator and competent authority; AEGIS supports and records.
+
+LIVE FAILURE LINE
+-----------------
+“That provider is currently unavailable, so AEGIS is showing the degraded state
+instead of fabricating data. I’ll continue with the deterministic prepared scenario.”
+
+CLOSING
+-------
+“AEGIS is not replacing emergency authorities. It gives them one defensible chain
+from a source-labelled signal, through a reproducible consequence model, to a
+time-aware plan they can inspect, approve and audit.”
+
+Full material:
+- docs/JUDGE_BRIEF.md
+- docs/DEMO_RUNBOOK.md
+- docs/AI_AGENT_LEDGER.md
+- docs/ARCHITECTURE.md
+- docs/API_AND_PROVIDERS.md
+- docs/DEPLOYMENT_HANDOFF.md
+- docs/DATA_PROVENANCE.md
