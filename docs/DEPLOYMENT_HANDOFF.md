@@ -6,10 +6,10 @@ This is the owner-action checklist for GitHub publication, immediate Cloudflare 
 
 | Surface | URL | Worker version |
 | --- | --- | --- |
-| Command center | https://aegis-codefusion-2k26.guptashivaani233.workers.dev | `e0b147fe-0219-4193-ad09-b402aa498170` |
-| Dedicated Agent Ledger | https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger | `4a840328-2982-4761-940b-95cb127c583b` |
+| Command center | https://aegis-codefusion-2k26.guptashivaani233.workers.dev | `58accdae-9be1-440c-b7f2-3cec0ff45e86` |
+| Dedicated Agent Ledger | https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger | `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` |
 
-The D1 migration is applied and live in APAC. Cross-deployment ledger `GET`, `POST` and human-review `PATCH` were accepted, including a D1-persisted approved revision 2 with verified SHA-256 receipt links. The remaining release acceptance item is the manual public visual judge flow in Chrome on the target Lenovo LOQ; browser-control integration was unavailable, so it has not been claimed as automated acceptance.
+The D1 migration is applied and live in APAC. Cross-deployment ledger `GET`, `POST` and human-review `PATCH` were accepted, including a D1-persisted approved revision 2 with verified SHA-256 receipt links. Remote-browser acceptance also confirmed globe rotation, country/city/street labels, New Delhi search, deep zoom without a black canvas and a clean console. The remaining acceptance item is repetition on the target Lenovo LOQ for device-specific GPU and Chrome validation.
 
 ## Deployment split
 

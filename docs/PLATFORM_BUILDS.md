@@ -102,7 +102,7 @@ The desktop executable is a Tauri/WebView2 command-center client, not a bundled 
 
 ### Final acceptance boundary
 
-The final canonical `npm run verify` passed 64 total tests: 63 passed, zero failed and one intentional optional-network skip. Typecheck, lint and production build passed with only the documented large-chunk advisory. Release hashes, backend/API checks and deployed HTTP workflows are also verified. Browser-control integration was unavailable during final handoff, so do not claim the complete public visual flow was replayed in Chrome. Before judging, manually open the public URL on the Lenovo LOQ and verify globe interaction, Site 3D, panel layouts, simulation playback, evacuation, Agent Ledger and external-link behavior.
+The final canonical `npm run verify` passed 67 total tests: 66 passed, zero failed and one intentional optional-network skip. Typecheck, lint and production build passed with only the documented large-chunk advisory. Release hashes, backend/API checks and deployed HTTP workflows are also verified. Remote-browser acceptance confirmed labelled globe rotation, world search and deep street zoom without a black canvas or console errors. Before judging, repeat the complete flow on the Lenovo LOQ to validate its specific GPU driver, Chrome build, panel layouts, Site 3D, simulation playback, evacuation, Agent Ledger and external-link behavior.
 
 ## Phone history - deferred
 

@@ -256,8 +256,8 @@ export function AgentActivityConsole() {
             <img src="/aegis-mark.svg" alt="" width="28" height="33" />
           </span>
           <div>
-            <span>AEGIS / CONTROL EVIDENCE</span>
-            <strong>AGENT LEDGER</strong>
+            <span>AEGIS Emergency Operations</span>
+            <strong>Decision Audit Log</strong>
           </div>
         </div>
         <div className={styles.captureState}>
@@ -274,8 +274,8 @@ export function AgentActivityConsole() {
       <main className={styles.main}>
         <section className={styles.intro} aria-labelledby="ledger-title">
           <div>
-            <span className={styles.kicker}>VERIFIABLE DECISION SUPPORT</span>
-            <h1 id="ledger-title">Every agent action leaves evidence.</h1>
+            <span className={styles.kicker}>Decision support audit</span>
+            <h1 id="ledger-title">Agent activity and decision records</h1>
             <p>
               A separate operational record of real executions, provider attempts, grounded outputs
               and the person who accepted or rejected the recommendation.
@@ -321,7 +321,7 @@ export function AgentActivityConsole() {
           <aside className={styles.stream} aria-label="Agent activity stream">
             <div className={styles.panelHeading}>
               <div>
-                <span>ACTIVITY STREAM</span>
+                <span>Activity log</span>
                 <strong>Recorded executions</strong>
               </div>
               <button
@@ -374,7 +374,7 @@ export function AgentActivityConsole() {
               <>
                 <div className={styles.detailHeading}>
                   <div>
-                    <span>AUDIT RECEIPT · REVISION {selected.receipt.revision}</span>
+                    <span>Audit receipt · revision {selected.receipt.revision}</span>
                     <h2>{selected.action.name}</h2>
                     <p>{shortReceipt(selected.receipt.id)}</p>
                   </div>
@@ -392,7 +392,7 @@ export function AgentActivityConsole() {
 
                 <div className={styles.detailScroll}>
                   <section className={styles.block}>
-                    <div className={styles.blockTitle}><TerminalSquare size={14} /><span>INPUT SUMMARY</span></div>
+                    <div className={styles.blockTitle}><TerminalSquare size={14} /><span>Input summary</span></div>
                     <p className={styles.question}>{selected.input.summary}</p>
                     <div className={styles.microMeta}>
                       <span>{selected.input.characters} characters</span>
@@ -401,22 +401,22 @@ export function AgentActivityConsole() {
                   </section>
 
                   <section className={styles.block}>
-                    <div className={styles.blockTitle}><FileCheck2 size={14} /><span>GROUNDED OUTPUT</span></div>
+                    <div className={styles.blockTitle}><FileCheck2 size={14} /><span>Grounded output</span></div>
                     <p>{selected.output.summary}</p>
                     {selected.output.narrative ? (
                       <blockquote>
-                        <span>MODEL-AUTHORED NARRATIVE · HUMAN REVIEW REQUIRED</span>
+                        <span>Model-authored narrative · human review required</span>
                         {selected.output.narrative}
                       </blockquote>
                     ) : null}
                     <div className={styles.recommendation}>
-                      <span>PROPOSED ACTION</span>
+                      <span>Proposed action</span>
                       <strong>{selected.output.recommendation}</strong>
                     </div>
                   </section>
 
                   <section className={styles.block}>
-                    <div className={styles.blockTitle}><Activity size={14} /><span>EXECUTION PATH</span></div>
+                    <div className={styles.blockTitle}><Activity size={14} /><span>Execution path</span></div>
                     <ol className={styles.timeline}>
                       <li>
                         <i className={styles.timelineGood}><Check size={11} /></i>
@@ -443,7 +443,7 @@ export function AgentActivityConsole() {
                   </section>
 
                   <section className={styles.block}>
-                    <div className={styles.blockTitle}><KeyRound size={14} /><span>EVIDENCE CITATIONS</span></div>
+                    <div className={styles.blockTitle}><KeyRound size={14} /><span>Evidence citations</span></div>
                     <div className={styles.evidenceList}>
                       {selected.evidence.map((citation) => (
                         <article key={citation.id}>
@@ -482,8 +482,8 @@ export function AgentActivityConsole() {
           <aside className={styles.actionPanel} aria-label="Run audited agent request">
             <div className={styles.panelHeading}>
               <div>
-                <span>NEW EXECUTION</span>
-                <strong>Grounded evidence brief</strong>
+                <span>New analysis</span>
+                <strong>Run an evidence-based brief</strong>
               </div>
               <Play size={15} />
             </div>

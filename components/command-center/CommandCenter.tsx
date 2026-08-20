@@ -754,12 +754,12 @@ function deterministicDecision(input: {
 }
 
 const NAV_ITEMS = [
-  { id: "global", label: "Global operations", icon: Globe2 },
-  { id: "incident", label: "Incident twin", icon: MapPinned },
-  { id: "simulation", label: "Scenario studio", icon: Boxes },
-  { id: "cascade", label: "Cascade graph", icon: Network },
-  { id: "evidence", label: "Evidence desk", icon: Eye },
-  { id: "analytics", label: "Decision analytics", icon: BarChart3 },
+  { id: "global", label: "World map", icon: Globe2 },
+  { id: "incident", label: "Incident", icon: MapPinned },
+  { id: "simulation", label: "Scenarios", icon: Boxes },
+  { id: "cascade", label: "Impacts", icon: Network },
+  { id: "evidence", label: "Sources", icon: Eye },
+  { id: "analytics", label: "Analysis", icon: BarChart3 },
 ];
 
 function formatClock(date: Date) {
@@ -1960,7 +1960,7 @@ export function CommandCenter() {
         durationMs: 1_500,
         requestId: `campus-import-${Date.now()}`,
       });
-      recordAudit("Verified campus dataset imported", `${result.dataset.label} · ${result.summary}`, "imported-context");
+      recordAudit("Campus dataset imported", `${result.dataset.label} · ${result.summary}`, "imported-context");
     } catch {
       setCampusImportStatus("Import rejected: the selected file is not valid JSON.");
     }
@@ -2177,6 +2177,7 @@ export function CommandCenter() {
           </div>
           <div>
             <strong>AEGIS</strong>
+            <span>Emergency Operations Console</span>
           </div>
         </div>
 
@@ -2187,7 +2188,7 @@ export function CommandCenter() {
               className={viewMode === mode ? styles.modeActive : ""}
               onClick={() => changeOperationalMode(mode)}
             >
-              {mode}
+              {mode === "monitor" ? "Monitor" : mode === "simulate" ? "Scenario" : "Response"}
             </button>
           ))}
         </div>
@@ -2203,8 +2204,8 @@ export function CommandCenter() {
             <i className={providerReadiness && providerReadiness.summary.degraded === 0 ? styles.healthGreen : styles.healthAmber} />
             <span>
               {providerReadiness
-                ? `${providerReadiness.summary.ready} public services configured`
-                : "Checking providers"}
+                ? `${providerReadiness.summary.ready} services connected`
+                : "Checking services"}
             </span>
           </button>
           <div className={styles.clock}>
@@ -2319,11 +2320,11 @@ export function CommandCenter() {
       <div className={styles.alertStrip}>
         <div className={styles.alertLead}>
           <Radio size={14} />
-          INCIDENT FEED
+          Incident updates
         </div>
         <button onClick={() => setLiveNoticeOpen(true)}>
-          <StatusTag tone={headlineIncident?.severity === "critical" || headlineIncident?.severity === "high" ? "red" : "amber"}>
-            {headlineIncident ? "SOURCE-LABELLED" : "CONNECTING"}
+            <StatusTag tone={headlineIncident?.severity === "critical" || headlineIncident?.severity === "high" ? "red" : "amber"}>
+              {headlineIncident ? "Source-labelled" : "Connecting"}
           </StatusTag>
           <strong>{headlineIncident?.location.name || "Global incident feeds"}</strong>
           <span>{headlineIncident?.title || "Waiting for source-labelled events"}</span>
@@ -2415,8 +2416,8 @@ export function CommandCenter() {
             <div className={styles.locationIdentity}>
               <div className={styles.livePulse}><i /></div>
               <div>
-                <span>{sceneView === "world" ? "Global operations" : "Active digital twin"}</span>
-                <strong>{sceneView === "world" ? "World incident overview" : `${activeLocation.name} · ${activeLocation.region}`}</strong>
+                <span>{sceneView === "world" ? "Global map" : "Site analysis"}</span>
+                <strong>{sceneView === "world" ? "Worldwide incident overview" : `${activeLocation.name} · ${activeLocation.region}`}</strong>
               </div>
             </div>
             {sceneView === "world" ? (
@@ -2436,11 +2437,11 @@ export function CommandCenter() {
             <div className={styles.sceneSwitch} aria-label="Geospatial scene mode">
               <button className={sceneView === "world" ? styles.sceneActive : ""} onClick={enterWorldView}>
                 <Globe2 size={15} />
-                World
+                Global map
               </button>
               <button className={sceneView === "twin" ? styles.sceneActive : ""} onClick={enterTwinView}>
                 <Building2 size={15} />
-                Site 3D
+                Site model
               </button>
             </div>
             <div className={styles.coordinates}>
@@ -2576,8 +2577,8 @@ export function CommandCenter() {
             </button>
             <div className={styles.scenarioHeader}>
               <div>
-                <span>Scenario</span>
-                <StatusTag tone="blue">SIMULATED</StatusTag>
+                <span>Scenario settings</span>
+                <StatusTag tone="blue">Planning model</StatusTag>
               </div>
               <button onClick={() => setScenarioMenuOpen((value) => !value)} aria-expanded={scenarioMenuOpen}>
                 <SelectedHazardIcon size={16} />
@@ -2647,12 +2648,12 @@ export function CommandCenter() {
           </div> : null}
 
           {viewMode !== "monitor" ? <div className={styles.depthLegend}>
-            <div><span>{hazardMetricLabel(coreHazard).toUpperCase()}</span><StatusTag tone="blue">MODEL</StatusTag></div>
+            <div><span>{hazardMetricLabel(coreHazard)}</span><StatusTag tone="blue">Modelled</StatusTag></div>
             <div
               className={styles.legendGradient}
               style={{ background: `linear-gradient(90deg, transparent, ${selectedHazard.accent}66, ${selectedHazard.accent}, #ff6d62)` }}
             />
-            <div className={styles.legendScale}><span>LOW</span><span>GUARDED</span><span>HIGH</span><span>EXTREME</span></div>
+            <div className={styles.legendScale}><span>Low</span><span>Moderate</span><span>High</span><span>Extreme</span></div>
           </div> : null}
 
           {evacuationVisible && (
@@ -2669,7 +2670,7 @@ export function CommandCenter() {
               <div className={styles.planTop}>
                 <div className={styles.planIcon}><Route size={18} /></div>
                 <div>
-                  <span>EVACUATION PLAN · {evacuationPlan?.id ?? "OPT-EIT"}</span>
+                  <span>Evacuation plan · {evacuationPlan?.id ?? "OPT-EIT"}</span>
                   <strong>{planState === "calculating" ? "Calculating constrained routes…" : "Two-stage evacuation ready"}</strong>
                 </div>
                 <PanelControls panel={planPanel} label="evacuation" onClose={() => setEvacuationVisible(false)} />
@@ -2843,7 +2844,7 @@ export function CommandCenter() {
                   </section>
                 ) : null}
                 <section className={styles.casualtySection}>
-                  <div className={styles.sectionTitle}><span>Human impact</span><StatusTag tone="red">SIMULATED</StatusTag></div>
+                  <div className={styles.sectionTitle}><span>Human impact</span><StatusTag tone="red">Simulated</StatusTag></div>
                   <div className={styles.casualtyGrid}>
                     <div><span>People inside impact envelope</span><strong>{impactSnapshot.humanImpact.peopleWithinExposureEnvelope.toLocaleString("en-IN")}</strong><small>Aggregate scenario exposure</small></div>
                     <div><span>Mobility-assistance demand</span><strong>{impactSnapshot.humanImpact.mobilityAssistanceEstimate.toLocaleString("en-IN")}</strong><small>Planning estimate; field confirmation required</small></div>
@@ -2903,7 +2904,7 @@ export function CommandCenter() {
             {panelTab === "intelligence" && (
               <>
                 <section className={styles.riskSection}>
-                  <div className={styles.sectionTitle}><span>Operational assessments</span><StatusTag tone="amber">MODELLED</StatusTag></div>
+                  <div className={styles.sectionTitle}><span>Operational assessments</span><StatusTag tone="amber">Modelled</StatusTag></div>
                   <div className={styles.agentList}>
                     {[
                       {
@@ -2929,9 +2930,9 @@ export function CommandCenter() {
                 </section>
                 <section className={styles.evidenceSummary}>
                   <div className={styles.sectionTitle}><span>Data classification</span></div>
-                  <div><StatusTag tone="green">IMPORTED</StatusTag><span>Open map, terrain and weather context</span></div>
-                  <div><StatusTag tone="blue">SIMULATED</StatusTag><span>Flood depth, impacts and response</span></div>
-                  <div><StatusTag tone="neutral">ESTIMATED</StatusTag><span>Population and facility capacity</span></div>
+                  <div><StatusTag tone="green">Imported</StatusTag><span>Open map, terrain and weather context</span></div>
+                  <div><StatusTag tone="blue">Simulated</StatusTag><span>Flood depth, impacts and response</span></div>
+                  <div><StatusTag tone="neutral">Estimated</StatusTag><span>Population and facility capacity</span></div>
                 </section>
               </>
             )}
@@ -2984,8 +2985,8 @@ export function CommandCenter() {
           <button className={styles.modalDismiss} onClick={() => setSearchOpen(false)} aria-label="Close world search" />
           <section className={styles.searchPanel} role="dialog" aria-modal="true" aria-label="Search world locations">
             <div className={styles.modalHeader}>
-              <div><span>WORLD LOCATION INDEX</span><strong>Select any operational area</strong></div>
-              <StatusTag tone="green">REAL MAP</StatusTag>
+              <div><span>Location search</span><strong>Select an operational area</strong></div>
+              <StatusTag tone="green">Open map data</StatusTag>
               <button onClick={() => setSearchOpen(false)} aria-label="Close world search"><X size={17} /></button>
             </div>
             <form className={styles.worldSearchForm} onSubmit={(event) => { event.preventDefault(); void runSearch(); }}>
@@ -3004,7 +3005,7 @@ export function CommandCenter() {
                 {searching ? <RefreshCw size={15} className={styles.spin} /> : "Search"}
               </button>
             </form>
-            <div className={styles.searchSectionLabel}>PREDEFINED OPERATIONAL LOCATIONS</div>
+            <div className={styles.searchSectionLabel}>Saved locations</div>
             <div className={styles.quickLocations}>
               {QUICK_LOCATIONS.map((location) => (
                 <button key={location.id} onClick={() => focusLocation(location)}>
@@ -3016,7 +3017,7 @@ export function CommandCenter() {
             </div>
             {searchResults.length > 0 ? (
               <div className={styles.searchResults}>
-                <div className={styles.searchSectionLabel}>{searchDataClass === "REFERENCE" ? "OFFLINE REFERENCE RESULTS" : "OPENSTREETMAP RESULTS · IMPORTED"}</div>
+                <div className={styles.searchSectionLabel}>{searchDataClass === "REFERENCE" ? "Offline reference results" : "OpenStreetMap results · imported"}</div>
                 {searchResults.map((result) => (
                   <button
                     key={result.id}
@@ -3049,8 +3050,8 @@ export function CommandCenter() {
           <button className={styles.modalDismiss} onClick={() => setComparisonOpen(false)} aria-label="Close scenario comparison" />
           <section className={styles.comparisonPanel} role="dialog" aria-modal="true" aria-label="Scenario comparison">
             <div className={styles.modalHeader}>
-              <div><span>WHAT-IF BRANCH ANALYSIS</span><strong>{selectedHazard.label} · {activeLocation.name}</strong></div>
-              <StatusTag tone="blue">DETERMINISTIC</StatusTag>
+              <div><span>Scenario comparison</span><strong>{selectedHazard.label} · {activeLocation.name}</strong></div>
+              <StatusTag tone="blue">Calculated</StatusTag>
               <button onClick={() => setComparisonOpen(false)} aria-label="Close scenario comparison"><X size={17} /></button>
             </div>
             <div className={styles.comparisonModeBar} role="group" aria-label="Comparison display mode">
@@ -3095,14 +3096,14 @@ export function CommandCenter() {
           <button className={styles.modalDismiss} onClick={() => setCascadeOpen(false)} aria-label="Close cascade graph" />
           <section className={styles.cascadePanel} role="dialog" aria-modal="true" aria-label="Infrastructure cascade graph">
             <div className={styles.modalHeader}>
-              <div><span>INFRASTRUCTURE CASCADE X-RAY</span><strong>{activeLocation.name} · T+{minute} minutes</strong></div>
+              <div><span>Infrastructure dependency assessment</span><strong>{activeLocation.name} · T+{minute} minutes</strong></div>
               <StatusTag tone="red">{currentFrame.severity.toUpperCase()}</StatusTag>
               <button onClick={() => setCascadeOpen(false)} aria-label="Close cascade graph"><X size={17} /></button>
             </div>
             <div className={styles.cascadeCanvas}>
               <div className={styles.cascadeHero}>
                 <SelectedHazardIcon size={24} />
-                <span>PRIMARY HAZARD</span>
+                <span>Primary hazard</span>
                 <strong>{selectedHazard.label}</strong>
                 <small>{demonstration.result.metrics.maximumHazardValue.toFixed(2)} {demonstration.result.metrics.maximumHazardUnit}</small>
               </div>
@@ -3182,7 +3183,7 @@ export function CommandCenter() {
           <p>{headlineIncident?.summary ?? "Connected providers have not returned a current incident brief. Provider readiness and failures remain visible."}</p>
           {(liveIntelligence?.incidents.length ?? 0) > 0 ? (
             <div className={styles.liveSignalList}>
-              <span>NEAR-REAL-TIME GLOBAL SIGNALS</span>
+              <span>Recent incident reports</span>
               {liveIntelligence?.incidents.slice(0, 3).map((incident) => (
                 <button
                   key={incident.id}
@@ -3210,7 +3211,7 @@ export function CommandCenter() {
             </div>
           ) : null}
           <div className={styles.liveNoticeSources}>
-            <StatusTag tone={headlineIncident?.severity === "critical" || headlineIncident?.severity === "high" ? "red" : "neutral"}>{headlineIncident ? "SOURCE-LABELLED" : "NO REPORT"}</StatusTag>
+            <StatusTag tone={headlineIncident?.severity === "critical" || headlineIncident?.severity === "high" ? "red" : "neutral"}>{headlineIncident ? "Source-labelled" : "No report"}</StatusTag>
             <span>{headlineIncident ? `${headlineIncident.provenance.sourceName} · ${headlineIncident.observedAt ?? "time unavailable"}` : "No report is being presented as live"}</span>
           </div>
           <div className={styles.liveNoticeActions}>
@@ -3320,8 +3321,8 @@ export function CommandCenter() {
           <section className={styles.copilot} role="dialog" aria-modal="true" aria-label="AEGIS decision brief">
             <div className={styles.copilotHeader}>
               <div className={styles.copilotMark}><MessageSquareText size={18} /></div>
-              <div><span>AEGIS DECISION BRIEF</span><strong>Grounded in the current twin state</strong></div>
-              <StatusTag tone="blue">DETERMINISTIC</StatusTag>
+              <div><span>Decision support</span><strong>Current scenario and impact data</strong></div>
+              <StatusTag tone="blue">Calculated</StatusTag>
               <button onClick={() => setCopilotOpen(false)} aria-label="Close decision brief"><X size={17} /></button>
             </div>
             <div className={styles.copilotBody}>
@@ -3331,7 +3332,7 @@ export function CommandCenter() {
               </div>
               <div className={styles.copilotAnswer}>
                 <div className={styles.answerSection}><span>SUMMARY</span><p>{decision.summary}</p></div>
-                <div className={styles.answerEvidence}><span>KEY EVIDENCE</span>{decision.evidence.map((item) => <p key={item}><Check size={12} />{item}</p>)}</div>
+                <div className={styles.answerEvidence}><span>Supporting evidence</span>{decision.evidence.map((item) => <p key={item}><Check size={12} />{item}</p>)}</div>
                 <div className={styles.answerSection}><span>PREDICTION</span><p>{decision.prediction}</p></div>
                 <div className={styles.recommendationBlock}>
                   <div><span>RECOMMENDATION</span><StatusTag tone="green">{Math.round(decision.confidence * 100)}% CONFIDENCE</StatusTag></div>

@@ -14,8 +14,8 @@ Cost policy: zero-paid-key deterministic core, no billing-required map path; opt
 Primary demo target: Lenovo LOQ, i5-12450HX, RTX 4050, 24 GB DDR5, 1366 x 768
 Live command center: https://aegis-codefusion-2k26.guptashivaani233.workers.dev
 Dedicated Agent Ledger: https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
-Main Worker version: e0b147fe-0219-4193-ad09-b402aa498170
-Ledger Worker version: 4a840328-2982-4761-940b-95cb127c583b
+Main Worker version: 58accdae-9be1-440c-b7f2-3cec0ff45e86
+Ledger Worker version: af5d0e22-9ed7-4e83-b0ff-ea62a312114f
 Ledger date: 21 August 2026
 
 
@@ -311,8 +311,8 @@ Public upstreams can throttle, revise or become unavailable; AEGIS reports this 
 13. ORACLE / CONTAINER DEPLOYMENT PACKAGE
 ==========================================
 
-[LIVE] Cloudflare command center Worker version e0b147fe-0219-4193-ad09-b402aa498170.
-[LIVE] Dedicated Agent Ledger Worker version 4a840328-2982-4761-940b-95cb127c583b.
+[LIVE] Cloudflare command center Worker version 58accdae-9be1-440c-b7f2-3cec0ff45e86.
+[LIVE] Dedicated Agent Ledger Worker version af5d0e22-9ed7-4e83-b0ff-ea62a312114f.
 [LIVE] D1 migration applied in APAC; cross-deployment create, read, human review and verified revision 2 passed.
 
 Cloudflare is the immediate public web/Agent Ledger deployment. It does not include FastAPI, PostGIS,
@@ -391,7 +391,7 @@ provider tiles and selected layers. The code is tuned for the stated Lenovo LOQ 
 
 The following records separate source checks, deployed HTTP checks and visual acceptance:
 
-[PASS] Final canonical npm run verify: 64 total, 63 passed, 0 failed and 1 intentionally skipped
+[PASS] Final canonical npm run verify: 67 total, 66 passed, 0 failed and 1 intentionally skipped
        optional-network test. TypeScript typecheck, ESLint and production build passed; the build emitted
        only the documented large-chunk performance advisory.
 [PASS] FastAPI/backend suite: 7 of 7.
@@ -401,8 +401,8 @@ The following records separate source checks, deployed HTTP checks and visual ac
        payload limits, request IDs, hash-chain integrity verification, WebSocket replay/origin checks
        and rate limiting.
 
-[PASS] Main Worker version e0b147fe-0219-4193-ad09-b402aa498170 is deployed over HTTPS.
-[PASS] Ledger Worker version 4a840328-2982-4761-940b-95cb127c583b is deployed over HTTPS.
+[PASS] Main Worker version 58accdae-9be1-440c-b7f2-3cec0ff45e86 is deployed over HTTPS.
+[PASS] Ledger Worker version af5d0e22-9ed7-4e83-b0ff-ea62a312114f is deployed over HTTPS.
 [PASS] D1 migration applied in APAC; Agent Ledger GET/POST/PATCH worked across both deployments.
 [PASS] Workers AI returned a grounded narrative in approximately 1.94 seconds; the approved revision 2
        persisted in D1 and its retained SHA-256 receipt/revision links verified.
@@ -414,10 +414,13 @@ The following records separate source checks, deployed HTTP checks and visual ac
 [PASS] Final Windows rebuild generated 2026-08-20T21:29:16.744481Z; manifest/hash comparison matched,
        with Authenticode NotSigned as declared.
 
-[LIMIT / MANUAL CHECK] The Chrome browser-control extension was unavailable. Source, unit, API and public
-       HTTP acceptance is complete, but the final visual judge flow was not replayed through public Chrome.
-       Manually verify globe interaction, world search, Site 3D, 1366 x 768 layouts, simulation playback,
-       evacuation, Agent Ledger and external links on the target Lenovo LOQ before judging.
+[PASS] Public remote-browser acceptance confirmed the labelled and slightly tilted Earth, visible idle orbit,
+       world search to New Delhi, district and street labels through deep zoom, no black canvas, and zero
+       browser warnings/errors. The exact globe-to-street failure reported by the operator was reproduced
+       before the correction and then replayed successfully after deployment.
+[LIMIT / MANUAL CHECK] Repeat the full judge flow on the actual Lenovo LOQ because GPU drivers, Chrome build,
+       internet latency and public tile delivery are device-specific. Include Site 3D, all five simulations,
+       evacuation, panel interactions, Agent Ledger and external links.
 [LIMIT] No local host was started during this final public-release pass.
 
 

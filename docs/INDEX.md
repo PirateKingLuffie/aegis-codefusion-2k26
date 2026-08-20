@@ -18,6 +18,7 @@
 2. `API_AND_PROVIDERS.md` — web API, durable API, agent API, provider roles, evidence classes and secret rules.
 3. `DATA_PROVENANCE.md` — full truth policy and source limitations.
 4. `EIT_DATA_IMPORT.md` — verified campus-data replacement contract.
+5. `GLOBE_AND_UI_ACCEPTANCE.md` — globe-to-street behaviour, UI standard and release checks.
 
 ## For release and operations
 

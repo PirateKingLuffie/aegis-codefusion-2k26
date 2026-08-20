@@ -88,8 +88,14 @@ import {
   type MapProviderState,
 } from "./providers";
 import {
+  WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM,
+  WORLD_DETAIL_IMAGERY_OPACITY_STOPS,
+  WORLD_CONTEXT_LAYER_IDS,
+  WORLD_GLOBE_ORBIT_MAX_ZOOM,
   WORLD_IMAGERY_LAYER_IDS,
   WORLD_IMAGERY_SOURCES,
+  WORLD_RASTER_LABELS,
+  initialOrbitResumeDeadline,
   nextOrbitLongitude,
   orbitResumeDeadline,
   shouldAdvanceOrbit,
@@ -98,6 +104,9 @@ import {
   isProviderContextLabelLayer,
   worldCameraForViewport,
   worldFocusUsesGlobe,
+  worldPitchForFocus,
+  worldProjectionModeForZoom,
+  type WorldProjectionMode,
 } from "./globe-runtime";
 import type {
   AegisCoordinate,
@@ -1761,9 +1770,9 @@ function installWorldImagery(map: MapLibreMap): boolean {
       paint: {
         "raster-opacity": [
           "interpolate", ["linear"], ["zoom"],
-          0, 0.96,
-          5.8, 0.9,
-          7.2, 0.42,
+          0, 0.94,
+          5.8, 0.82,
+          7.2, 0.34,
           8.6, 0,
         ],
         "raster-saturation": -0.1,
@@ -1778,14 +1787,15 @@ function installWorldImagery(map: MapLibreMap): boolean {
       type: "raster",
       source: WORLD_IMAGERY_SOURCES[1].id,
       minzoom: 0,
-      maxzoom: 9,
+      // The EOX source publishes through z14. Keeping the layer active above
+      // that level lets MapLibre overzoom the last good tile underneath the
+      // provider's vector streets, labels and buildings instead of exposing a
+      // black background between imagery and local detail.
+      maxzoom: WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM,
       paint: {
         "raster-opacity": [
           "interpolate", ["linear"], ["zoom"],
-          0, 0.94,
-          5.8, 0.92,
-          7.2, 0.48,
-          8.6, 0,
+          ...WORLD_DETAIL_IMAGERY_OPACITY_STOPS,
         ],
         "raster-saturation": -0.06,
         "raster-contrast": 0.13,
@@ -1800,6 +1810,71 @@ function installWorldImagery(map: MapLibreMap): boolean {
   return installed;
 }
 
+/**
+ * Transparent, pre-rendered labels remain readable when a browser/GPU drops
+ * vector glyph buckets. Insertion before provider symbols means the later
+ * AEGIS operational layers stay visually and semantically dominant.
+ */
+function installRasterLabelFallback(map: MapLibreMap): boolean {
+  try {
+    if (!map.getSource(WORLD_RASTER_LABELS.sourceId)) {
+      map.addSource(WORLD_RASTER_LABELS.sourceId, {
+        type: "raster",
+        tiles: [...WORLD_RASTER_LABELS.tiles],
+        tileSize: 256,
+        minzoom: WORLD_RASTER_LABELS.minzoom,
+        maxzoom: WORLD_RASTER_LABELS.maxzoom,
+        attribution: WORLD_RASTER_LABELS.attribution,
+      });
+    }
+    addLayer(map, {
+      id: WORLD_RASTER_LABELS.layerId,
+      type: "raster",
+      source: WORLD_RASTER_LABELS.sourceId,
+      minzoom: WORLD_RASTER_LABELS.minzoom,
+      maxzoom: WORLD_RASTER_LABELS.maxzoom,
+      paint: {
+        "raster-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.9, 5, 0.94, 20, 0.98],
+        "raster-fade-duration": 0,
+      },
+    } as LayerSpecification, firstSymbolLayerId(map));
+    return true;
+  } catch {
+    // Vector labels remain the primary path; this independent fallback is optional.
+    return false;
+  }
+}
+
+/** Guarantees a neutral visible surface even if optional imagery is delayed. */
+function stabilizeProviderStreetContext(map: MapLibreMap): void {
+  map.getStyle().layers?.forEach((layer) => {
+    try {
+      if (layer.type === "background") {
+        map.setPaintProperty(layer.id, "background-color", "#111411");
+        map.setPaintProperty(layer.id, "background-opacity", 1);
+        return;
+      }
+      const value = layer as LayerSpecification & {
+        "source-layer"?: string;
+        layout?: Record<string, unknown>;
+      };
+      if (
+        layer.type === "symbol"
+        && isProviderContextLabelLayer({
+          id: layer.id,
+          type: layer.type,
+          sourceLayer: value["source-layer"],
+          hasTextField: Boolean(value.layout && "text-field" in value.layout),
+        })
+      ) {
+        map.setLayoutProperty(layer.id, "visibility", "visible");
+      }
+    } catch {
+      // Provider styles may expose immutable generated properties.
+    }
+  });
+}
+
 function providerLayerReference(
   map: MapLibreMap,
   sourceLayerPattern: RegExp,
@@ -1811,6 +1886,181 @@ function providerLayerReference(
       && sourceLayerPattern.test(value["source-layer"]);
   }) as (LayerSpecification & { source: string; "source-layer": string }) | undefined;
   return layer ? { source: layer.source, sourceLayer: layer["source-layer"] } : null;
+}
+
+function contextRoadWidth(): ExpressionSpecification {
+  return [
+    "interpolate", ["linear"], ["zoom"],
+    5, ["match", ["get", "class"], ["motorway", "trunk"], 0.8, ["primary", "secondary"], 0.5, 0.2],
+    10, ["match", ["get", "class"], ["motorway", "trunk"], 2.4, ["primary", "secondary"], 1.75, 0.85],
+    16, ["match", ["get", "class"], ["motorway", "trunk"], 8.5, ["primary", "secondary"], 6.2, 3.2],
+  ] as ExpressionSpecification;
+}
+
+/**
+ * Provider-independent geographic context drawn from the style's own
+ * OpenMapTiles-compatible vector source. These layers sit above imagery but
+ * are installed before AEGIS operational layers, preserving route/hazard
+ * priority even when a provider's bundled dark-style paint is too subtle.
+ */
+function enableProviderVectorContext(map: MapLibreMap): number {
+  let installed = 0;
+  const beforeProviderSymbols = firstSymbolLayerId(map);
+  const roads = providerLayerReference(map, /^(?:transportation|road)$/i)
+    ?? providerLayerReference(map, /transportation|road/i);
+  if (roads) {
+    const roadFilter: ExpressionSpecification = [
+      "all",
+      ["==", ["geometry-type"], "LineString"],
+      [
+        "in", ["get", "class"],
+        ["literal", ["motorway", "trunk", "primary", "secondary", "tertiary", "minor", "service", "path", "track", "street"]],
+      ],
+    ] as ExpressionSpecification;
+    try {
+      addLayer(map, {
+        id: WORLD_CONTEXT_LAYER_IDS.roadCasing,
+        type: "line",
+        source: roads.source,
+        "source-layer": roads.sourceLayer,
+        minzoom: 5,
+        filter: roadFilter,
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": "rgba(12,15,15,0.94)",
+          "line-width": ["+", contextRoadWidth(), ["interpolate", ["linear"], ["zoom"], 5, 0.5, 16, 2.2]],
+          "line-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.32, 8, 0.72, 14, 0.9],
+        },
+      } as LayerSpecification, beforeProviderSymbols);
+      addLayer(map, {
+        id: WORLD_CONTEXT_LAYER_IDS.roads,
+        type: "line",
+        source: roads.source,
+        "source-layer": roads.sourceLayer,
+        minzoom: 5,
+        filter: roadFilter,
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": [
+            "match", ["get", "class"],
+            ["motorway", "trunk"], "#d2b278",
+            ["primary", "secondary"], "#c5b99c",
+            ["tertiary", "minor"], "#9ea39d",
+            "#737b78",
+          ],
+          "line-width": contextRoadWidth(),
+          "line-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.38, 8, 0.76, 14, 0.94],
+        },
+      } as LayerSpecification, beforeProviderSymbols);
+      installed += 2;
+    } catch {
+      // Provider geometry remains available through its native style layers.
+    }
+  }
+
+  const roadNames = providerLayerReference(map, /transportation_name|road.*name/i);
+  if (roadNames) {
+    try {
+      addLayer(map, {
+        id: WORLD_CONTEXT_LAYER_IDS.roadLabels,
+        type: "symbol",
+        source: roadNames.source,
+        "source-layer": roadNames.sourceLayer,
+        minzoom: 9,
+        layout: {
+          "symbol-placement": "line",
+          "symbol-spacing": 340,
+          "text-field": ["coalesce", ["get", "name_en"], ["get", "name:en"], ["get", "name"], ["get", "ref"], ""],
+          "text-font": MAP_FONT_STACK,
+          "text-size": ["interpolate", ["linear"], ["zoom"], 9, 9, 14, 11.5, 18, 13],
+          "text-max-angle": 35,
+          "text-padding": 3,
+          "text-optional": true,
+        },
+        paint: {
+          "text-color": "#e4e4dd",
+          "text-halo-color": "rgba(13,16,15,0.96)",
+          "text-halo-width": 1.35,
+          "text-halo-blur": 0.25,
+        },
+      } as LayerSpecification);
+      installed += 1;
+    } catch {
+      // Street geometry remains usable if a provider omits road-name fields.
+    }
+  }
+
+  const places = providerLayerReference(map, /^(?:place|settlement)$/i)
+    ?? providerLayerReference(map, /place|settlement/i);
+  if (places) {
+    const placeName: ExpressionSpecification = [
+      "coalesce", ["get", "name_en"], ["get", "name:en"], ["get", "name"], "",
+    ] as ExpressionSpecification;
+    try {
+      addLayer(map, {
+        id: WORLD_CONTEXT_LAYER_IDS.countryLabels,
+        type: "symbol",
+        source: places.source,
+        "source-layer": places.sourceLayer,
+        minzoom: 0,
+        maxzoom: 7.8,
+        filter: ["any", ["==", ["get", "class"], "country"], ["==", ["get", "place"], "country"]],
+        layout: {
+          "text-field": placeName,
+          "text-font": MAP_FONT_STACK,
+          "text-size": ["interpolate", ["linear"], ["zoom"], 0, 9.5, 3, 12, 7, 15],
+          "text-transform": "uppercase",
+          "text-letter-spacing": 0.08,
+          "text-max-width": 12,
+          "text-allow-overlap": false,
+          "text-optional": true,
+          "text-pitch-alignment": "viewport",
+          "text-rotation-alignment": "viewport",
+        },
+        paint: {
+          "text-color": "#f1f0e9",
+          "text-halo-color": "rgba(9,12,12,0.98)",
+          "text-halo-width": 1.7,
+          "text-halo-blur": 0.2,
+        },
+      } as LayerSpecification);
+      addLayer(map, {
+        id: WORLD_CONTEXT_LAYER_IDS.cityLabels,
+        type: "symbol",
+        source: places.source,
+        "source-layer": places.sourceLayer,
+        minzoom: 3,
+        maxzoom: 17,
+        filter: [
+          "any",
+          ["in", ["get", "class"], ["literal", ["city", "town", "village", "suburb", "neighbourhood"]]],
+          ["in", ["get", "place"], ["literal", ["city", "town", "village", "suburb", "neighbourhood"]]],
+          ["has", "capital"],
+        ],
+        layout: {
+          "text-field": placeName,
+          "text-font": MAP_FONT_STACK,
+          "text-size": ["interpolate", ["linear"], ["zoom"], 3, 9.5, 8, 12, 14, 15],
+          "text-max-width": 10,
+          "text-padding": 4,
+          "text-allow-overlap": false,
+          "text-optional": true,
+          "text-pitch-alignment": "viewport",
+          "text-rotation-alignment": "viewport",
+        },
+        paint: {
+          "text-color": "#f4f2e9",
+          "text-halo-color": "rgba(9,12,12,0.97)",
+          "text-halo-width": 1.55,
+          "text-halo-blur": 0.25,
+        },
+      } as LayerSpecification);
+      installed += 2;
+    } catch {
+      // Country boundaries and native provider symbols remain as fallbacks.
+    }
+  }
+  return installed;
 }
 
 function enableWorldBoundaries(map: MapLibreMap): boolean {
@@ -2094,7 +2344,7 @@ export function AegisMap({
   initialCamera,
   autoFlyToEit = true,
   autoRotateGlobe = true,
-  autoRotateSpeedDegPerSecond = 0.35,
+  autoRotateSpeedDegPerSecond = 0.65,
   globeIdleResumeMs = 6_500,
   defaultTool = "inspect",
   initialLayerVisibility,
@@ -2145,6 +2395,7 @@ export function AegisMap({
   const globeIdleUntilRef = useRef(0);
   const globeRotationEnabledRef = useRef(autoRotateGlobe);
   const reducedMotionRef = useRef(false);
+  const appliedViewModeRef = useRef<AegisMapViewMode>(viewMode ?? defaultViewMode);
 
   const [internalSelection, setInternalSelection] = useState<AegisMapSelection>(
     selection ?? { points: [] },
@@ -2358,6 +2609,7 @@ export function AegisMap({
     activeTwinCenterRef.current = center;
     pauseOrbit(mode === "world" ? 2_400 : 3_500);
     activeViewRef.current = mode;
+    appliedViewModeRef.current = mode;
     if (viewMode === undefined) setInternalViewMode(mode);
     callbacksRef.current.onViewModeChange?.(mode);
     const map = mapRef.current;
@@ -2382,6 +2634,7 @@ export function AegisMap({
     let lastAnimation = 0;
     let lastWorldRotation = 0;
     let autoTimer: number | null = null;
+    let worldProjectionMode: WorldProjectionMode = "globe";
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const updateMotionPreference = () => {
       reducedMotionRef.current = motionQuery.matches;
@@ -2600,13 +2853,19 @@ export function AegisMap({
           providerSwitching = false;
           resourceErrorTimes = [];
           if (styleTimer !== null) window.clearTimeout(styleTimer);
-          setAtmosphere(map, true);
+          const mode = activeViewRef.current;
+          const globeOverview = mode === "world" && worldFocusUsesGlobe(map.getZoom());
+          worldProjectionMode = globeOverview ? "globe" : "mercator";
+          setAtmosphere(map, globeOverview);
+          stabilizeProviderStreetContext(map);
           installWorldImagery(map);
           enableWorldBoundaries(map);
           enableCityLights(map);
+          enableProviderVectorContext(map);
           // Install provider-backed buildings before operational extrusions so
           // damage, flood waterlines and the campus twin remain visually on top.
           const baseBuildings = enableBaseBuildings(map);
+          installRasterLabelFallback(map);
           addSources(map, sourceDataRef.current, enableTerrain);
           addMapLayers(map, waterVerticalExaggeration, enableTerrain);
           promoteProviderContextLabels(map);
@@ -2642,12 +2901,15 @@ export function AegisMap({
           setMapReady(true);
           callbacksRef.current.onMapReady?.();
 
-          const mode = activeViewRef.current;
-          pauseOrbit(1_200);
           if (mode === "twin") {
+            pauseOrbit(1_200);
             flyTwin(map, EIT_FARIDABAD, 1_700, enableTerrain, showCampusMassing);
           } else {
             setCampusLayerVisibility(map, false);
+            // Start the presentation orbit quickly after the first stable
+            // frame. User interactions still use the longer configured pause.
+            lastWorldRotation = performance.now();
+            globeIdleUntilRef.current = initialOrbitResumeDeadline(lastWorldRotation);
             if (shouldAutoFlyToTwin({
               enabled: autoFlyToEit,
               hasInitialCamera: Boolean(initialCamera),
@@ -2770,37 +3032,61 @@ export function AegisMap({
           }
         });
 
-        const syncWorldProjection = () => {
+        const syncWorldProjection = (finalizeTerrain = false) => {
           if (!map || !styleLoaded || activeViewRef.current !== "world") return;
-          const globeOverview = worldFocusUsesGlobe(map.getZoom());
-          setAtmosphere(map, globeOverview);
+          const nextProjection = worldProjectionModeForZoom(map.getZoom(), worldProjectionMode);
           try {
-            if (globeOverview) {
+            if (nextProjection !== worldProjectionMode) {
+              // Detach the terrain mesh before changing projection. This is the
+              // critical ordering that prevents a black WebGL frame during a
+              // continuous wheel/trackpad zoom.
               if (map.getTerrain()) map.setTerrain(null);
-            } else if (enableTerrain && map.getSource("aegis-terrain-dem")) {
+              worldProjectionMode = nextProjection;
+              setAtmosphere(map, nextProjection === "globe");
+            }
+            if (
+              finalizeTerrain
+              && nextProjection === "mercator"
+              && enableTerrain
+              && map.getSource("aegis-terrain-dem")
+            ) {
               map.setTerrain({ source: "aegis-terrain-dem", exaggeration: 0.78 });
             }
           } catch {
             // Projection remains usable if optional terrain cannot be toggled.
           }
         };
-        map.on("zoomend", syncWorldProjection);
+        // Switch before zoomend so the renderer never spends local-detail
+        // frames in spherical projection. Terrain is restored only once the
+        // gesture has settled.
+        map.on("zoom", () => syncWorldProjection(false));
+        map.on("zoomend", () => syncWorldProjection(true));
 
         const animate = (time: number) => {
           if (disposed || !map) return;
           const visible = document.visibilityState === "visible";
+          const orbitCanRun = activeViewRef.current === "world"
+            && globeRotationEnabledRef.current
+            && map.getZoom() <= WORLD_GLOBE_ORBIT_MAX_ZOOM
+            && worldProjectionMode === "globe"
+            && !reducedMotionRef.current
+            && visible
+            && time >= globeIdleUntilRef.current;
+          const mapMoving = map.isMoving();
           if (shouldAdvanceOrbit({
             worldView: activeViewRef.current === "world",
             // Orbit is an overview presentation affordance. Once search or a
             // click has descended into regional/street detail, keep that
             // operational location fixed even after the idle timer expires.
-            enabled: globeRotationEnabledRef.current && map.getZoom() <= 3.5,
+            enabled: globeRotationEnabledRef.current
+              && map.getZoom() <= WORLD_GLOBE_ORBIT_MAX_ZOOM
+              && worldProjectionMode === "globe",
             reducedMotion: reducedMotionRef.current,
             documentVisible: visible,
             nowMs: time,
             resumeAtMs: globeIdleUntilRef.current,
             lastFrameMs: lastWorldRotation,
-            moving: map.isMoving(),
+            moving: mapMoving,
           })) {
             const elapsedSeconds = lastWorldRotation === 0
               ? 0
@@ -2815,7 +3101,8 @@ export function AegisMap({
               );
               map.setCenter([longitude, center.lat]);
             }
-          } else if (activeViewRef.current !== "world") {
+          } else if (!orbitCanRun || mapMoving) {
+            // Reset the time base while paused so resuming never jumps.
             lastWorldRotation = time;
           }
           if (time - lastAnimation >= 90 && visible) {
@@ -2920,6 +3207,8 @@ export function AegisMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
+    if (appliedViewModeRef.current === activeViewMode) return;
+    appliedViewModeRef.current = activeViewMode;
     const duration = activeViewMode === "world" ? 2_200 : 2_800;
     pauseOrbit(duration);
     if (activeViewMode === "world") flyWorld(map, duration);
@@ -2949,21 +3238,19 @@ export function AegisMap({
       // Staying in the WORLD product mode must not force the globe projection
       // at landmark zooms: some zero-cost vector styles render a black canvas
       // there even though their tiles remain healthy.
-      setAtmosphere(map, globeOverview);
       setCampusLayerVisibility(map, false);
       try {
-        if (globeOverview) {
-          if (map.getTerrain()) map.setTerrain(null);
-        } else if (enableTerrain && map.getSource("aegis-terrain-dem")) {
-          map.setTerrain({ source: "aegis-terrain-dem", exaggeration: 0.78 });
-        }
+        // Always detach the terrain mesh before projection/camera changes.
+        // The zoomend synchronizer restores terrain after a local flight.
+        if (map.getTerrain()) map.setTerrain(null);
       } catch {
         // Street detail remains available when terrain state cannot be changed.
       }
+      setAtmosphere(map, globeOverview);
       map.flyTo({
         center,
         zoom: targetZoom,
-        pitch: focusPitch ?? 0,
+        pitch: worldPitchForFocus(targetZoom, focusPitch),
         bearing: focusBearing ?? 0,
         duration,
         curve: 1.32,
@@ -3269,6 +3556,10 @@ export function AegisMap({
               <a href="https://maps.eox.at" target="_blank" rel="noreferrer">EOX Sentinel-2 cloudless 2020</a>
               {" (modified Copernicus Sentinel data 2020)"}
               {" / "}<a href="https://www.earthdata.nasa.gov/gibs" target="_blank" rel="noreferrer">NASA EOSDIS GIBS</a>
+              {providerState.providerId === "openfreemap-dark" ? (
+                <>{" / "}<a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap / OpenMapTiles</a></>
+              ) : null}
+              {" / "}<a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO labels</a>
               {" / "}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>
             </>
           ) : providerState.providerId === "carto-dark" ? (

@@ -7,8 +7,15 @@ import {
   providersAreIndependent,
 } from "../components/map/providers.ts";
 import {
+  WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM,
+  WORLD_DETAIL_IMAGERY_OPACITY_STOPS,
+  WORLD_CONTEXT_LAYER_IDS,
+  WORLD_GLOBE_EXIT_ZOOM,
+  WORLD_GLOBE_REENTRY_ZOOM,
   WORLD_IMAGERY_LAYER_IDS,
   WORLD_IMAGERY_SOURCES,
+  WORLD_RASTER_LABELS,
+  initialOrbitResumeDeadline,
   isProviderContextLabelLayer,
   nextOrbitLongitude,
   orbitResumeDeadline,
@@ -16,6 +23,8 @@ import {
   shouldAutoFlyToTwin,
   worldCameraForViewport,
   worldFocusUsesGlobe,
+  worldPitchForFocus,
+  worldProjectionModeForZoom,
 } from "../components/map/globe-runtime.ts";
 import { createEitFaridabadScenario, rankInterventions, runSimulation } from "../lib/simulation/index.ts";
 import { createEitCampusDataset, parseTwinCampusDataset } from "../lib/twin/index.ts";
@@ -63,17 +72,60 @@ test("world surface uses independent keyless imagery with a street-detail handof
   assert.equal(new URL(WORLD_IMAGERY_SOURCES[1].tiles[0]).hostname, "tiles.maps.eox.at");
   assert.equal(WORLD_IMAGERY_SOURCES.every((source) => !/[?&](key|token)=/i.test(source.tiles[0])), true);
   assert.ok(WORLD_IMAGERY_SOURCES.every((source) => source.maxzoom >= 8));
-  assert.equal(worldFocusUsesGlobe(6.5), true);
+  assert.equal(WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM, 20);
+  const imageryOpacityByZoom = new Map(
+    Array.from({ length: WORLD_DETAIL_IMAGERY_OPACITY_STOPS.length / 2 }, (_, index) => [
+      WORLD_DETAIL_IMAGERY_OPACITY_STOPS[index * 2],
+      WORLD_DETAIL_IMAGERY_OPACITY_STOPS[index * 2 + 1],
+    ]),
+  );
+  assert.equal(imageryOpacityByZoom.get(14), 0.34);
+  assert.ok(imageryOpacityByZoom.get(18) <= 0.1);
+  assert.equal(worldFocusUsesGlobe(4.7), true);
+  assert.equal(worldFocusUsesGlobe(6.5), false);
   assert.equal(worldFocusUsesGlobe(14.2), false);
   assert.equal(worldFocusUsesGlobe(16.2), false);
 });
 
-test("world camera frames a level horizon and orbit pauses then wraps smoothly", () => {
+test("provider-independent world context defines roads, road names, countries and cities", () => {
+  assert.deepEqual(Object.keys(WORLD_CONTEXT_LAYER_IDS).sort(), [
+    "cityLabels",
+    "countryLabels",
+    "roadCasing",
+    "roadLabels",
+    "roads",
+  ]);
+  assert.equal(new Set(Object.values(WORLD_CONTEXT_LAYER_IDS)).size, 5);
+  assert.ok(Object.values(WORLD_CONTEXT_LAYER_IDS).every((id) => id.startsWith("aegis-world-")));
+});
+
+test("glyph-free CARTO label tiles cover world through street zoom and degrade independently", () => {
+  assert.equal(WORLD_RASTER_LABELS.minzoom, 0);
+  assert.equal(WORLD_RASTER_LABELS.maxzoom, 20);
+  assert.equal(WORLD_RASTER_LABELS.tiles.length, 4);
+  assert.ok(WORLD_RASTER_LABELS.tiles.every((url) => (
+    new URL(url).hostname.endsWith("basemaps.cartocdn.com")
+      && url.includes("/dark_only_labels/")
+      && !/[?&](?:key|token)=/i.test(url)
+  )));
+  assert.match(WORLD_RASTER_LABELS.attribution, /CARTO/);
+  assert.match(WORLD_RASTER_LABELS.attribution, /OpenStreetMap/);
+  assert.equal(classifyMapFailure({
+    sourceId: WORLD_RASTER_LABELS.sourceId,
+    message: "label tile request failed",
+    styleReady: true,
+  }), "optional");
+});
+
+test("world camera keeps a restrained presentation tilt and orbit pauses then wraps smoothly", () => {
   const laptop = worldCameraForViewport(1366, 768);
   const compact = worldCameraForViewport(900, 520);
-  assert.equal(laptop.pitch, 0);
-  assert.equal(laptop.bearing, 0);
+  assert.equal(laptop.pitch, 12);
+  assert.equal(laptop.bearing, -8);
   assert.ok(laptop.zoom > compact.zoom);
+  assert.equal(worldPitchForFocus(1.84, 0), 12);
+  assert.equal(worldPitchForFocus(12.2, 42), 42);
+  assert.equal(initialOrbitResumeDeadline(1_000), 1_850);
   assert.equal(orbitResumeDeadline(1_000, 6_500, 2_400), 9_900);
   assert.equal(nextOrbitLongitude(179.99, 1.25, 0.1) < -179, true);
   assert.equal(shouldAdvanceOrbit({
@@ -96,6 +148,13 @@ test("world camera frames a level horizon and orbit pauses then wraps smoothly",
     lastFrameMs: 9_950,
     moving: false,
   }), false);
+});
+
+test("globe projection hands off before local detail and uses hysteresis on zoom-out", () => {
+  assert.equal(worldProjectionModeForZoom(WORLD_GLOBE_EXIT_ZOOM - 0.01, "globe"), "globe");
+  assert.equal(worldProjectionModeForZoom(WORLD_GLOBE_EXIT_ZOOM, "globe"), "mercator");
+  assert.equal(worldProjectionModeForZoom(WORLD_GLOBE_REENTRY_ZOOM + 0.01, "mercator"), "mercator");
+  assert.equal(worldProjectionModeForZoom(WORLD_GLOBE_REENTRY_ZOOM, "mercator"), "globe");
 });
 
 test("globe orbit advances slowly and continuously while respecting runtime gates", () => {

@@ -61,6 +61,7 @@ const OPTIONAL_SOURCE_IDS = new Set([
   "aegis-terrain-hillshade",
   "aegis-world-blue-marble",
   "aegis-world-sentinel",
+  "aegis-world-carto-labels",
 ]);
 
 /** Pure classification used by the renderer and scoped provider tests. */

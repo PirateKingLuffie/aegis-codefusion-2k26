@@ -172,7 +172,7 @@ export function WorkspaceManagerPanel({
           <div className={styles.productSectionTitle}><span>Campus data</span><small>{campusDatasetLabel}</small></div>
           <div className={styles.campusImportRow}>
             <label>
-              <Upload size={14} /> Import verified JSON
+              <Upload size={14} /> Import campus JSON
               <input
                 type="file"
                 accept="application/json,.json"

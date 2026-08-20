@@ -10,8 +10,8 @@ AEGIS combines a rotating 3D world view, source-labelled incident intelligence, 
 - **Dedicated Agent Ledger:** https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 - **Source repository:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26
 - **Windows and presentation downloads:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26/releases/tag/v0.1.0
-- **Main Worker version:** `e0b147fe-0219-4193-ad09-b402aa498170`
-- **Ledger Worker version:** `4a840328-2982-4761-940b-95cb127c583b`
+- **Main Worker version:** `58accdae-9be1-440c-b7f2-3cec0ff45e86`
+- **Ledger Worker version:** `af5d0e22-9ed7-4e83-b0ff-ea62a312114f`
 
 Cloudflare D1 is migrated and live for immutable Agent Ledger receipt revisions. Cross-deployment `GET`, `POST` and human-review `PATCH` were verified. D1 is the ledger store only; scenario history remains browser-local unless the separate FastAPI operations service is deployed.
 
@@ -81,6 +81,7 @@ All hazard consequences and evacuation outcomes are prototype planning estimates
 - [API and providers](docs/API_AND_PROVIDERS.md)
 - [Data provenance](docs/DATA_PROVENANCE.md)
 - [EIT authoritative-data import](docs/EIT_DATA_IMPORT.md)
+- [Globe and interface acceptance](docs/GLOBE_AND_UI_ACCEPTANCE.md)
 - [Demo runbook](docs/DEMO_RUNBOOK.md)
 - [Deployment handoff](docs/DEPLOYMENT_HANDOFF.md)
 - [Windows and deferred mobile builds](docs/PLATFORM_BUILDS.md)
@@ -92,8 +93,8 @@ All hazard consequences and evacuation outcomes are prototype planning estimates
 - A unique cold live-intelligence query completed in `4,559 ms` with three live sources, one degraded source and nine incidents; its immediate cached repeat completed in `169 ms`.
 - Workers AI returned a grounded narrative in approximately `1.94 s`; D1 preserved the human-approved revision 2 and its receipt chain verified across the main and dedicated-ledger deployments.
 - Backend tests passed `7/7`; opt-in public-feed tests passed `6/6`; `npm audit` reported zero vulnerabilities.
-- Final canonical `npm run verify`: 64 tests total, 63 passed, zero failed and one intentional optional-network skip. Typecheck, lint and production build passed; the build reports only the documented large-chunk performance advisory.
-- Source, unit, API and deployed HTTP acceptance are complete. The browser-control extension was unavailable, so the complete public visual judge flow at 1366 × 768 remains a manual Chrome/Lenovo LOQ check.
+- Final canonical `npm run verify`: 67 tests total, 66 passed, zero failed and one intentional optional-network skip. Typecheck, lint and production build passed; the build reports only the documented large-chunk performance advisory.
+- Remote-browser acceptance on the public Worker confirmed the labelled, slightly tilted globe, visible idle rotation, world search to New Delhi, district and street labels through deep zoom, no black canvas and no browser warnings or errors. A final run on the actual Lenovo LOQ remains the owner’s device-specific check.
 
 ## Oracle Free Tier expansion
 

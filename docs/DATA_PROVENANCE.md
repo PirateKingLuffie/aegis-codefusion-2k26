@@ -4,7 +4,7 @@ Every visible AEGIS fact is classified as **OBSERVED**, **IMPORTED**, **ESTIMATE
 
 | Source | Use | Key | Limitation |
 |---|---|---|---|
-| OpenFreeMap / CARTO / OpenStreetMap | World base context and available vector buildings | None | Map data can be incomplete or old |
+| OpenFreeMap / CARTO / OpenStreetMap | World base context, transparent map labels and available vector buildings | None | Map data can be incomplete or old |
 | EOX Sentinel-2 cloudless 2020 | Low-zoom cloudless Earth imagery context | None | Dated composite imagery; not a live satellite view; attribution/licence remains visible |
 | NASA EOSDIS GIBS Blue Marble | Low-zoom Earth imagery fallback/context | None | Dated visual context; not a live satellite view |
 | Public Terrarium / SRTM-derived tiles | Global terrain relief | None | Not survey-grade terrain; source resolution and age vary |

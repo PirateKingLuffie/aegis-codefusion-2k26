@@ -1,10 +1,52 @@
 import type { AegisCoordinate } from "./types";
 
 export const WORLD_GLOBE_CENTER: AegisCoordinate = [24, 16];
-export const WORLD_GLOBE_ZOOM = 2;
-export const WORLD_GLOBE_PITCH = 0;
-export const WORLD_GLOBE_BEARING = 0;
-export const WORLD_GLOBE_MAX_FOCUS_ZOOM = 6.5;
+export const WORLD_GLOBE_ZOOM = 1.96;
+export const WORLD_GLOBE_PITCH = 12;
+export const WORLD_GLOBE_BEARING = -8;
+
+/**
+ * Leave the spherical renderer before local-detail tiles are needed. The
+ * buffer below the raster hand-off prevents a one-frame black surface while
+ * MapLibre changes projection during a wheel or trackpad gesture.
+ */
+export const WORLD_GLOBE_EXIT_ZOOM = 5.25;
+export const WORLD_GLOBE_REENTRY_ZOOM = 4.7;
+export const WORLD_GLOBE_ORBIT_MAX_ZOOM = 3.6;
+export const WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM = 20;
+export const WORLD_DETAIL_IMAGERY_OPACITY_STOPS = [
+  0, 0.92,
+  5.5, 0.88,
+  8, 0.78,
+  11, 0.62,
+  14, 0.34,
+  16, 0.16,
+  18, 0.08,
+  20, 0.04,
+] as const;
+
+export const WORLD_CONTEXT_LAYER_IDS = {
+  roadCasing: "aegis-world-road-casing",
+  roads: "aegis-world-roads",
+  roadLabels: "aegis-world-road-labels",
+  countryLabels: "aegis-world-country-context-labels",
+  cityLabels: "aegis-world-city-context-labels",
+} as const;
+
+/** Glyph-free label safety net used when a WebGL runtime drops vector symbols. */
+export const WORLD_RASTER_LABELS = {
+  sourceId: "aegis-world-carto-labels",
+  layerId: "aegis-world-carto-labels-layer",
+  tiles: [
+    "https://a.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png",
+    "https://b.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png",
+    "https://c.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png",
+    "https://d.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png",
+  ],
+  minzoom: 0,
+  maxzoom: 20,
+  attribution: "CARTO / OpenStreetMap contributors",
+} as const;
 
 export const WORLD_IMAGERY_SOURCES = [
   {
@@ -39,9 +81,33 @@ export interface WorldCamera {
   bearing: number;
 }
 
+export type WorldProjectionMode = "globe" | "mercator";
+
+/**
+ * Projection selection with hysteresis. A zoom gesture can hover around a
+ * boundary for several frames; separate exit and re-entry thresholds stop the
+ * renderer from repeatedly rebuilding its projection.
+ */
+export function worldProjectionModeForZoom(
+  targetZoom: number,
+  currentMode: WorldProjectionMode = "globe",
+): WorldProjectionMode {
+  if (currentMode === "globe") {
+    return targetZoom < WORLD_GLOBE_EXIT_ZOOM ? "globe" : "mercator";
+  }
+  return targetZoom <= WORLD_GLOBE_REENTRY_ZOOM ? "globe" : "mercator";
+}
+
 /** Regional searches stay spherical; closer targets use Mercator for reliable street detail. */
 export function worldFocusUsesGlobe(targetZoom: number): boolean {
-  return targetZoom <= WORLD_GLOBE_MAX_FOCUS_ZOOM;
+  return worldProjectionModeForZoom(targetZoom, "globe") === "globe";
+}
+
+/** Keeps overview requests recognizably three-dimensional without over-tilting labels. */
+export function worldPitchForFocus(targetZoom: number, requestedPitch?: number): number {
+  if (!worldFocusUsesGlobe(targetZoom)) return requestedPitch ?? 18;
+  const requested = requestedPitch ?? WORLD_GLOBE_PITCH;
+  return Math.min(18, Math.max(8, requested || WORLD_GLOBE_PITCH));
 }
 
 /** Controlled consumers own the initial scene; only an uncontrolled map may auto-enter the twin. */
@@ -101,6 +167,11 @@ export function orbitResumeDeadline(
   activeFlightMs = 0,
 ): number {
   return nowMs + Math.max(1_500, idleResumeMs) + Math.max(0, activeFlightMs);
+}
+
+/** Initial orbit starts promptly; the longer idle delay is reserved for real interaction. */
+export function initialOrbitResumeDeadline(nowMs: number, startupDelayMs = 850): number {
+  return nowMs + Math.min(1_500, Math.max(250, startupDelayMs));
 }
 
 export function nextOrbitLongitude(

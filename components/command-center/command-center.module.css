@@ -4567,3 +4567,452 @@
   .worldSearchPopover { position: fixed; top: 66px; right: 8px; left: 8px; max-height: calc(100svh - 132px); }
   .worldSearchProvider span:last-child { display: none; }
 }
+
+/* V5 operations UI: a conventional GIS workspace with restrained, functional styling. */
+.shell {
+  --bg: #0a0c0d;
+  --panel: #111416;
+  --panel-2: #16191b;
+  --line: #2c3033;
+  --line-strong: #3b4044;
+  --text: #edf0f2;
+  --muted: #a8afb4;
+  --blue: #3488e8;
+  --green: #43b978;
+  --amber: #d2a84e;
+  --red: #e2525f;
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+}
+
+.shell button,
+.shell a,
+.shell input,
+.shell select,
+.shell textarea {
+  letter-spacing: normal;
+}
+
+.shell button:focus-visible,
+.shell a:focus-visible,
+.shell input:focus-visible,
+.shell select:focus-visible,
+.shell textarea:focus-visible {
+  outline: 2px solid #73a9e8;
+  outline-offset: 2px;
+}
+
+.entry {
+  gap: 10px;
+  background: #0a0c0d;
+}
+
+.entryEmblem {
+  width: 74px;
+  height: 74px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.entryEmblem::before,
+.entryEmblem::after { display: none; }
+.entry > strong { margin-top: 7px; font: 650 22px/1 var(--font-geist-sans), "Segoe UI", sans-serif; letter-spacing: .2em; text-indent: .2em; }
+.entry > small { color: #9ca2a6; font-size: 11px; letter-spacing: .02em; text-transform: none; }
+
+.header {
+  height: 58px;
+  grid-template-columns: minmax(238px, auto) minmax(250px, 1fr) auto;
+  gap: 14px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+  background: #111315;
+}
+
+.brand { gap: 10px; }
+.brandMark { width: 27px; height: 32px; }
+.brand strong { color: #f3f5f6; font-size: 16px; font-weight: 700; letter-spacing: .13em; }
+.brand span {
+  display: block;
+  margin-top: 3px;
+  color: #a5acb1;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.header .modeSwitch {
+  justify-self: center;
+  gap: 1px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.header .modeSwitch button {
+  min-height: 38px;
+  padding: 0 18px;
+  color: #a7adb1;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  font-size: 12px;
+  font-weight: 550;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.header .modeSwitch .modeActive {
+  color: #fff;
+  border-bottom-color: #dfe3e5;
+  background: #1b1e20;
+  box-shadow: none;
+}
+
+.headerStatus { gap: 6px; }
+.healthLabel,
+.iconButton,
+.mobileMenu {
+  min-height: 32px;
+  border-color: var(--line);
+  border-radius: 3px;
+  color: #b8bec2;
+  background: #171a1c;
+}
+
+.healthLabel { padding: 0 9px; font-size: 11px; }
+.healthGreen,
+.healthAmber { box-shadow: none; }
+.clock { margin: 0 4px; }
+.clock span { color: #d7dbdd; font-size: 12px; }
+.clock small { color: #91989c; font-size: 9px; }
+
+.alertStrip {
+  height: 35px;
+  grid-template-columns: 136px minmax(0, 1fr) auto;
+  border-bottom: 1px solid var(--line);
+  background: #0e1011;
+}
+
+.alertLead {
+  color: #d9dddf;
+  border-right: 1px solid var(--line);
+  background: #17191b;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.alertStrip > button,
+.alertStrip > button strong,
+.alertStrip > button > span:not(.statusTag),
+.alertStrip > button small,
+.alertSource { font-size: 11px; }
+.alertSource { color: #969da1; }
+
+.workspace {
+  height: calc(100svh - 93px);
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+
+.rail {
+  width: 72px;
+  gap: 3px;
+  padding: 7px 4px;
+  border-right: 1px solid var(--line);
+  background: #111315;
+}
+
+.rail button {
+  width: 63px;
+  height: 49px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #a3aaae;
+  border: 1px solid transparent;
+  border-radius: 2px;
+}
+
+.rail button:hover { color: #fff; border-color: var(--line); background: #1b1e20; }
+.rail .railActive { color: #fff; border-color: #42484c; background: #222629; box-shadow: inset 3px 0 #cfd4d7; }
+.railLabel { display: block; max-width: 60px; font-size: 9px; font-weight: 550; line-height: 1; }
+.operatorBadge { border-radius: 2px; color: #dfe3e5; border-color: var(--line-strong); background: #1a1d1f; }
+.mapStage { grid-column: 2; background: #080a0b; }
+.mapStage::after { box-shadow: none; }
+
+.locationBar {
+  top: 10px;
+  left: 12px;
+  right: 366px;
+  min-height: 52px;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: rgba(17, 20, 22, .97);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, .28);
+  backdrop-filter: none;
+}
+
+.locationIdentity { min-width: 176px; }
+.locationIdentity span,
+.scenarioHeader > div > span:first-child,
+.timeReadout span,
+.panelHeader span,
+.responseAction span,
+.sectionTitle > span,
+.liveNoticeTop span,
+.copilotHeader span,
+.copilotQuestion span,
+.answerSection > span,
+.answerEvidence > span,
+.recommendationBlock > div > span,
+.evidenceSummary .sectionTitle span {
+  color: #a7aeb2;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.locationIdentity strong { color: #f2f4f5; font-size: 13px; }
+.livePulse { width: 24px; height: 24px; border-radius: 50%; background: #151819; }
+.livePulse i { width: 7px; height: 7px; box-shadow: none; }
+.sceneSwitch { gap: 0; border-color: var(--line); border-radius: 3px; background: #151719; }
+.sceneSwitch button { min-height: 34px; padding: 0 10px; border-radius: 2px; color: #aab0b4; font-size: 11px; font-weight: 550; text-transform: none; }
+.sceneSwitch .sceneActive { color: #fff; background: #292d30; box-shadow: none; }
+.coordinates,
+.weatherChip { color: #aab1b5; font-size: 10px; }
+.searchButton { min-height: 34px; border-color: var(--line); border-radius: 3px; color: #dfe2e4; background: #1a1d1f; font-size: 11px; }
+
+.worldLocationSearchForm,
+.worldSearchPopover {
+  border-color: var(--line-strong);
+  border-radius: 3px;
+  background: #131618;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .36);
+}
+.worldLocationSearchForm input { font-size: 12px; }
+.worldSearchSubmit,
+.worldSearchOptions > button,
+.worldSearchFeedback { border-radius: 2px; }
+.worldSearchOptions b,
+.worldSearchOptions small { font-size: 11px; }
+
+.scenarioCard,
+.planOverlay,
+.commandPanel,
+.liveNotice,
+.providerPanel {
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: #111416;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .42);
+  backdrop-filter: none;
+}
+
+.scenarioCard { top: 72px; left: 12px; width: 306px; }
+.scenarioHeader { padding: 13px 12px 11px; border-bottom: 1px solid var(--line); }
+.scenarioHeader > button,
+.branchButton,
+.secondaryAction,
+.primaryAction,
+.planActions button,
+.responseAction > button {
+  border-radius: 3px;
+  font-size: 12px;
+}
+.scenarioHeader > button,
+.branchButton,
+.secondaryAction { color: #dde1e3; border-color: var(--line-strong); background: #1a1d1f; }
+.scenarioMenu { border-color: var(--line-strong); border-radius: 3px; background: #151819; box-shadow: 0 8px 20px rgba(0,0,0,.35); }
+.scenarioMenu > button { border-radius: 2px; }
+.scenarioMenu > button:hover,
+.scenarioMenu .scenarioSelected { background: #24282b; }
+.scenarioInputs > div:first-child span,
+.inputMeta span,
+.scenarioMenu button small,
+.comingSoon p { color: #aab1b5; font-size: 11px; }
+.branchButton { min-height: 39px; }
+
+.depthLegend,
+.semanticLegend,
+.timeline {
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: rgba(17, 20, 22, .97);
+  box-shadow: 0 5px 16px rgba(0,0,0,.28);
+  backdrop-filter: none;
+}
+.depthLegend { right: 366px; }
+.depthLegend > div:first-child > span:first-child,
+.legendScale span { font-size: 10px; text-transform: none; }
+.semanticLegend { left: 12px; }
+.semanticLegend span { color: #c0c5c8; font-size: 11px; }
+.timeline { left: 12px; right: 366px; bottom: 10px; height: 78px; }
+.transport button,
+.timelineActions button { border-radius: 3px; }
+.timeReadout strong { font-size: 16px; }
+
+.commandPanel { top: 10px; right: 10px; bottom: 10px; width: 342px; min-width: 318px; }
+.panelHeader,
+.tabs,
+.provenanceRow,
+.responseAction { border-color: var(--line); background: #141719; }
+.panelHeader { min-height: 58px; padding: 12px; }
+.panelHeader strong { font-size: 14px; font-weight: 650; letter-spacing: .02em; }
+.provenanceRow span,
+.metricTop,
+.metric small,
+.tabs button,
+.sectionTitle small,
+.sectionTitle button,
+.capacityRow small,
+.agentList small,
+.resourceList small { color: #aab1b5; font-size: 11px; }
+.metric { min-height: 94px; border-color: var(--line); background: #111416; }
+.metric strong { color: #f2f4f5; font-size: 23px; }
+.tabs button { min-height: 40px; color: #aab0b4; font-weight: 550; letter-spacing: 0; text-transform: none; }
+.tabs .tabActive { color: #fff; border-bottom-color: #dfe3e5; background: #1a1d1f; }
+.panelBody { padding: 12px; }
+.buildingXray,
+.riskSection,
+.capacitySection,
+.casualtySection,
+.secondaryConsequences { border-radius: 2px; background: #121517; }
+.casualtyGrid > div,
+.buildingXrayGrid > div,
+.cascadeNode,
+.agentList > div,
+.resourceList > div { border-radius: 2px; }
+.responseAction > button { background: #275f9e; border-color: #397dca; }
+
+.statusTag {
+  min-height: 20px;
+  padding: 3px 6px;
+  border-radius: 2px;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.tone_blue { color: #cde1f8; border-color: #456b94; background: #1b3046; }
+.tone_neutral { color: #d0d4d6; border-color: #4a4f52; background: #25282a; }
+.tone_green { color: #a8e2c0; border-color: #397557; background: #183626; }
+.tone_amber { color: #ead39e; border-color: #765f31; background: #382e18; }
+.tone_red { color: #f4b0b7; border-color: #823e47; background: #3b1e22; }
+
+.dragHandle { color: #979ea2; border-radius: 0; }
+.dragHandle:hover { color: #fff; background: #202427; }
+.panelControls button,
+.providerPanelHeader > button,
+.layerPanelHeader > button { border-radius: 2px; }
+
+.layerPanel {
+  right: 366px;
+  border-color: var(--line-strong);
+  border-radius: 4px;
+  background: #111416;
+  box-shadow: 0 10px 28px rgba(0,0,0,.42);
+}
+.layerPanelHeader,
+.providerPanelHeader { border-color: var(--line); background: #141719; }
+.layerPanelHeader span,
+.providerPanelHeader span,
+.layerRow small,
+.layerRow em { color: #aab1b5; }
+.layerRow { border-radius: 2px; }
+.layerRow:hover { background: #1b1e20; }
+.layerPanelMeta span,
+.layerReset,
+.layerTools > label:first-child,
+.layerTools select,
+.layerPresets button { border-radius: 2px; }
+
+.liveNotice { right: 366px; }
+.liveNoticeTop { border-bottom: 1px solid var(--line); background: #141719; }
+.liveSignalList button,
+.liveNoticeActions a,
+.liveNoticeActions button { border-radius: 2px; }
+.satelliteScan { background: #121517; background-image: none; }
+.copilotLauncher { right: 366px; border-radius: 3px; color: #e1e4e6; background: #171a1c; }
+
+.productDialog,
+.searchPanel,
+.comparisonPanel,
+.cascadePanel,
+.copilot {
+  border-color: var(--line-strong);
+  border-radius: 4px;
+  background: #111416;
+  box-shadow: 0 18px 52px rgba(0,0,0,.54);
+}
+.productDialogHeader,
+.modalHeader,
+.copilotHeader { border-color: var(--line); background: #171a1c; }
+.productDialogHeader span,
+.modalHeader span:first-child,
+.searchSectionLabel { color: #aab1b5; font-size: 11px; letter-spacing: 0; text-transform: none; }
+.productDialogHeader strong,
+.modalHeader strong { font-size: 16px; }
+.productDialogHeader > button,
+.presetGrid > button,
+.layoutGrid > button,
+.savedList > div > button,
+.commandSearch,
+.commandResults > button,
+.recoveryMetrics > div,
+.recoveryList article,
+.reentryList article,
+.thresholdAlertList article,
+.receiptList article,
+.auditList article { border-radius: 2px; }
+.cascadeCanvas { background: #101315; }
+.cascadeHero { border-radius: 3px; box-shadow: none; }
+.cascadeFlowLarge article,
+.cascadeDetailGrid article { border-radius: 2px; background: #151819; }
+
+@media (max-width: 1400px) {
+  .header { grid-template-columns: minmax(215px, auto) minmax(230px, 1fr) auto; }
+  .brand span { display: block; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .healthLabel span { display: none; }
+  .healthLabel { width: 32px; justify-content: center; padding: 0; }
+  .locationBar,
+  .timeline { right: 358px; }
+  .commandPanel { width: 334px; }
+  .depthLegend,
+  .copilotLauncher,
+  .layerPanel,
+  .liveNotice { right: 358px; }
+  .coordinates,
+  .weatherChip { display: none; }
+}
+
+@media (max-width: 1120px) {
+  .header .modeSwitch { display: none; }
+  .header { grid-template-columns: 1fr auto; }
+  .locationBar,
+  .timeline { right: 12px; }
+  .layerPanel,
+  .liveNotice { right: 12px; }
+  .commandPanel { position: fixed; top: 96px; right: 12px; bottom: 12px; width: min(360px, calc(100vw - 88px)); }
+  .depthLegend,
+  .copilotLauncher { right: 14px; }
+}
+
+@media (max-width: 780px) {
+  .header { height: 56px; padding: 0 10px; }
+  .brand span,
+  .healthLabel,
+  .clock { display: none; }
+  .workspace { height: calc(100svh - 91px); grid-template-columns: 1fr; }
+  .rail { width: auto; height: 56px; padding: 3px; }
+  .rail button { width: 50px; height: 48px; }
+  .railLabel { font-size: 8px; }
+}

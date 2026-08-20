@@ -2,8 +2,8 @@
 
 :root {
   color-scheme: dark;
-  --background: #020303;
-  --foreground: #f1f2f2;
+  --background: #0a0c0d;
+  --foreground: #edf0f2;
   --aegis-red: #ff4354;
   --aegis-route: #2f8fff;
   --aegis-safe: #43d17f;
@@ -37,6 +37,7 @@ body {
 
 body {
   overflow: hidden;
+  font-variant-numeric: tabular-nums;
 }
 
 button,
@@ -57,7 +58,12 @@ input:focus-visible {
 
 ::selection {
   color: #ffffff;
-  background: #245f9f;
+  background: #356b9f;
+}
+
+* {
+  scrollbar-color: #4a5054 #141719;
+  scrollbar-width: thin;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -60,7 +60,7 @@ Implemented service protections include strict validation, bounded payloads, req
 | Provider | Capability | Role in AEGIS | Important limitation |
 | --- | --- | --- | --- |
 | OpenFreeMap / OpenStreetMap | Primary vector basemap | Interactive world and local street/building context | Public tiles and source data can be incomplete, old or unavailable |
-| CARTO Dark Matter | Independent basemap fallback | Automatic second provider | Also uses OSM-derived context; it is not satellite imagery |
+| CARTO Dark Matter / labels-only tiles | Independent basemap and transparent-label fallback | Automatic second provider plus guaranteed country, city and street names above imagery | Uses OSM-derived context; it is not satellite imagery |
 | NASA Blue Marble / GIBS context | Low-zoom Earth imagery | Global visual context where configured by the renderer | Dated imagery, not live satellite |
 | EOX Sentinel-2 cloudless | Low-zoom cloudless imagery context | Higher-detail Earth context under provider vectors | Composite imagery, not a current live view; attribution must remain visible |
 | Public Terrarium elevation tiles | MapLibre terrain/hillshade | Global relief where available | Not survey-grade |

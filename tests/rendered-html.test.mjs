@@ -30,8 +30,8 @@ test("server-renders the AEGIS operations center", async () => {
   assert.match(html, /Adaptive Emergency Geospatial Intelligence/);
   assert.match(html, /Generate evacuation plan/);
   assert.match(html, /Global incident feeds/);
-  assert.match(html, /World incident overview/);
-  assert.match(html, /SIMULATED/);
+  assert.match(html, /Worldwide incident overview/);
+  assert.match(html, /Emergency Operations Console/);
   assert.doesNotMatch(html, /starter loading skeleton|react-loading-skeleton|codex-preview/i);
 });
 

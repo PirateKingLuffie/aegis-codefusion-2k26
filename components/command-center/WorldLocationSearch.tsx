@@ -274,7 +274,7 @@ export function WorldLocationSearch({
       {showPopover ? (
         <div className={styles.worldSearchPopover}>
           <div className={styles.worldSearchContext}>
-            <span>{query.trim() ? (directCoordinate ? "EXACT COORDINATE" : "WORLD SEARCH") : "QUICK ACCESS"}</span>
+            <span>{query.trim() ? (directCoordinate ? "Exact coordinate" : "Location results") : "Recent locations"}</span>
             <small>{activeName} · {formatCoordinate(activeLatitude, activeLongitude)}</small>
           </div>
           {options.length ? (
