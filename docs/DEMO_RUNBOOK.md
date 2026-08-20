@@ -2,7 +2,7 @@
 
 This is the primary **5–7 minute** judge flow for the Cloudflare command center at https://aegis-codefusion-2k26.guptashivaani233.workers.dev. The dedicated audit surface is https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger. Do not improvise numerical claims; let the current interface show them and state their evidence class.
 
-**Release gate:** completed for deployed application source `9b2d9f5` on Worker `e7142f5a-84bb-4692-8381-f4f749000147`. Check the live URL once on the presentation laptop before the judges arrive; the remaining device-specific check is the Lenovo LOQ manual pass.
+**Release gate:** completed for deployed application source `371ae53` on Worker `c408e9e0-a0df-4177-b0e3-25eee11a307a`. Check the live URL once on the presentation laptop before the judges arrive; the remaining device-specific check is the Lenovo LOQ manual pass.
 
 ## Roles
 

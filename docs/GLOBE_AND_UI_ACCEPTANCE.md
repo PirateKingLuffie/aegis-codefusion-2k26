@@ -89,8 +89,8 @@ Free public providers have no availability SLA. If one basemap fails, AEGIS swit
 
 ## Current-rehaul release record
 
-- Deployed application source: `9b2d9f5` (`fix: keep searched locations out of EIT twin`)
-- Command center Worker: `e7142f5a-84bb-4692-8381-f4f749000147`
+- Deployed application source: `371ae53` (`fix: finalize generic scenario identity and release ledger`)
+- Command center Worker: `c408e9e0-a0df-4177-b0e3-25eee11a307a`
 - Agent Ledger Worker: `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
 - Canonical verification: 76 total tests, 75 passed, zero failed and one optional public-live-feed test skipped; production build passed.
 - Remote-browser evidence: Public 1366 × 768 replay confirmed enabled Auto orbit control, Eiffel Tower OSM search, a labelled Paris street/arrondissement view with no black canvas, generic-world Scenario context and Tokyo earthquake at T+60. Browser warning/error log was empty throughout the replay.

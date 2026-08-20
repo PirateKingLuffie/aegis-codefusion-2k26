@@ -71,8 +71,8 @@ credentials/artwork; they cannot be fabricated in code.
                         remaining exposure and plan warning.
 
 CURRENT-REHAUL RELEASE RECORD:
-  Deployed application source:  9b2d9f5 (fix: keep searched locations out of EIT twin)
-  Main Worker version:          e7142f5a-84bb-4692-8381-f4f749000147
+  Deployed application source:  371ae53 (fix: finalize generic scenario identity and release ledger)
+  Main Worker version:          c408e9e0-a0df-4177-b0e3-25eee11a307a
   Ledger Worker version:        af5d0e22-9ed7-4e83-b0ff-ea62a312114f (unchanged)
   Canonical verify totals:      76 total / 75 passed / 0 failed / 1 optional live-feed skipped
   Production build:             PASS

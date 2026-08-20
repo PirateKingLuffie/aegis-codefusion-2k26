@@ -10,8 +10,8 @@ AEGIS combines a slowly rotating and searchable 3D world view, source-labelled i
 - **Dedicated Agent Ledger:** https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 - **Source repository:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26
 - **Windows and presentation downloads:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26/releases/tag/v0.1.0
-- **Deployed application source commit:** `9b2d9f5` (`fix: keep searched locations out of EIT twin`)
-- **Main Worker version:** `e7142f5a-84bb-4692-8381-f4f749000147`
+- **Deployed application source commit:** `371ae53` (`fix: finalize generic scenario identity and release ledger`)
+- **Main Worker version:** `c408e9e0-a0df-4177-b0e3-25eee11a307a`
 - **Ledger Worker version:** `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
 - **Canonical verification:** 76 tests total — 75 passed, 0 failed, 1 optional public-live-feed test skipped; production build passed.
 - **Remote browser:** At 1366 × 768, the public site loaded with no browser warnings/errors; the enabled Auto orbit control, world search, Paris/Eiffel Tower place selection, labelled streets/arrondissements, generic-location Scenario view, Tokyo earthquake preset and plan-grounded evacuation assistant were replayed successfully.
