@@ -3168,58 +3168,129 @@ function scaledTerrain(
   }));
 }
 
-function scaledPrototypeAssets(
+/**
+ * The EIT scenario is the source scaffold for the portable local model. Once
+ * it is moved or scaled for another location, neither its display labels nor
+ * its internal identifiers may imply that the generated assets belong to EIT.
+ *
+ * IDs are deliberately remapped as well as labels. Map layers, impact records,
+ * evacuation routes and decision receipts all surface these IDs, so retaining a
+ * source-campus id would be misleading even when the visible building label is
+ * neutral. Reference remapping preserves the transport graph's integrity.
+ */
+function genericPrototypeAssets(
   assets: ScenarioAssets,
-  sourceArea: ScenarioDefinition["area"],
-  destinationArea: ScenarioDefinition["area"],
+  projectCoordinate: (value: Coordinate) => Coordinate,
+  variant: "translated" | "area-scaled",
 ): ScenarioAssets {
-  const scale = (value: Coordinate) => scaleCoordinateBetweenAreas(value, sourceArea, destinationArea);
-  const typeCounts = new Map<string, number>();
+  const roadIds = new Map(assets.roads.map((road, index) => [road.id, `generic-road-${index + 1}`]));
+  const bridgeIds = new Map(assets.bridges.map((bridge, index) => [bridge.id, `generic-crossing-${index + 1}`]));
+  const buildingIds = new Map(assets.buildings.map((building, index) => [building.id, `generic-building-${index + 1}`]));
+  const nodeIds = new Map(assets.network.nodes.map((node, index) => [node.id, `generic-node-${index + 1}`]));
+  const facilityIds = new Map(assets.facilities.map((facility, index) => [facility.id, `generic-facility-${index + 1}`]));
+  const zoneIds = new Map(assets.populationZones.map((zone, index) => [zone.id, `generic-zone-${index + 1}`]));
+  const responderIds = new Map(assets.responders.map((unit, index) => [unit.id, `generic-unit-${index + 1}`]));
+  const edgeIds = new Map(assets.network.edges.map((edge, index) => [edge.id, `generic-edge-${index + 1}`]));
+  const remap = (ids: Map<string, string>, sourceId: string, kind: string) =>
+    ids.get(sourceId) ?? stableId(`generic-${kind}`, sourceId);
+  const facilityTypeCounts = new Map<string, number>();
+
   return {
-    roads: assets.roads.map((road, index) => ({
-      ...road,
-      name: `Estimated ${road.classification} route ${index + 1} (area-scaled prototype)`,
-      geometry: road.geometry.map(scale),
-    })),
+    roads: assets.roads.map((road, index) => {
+      const base = { ...road };
+      Reflect.deleteProperty(base, "sourceFeatureId");
+      return {
+        ...base,
+        id: remap(roadIds, road.id, "road"),
+        name: `Estimated ${road.classification} route ${index + 1} (${variant} prototype)`,
+        geometry: road.geometry.map(projectCoordinate),
+        geometryEvidenceClassification: "estimated",
+      };
+    }),
     bridges: assets.bridges.map((bridge, index) => ({
       ...bridge,
-      name: `Estimated crossing ${index + 1} (area-scaled prototype)`,
-      coordinate: scale(bridge.coordinate),
+      id: remap(bridgeIds, bridge.id, "crossing"),
+      name: `Estimated crossing ${index + 1} (${variant} prototype)`,
+      roadId: remap(roadIds, bridge.roadId, "road"),
+      coordinate: projectCoordinate(bridge.coordinate),
     })),
-    buildings: assets.buildings.map((building, index) => ({
-      ...building,
-      name: `Estimated ${building.use} building ${index + 1} (area-scaled prototype)`,
-      coordinate: scale(building.coordinate),
-      footprint: building.footprint?.map(scale),
-    })),
+    buildings: assets.buildings.map((building, index) => {
+      const base = { ...building };
+      Reflect.deleteProperty(base, "sourceFeatureId");
+      return {
+        ...base,
+        id: remap(buildingIds, building.id, "building"),
+        name: `Estimated ${building.use} building ${index + 1} (${variant} prototype)`,
+        coordinate: projectCoordinate(building.coordinate),
+        footprint: building.footprint?.map(projectCoordinate),
+        heightEvidenceClassification: "estimated",
+      };
+    }),
     facilities: assets.facilities.map((facility) => {
-      const count = (typeCounts.get(facility.type) ?? 0) + 1;
-      typeCounts.set(facility.type, count);
+      const count = (facilityTypeCounts.get(facility.type) ?? 0) + 1;
+      facilityTypeCounts.set(facility.type, count);
       return {
         ...facility,
-        name: `Estimated ${facility.type.replaceAll("_", " ")} facility ${count} (area-scaled prototype)`,
-        coordinate: scale(facility.coordinate),
+        id: remap(facilityIds, facility.id, "facility"),
+        name: `Estimated ${facility.type.replaceAll("_", " ")} facility ${count} (${variant} prototype)`,
+        coordinate: projectCoordinate(facility.coordinate),
+        networkNodeId: facility.networkNodeId
+          ? remap(nodeIds, facility.networkNodeId, "node")
+          : undefined,
       };
     }),
     populationZones: assets.populationZones.map((zone, index) => ({
       ...zone,
-      name: `Estimated population zone ${index + 1} (area-scaled prototype)`,
-      center: scale(zone.center),
+      id: remap(zoneIds, zone.id, "zone"),
+      name: `Estimated population zone ${index + 1} (${variant} prototype)`,
+      center: projectCoordinate(zone.center),
+      originNodeId: remap(nodeIds, zone.originNodeId, "node"),
     })),
     responders: assets.responders.map((unit, index) => ({
       ...unit,
+      id: remap(responderIds, unit.id, "unit"),
       name: `Scenario ${unit.type.replaceAll("_", " ")} unit ${index + 1}`,
+      homeNodeId: remap(nodeIds, unit.homeNodeId, "node"),
       capabilities: [...unit.capabilities],
     })),
     network: {
       nodes: assets.network.nodes.map((node, index) => ({
         ...node,
-        name: `Estimated network node ${index + 1} (area-scaled prototype)`,
-        coordinate: scale(node.coordinate),
+        id: remap(nodeIds, node.id, "node"),
+        name: `Estimated network node ${index + 1} (${variant} prototype)`,
+        coordinate: projectCoordinate(node.coordinate),
+        facilityId: node.facilityId
+          ? remap(facilityIds, node.facilityId, "facility")
+          : undefined,
       })),
-      edges: assets.network.edges.map((edge) => ({ ...edge })),
+      edges: assets.network.edges.map((edge) => {
+        const base = { ...edge };
+        Reflect.deleteProperty(base, "sourceFeatureId");
+        return {
+          ...base,
+          id: remap(edgeIds, edge.id, "edge"),
+          from: remap(nodeIds, edge.from, "node"),
+          to: remap(nodeIds, edge.to, "node"),
+          roadId: remap(roadIds, edge.roadId, "road"),
+          bridgeId: edge.bridgeId
+            ? remap(bridgeIds, edge.bridgeId, "crossing")
+            : undefined,
+        };
+      }),
     },
   };
+}
+
+function scaledPrototypeAssets(
+  assets: ScenarioAssets,
+  sourceArea: ScenarioDefinition["area"],
+  destinationArea: ScenarioDefinition["area"],
+): ScenarioAssets {
+  return genericPrototypeAssets(
+    assets,
+    (value) => scaleCoordinateBetweenAreas(value, sourceArea, destinationArea),
+    "area-scaled",
+  );
 }
 
 function translateAssetsPreservingNames(
@@ -3270,54 +3341,11 @@ function translatedPrototypeAssets(
   sourceCenter: Coordinate,
   destinationCenter: Coordinate,
 ): ScenarioAssets {
-  const translate = (value: Coordinate) =>
-    translateCoordinate(value, sourceCenter, destinationCenter);
-  const typeCounts = new Map<string, number>();
-  return {
-    roads: assets.roads.map((road, index) => ({
-      ...road,
-      name: `Estimated ${road.classification} route ${index + 1} (translated prototype)`,
-      geometry: road.geometry.map(translate),
-    })),
-    bridges: assets.bridges.map((bridge, index) => ({
-      ...bridge,
-      name: `Estimated crossing ${index + 1} (translated prototype)`,
-      coordinate: translate(bridge.coordinate),
-    })),
-    buildings: assets.buildings.map((building, index) => ({
-      ...building,
-      name: `Estimated ${building.use} building ${index + 1} (translated prototype)`,
-      coordinate: translate(building.coordinate),
-      footprint: building.footprint?.map(translate),
-    })),
-    facilities: assets.facilities.map((facility) => {
-      const count = (typeCounts.get(facility.type) ?? 0) + 1;
-      typeCounts.set(facility.type, count);
-      return {
-        ...facility,
-        name: `Estimated ${facility.type.replaceAll("_", " ")} facility ${count} (translated prototype)`,
-        coordinate: translate(facility.coordinate),
-      };
-    }),
-    populationZones: assets.populationZones.map((zone, index) => ({
-      ...zone,
-      name: `Estimated population zone ${index + 1} (translated prototype)`,
-      center: translate(zone.center),
-    })),
-    responders: assets.responders.map((unit, index) => ({
-      ...unit,
-      name: `Scenario ${unit.type.replaceAll("_", " ")} unit ${index + 1}`,
-      capabilities: [...unit.capabilities],
-    })),
-    network: {
-      nodes: assets.network.nodes.map((node, index) => ({
-        ...node,
-        name: `Estimated network node ${index + 1} (translated prototype)`,
-        coordinate: translate(node.coordinate),
-      })),
-      edges: assets.network.edges.map((edge) => ({ ...edge })),
-    },
-  };
+  return genericPrototypeAssets(
+    assets,
+    (value) => translateCoordinate(value, sourceCenter, destinationCenter),
+    "translated",
+  );
 }
 
 function cloneImportedAssets(assets: ScenarioAssets): ScenarioAssets {

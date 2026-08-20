@@ -10,18 +10,11 @@ AEGIS combines a slowly rotating and searchable 3D world view, source-labelled i
 - **Dedicated Agent Ledger:** https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 - **Source repository:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26
 - **Windows and presentation downloads:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26/releases/tag/v0.1.0
-- **Previously accepted main Worker version:** `58accdae-9be1-440c-b7f2-3cec0ff45e86`
-- **Previously accepted ledger Worker version:** `af5d0e22-9ed7-4e83-b0ff-ea62a312114f`
-
-### Current-rehaul release record — root must complete
-
-- **Final commit:** `[ROOT: INSERT FINAL COMMIT]`
-- **Main Worker version:** `[ROOT: INSERT FINAL MAIN WORKER VERSION]`
-- **Ledger Worker version:** `[ROOT: INSERT FINAL LEDGER WORKER VERSION OR “UNCHANGED”]`
-- **Canonical verification:** `[ROOT: INSERT EXACT TOTAL/PASS/FAIL/SKIP COUNTS]`
-- **Remote browser:** `[ROOT: INSERT SEARCH/ZOOM/ORBIT/HAZARD/CONSOLE RESULT]`
-
-The URLs above may still serve the preceding accepted release until this block is completed. Do not present the current source rehaul as deployed solely because the prior Worker IDs remain reachable.
+- **Deployed application source commit:** `9b2d9f5` (`fix: keep searched locations out of EIT twin`)
+- **Main Worker version:** `e7142f5a-84bb-4692-8381-f4f749000147`
+- **Ledger Worker version:** `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
+- **Canonical verification:** 76 tests total — 75 passed, 0 failed, 1 optional public-live-feed test skipped; production build passed.
+- **Remote browser:** At 1366 × 768, the public site loaded with no browser warnings/errors; the enabled Auto orbit control, world search, Paris/Eiffel Tower place selection, labelled streets/arrondissements, generic-location Scenario view, Tokyo earthquake preset and plan-grounded evacuation assistant were replayed successfully.
 
 Cloudflare D1 is migrated and live for immutable Agent Ledger receipt revisions. Cross-deployment `GET`, `POST` and human-review `PATCH` were verified. D1 is the ledger store only; scenario history remains browser-local unless the separate FastAPI operations service is deployed.
 
@@ -90,7 +83,7 @@ Open **Workspace → Campus data** to import a validated campus JSON file. The s
 - Capacity-aware evacuation origins/destinations, alternatives, staged departures, resources, shelters, coverage gaps and human approval receipts.
 - Imported OSRM candidates screened against active simulated consequence polygons before route styling.
 - Scenario save/load/version history, bookmarks, annotations, named layouts, replay, JSON/CSV/print exports, measurement, layer search/presets/solo/threshold, comparison layouts, alerts, command palette and local audit history.
-- The primary Scenario panel includes three loaded planning cases at different locations: EIT campus flood, Guwahati urban flood and Miami cyclone/surge. A separate Tokyo coastal-inundation card is explicitly labelled as a tsunami proxy that reuses the cyclone/surge low-point engine; it is not a calibrated tsunami solver.
+- The primary Scenario panel includes three loaded planning cases at different locations: EIT campus flood, Tokyo earthquake access and Miami cyclone/surge. A separate Sendai coastal-inundation card is explicitly labelled as a tsunami proxy that reuses the cyclone/surge low-point engine; it is not a calibrated tsunami solver.
 - Main World map, Incident, Scenarios, Impacts, Sources and Analysis destinations include concise purpose briefings instead of unexplained icons.
 - Decision support includes an **Explain evacuation procedure** action grounded in the current departure stages, screened route, destination/capacity, coverage, remaining exposure and model warning. The optional language layer may explain this structured plan; it does not create a route or evacuation order.
 
@@ -110,7 +103,7 @@ All hazard consequences and evacuation outcomes are prototype planning estimates
 - [Windows and deferred mobile builds](docs/PLATFORM_BUILDS.md)
 - [Completion ledger](COMPLETION.txt)
 
-## Previously accepted release verification snapshot
+## Earlier release verification snapshot
 
 - Five deployed hazard requests returned HTTP 200 in `100–420 ms`, each with 25 timeline frames. Flood returned 41 route candidates in the accepted sample; other hazards can truthfully return zero routes when no destination remains feasible.
 - A unique cold live-intelligence query completed in `4,559 ms` with three live sources, one degraded source and nine incidents; its immediate cached repeat completed in `169 ms`.
@@ -119,7 +112,7 @@ All hazard consequences and evacuation outcomes are prototype planning estimates
 - Final canonical `npm run verify`: 67 tests total, 66 passed, zero failed and one intentional optional-network skip. Typecheck, lint and production build passed; the build reports only the documented large-chunk performance advisory.
 - Remote-browser acceptance on the public Worker confirmed the labelled, slightly tilted globe, visible idle rotation, world search to New Delhi, district and street labels through deep zoom, no black canvas and no browser warnings or errors. A final run on the actual Lenovo LOQ remains the owner’s device-specific check.
 
-These results belong to the preceding accepted Worker versions listed above. The current-rehaul acceptance must be recorded separately in the placeholder block after its own build, deployment and remote-browser replay.
+These results are retained as earlier baseline evidence. The current released rehaul is recorded in the live-deployment section and in the globe/interface acceptance note above.
 
 ## Oracle Free Tier expansion
 

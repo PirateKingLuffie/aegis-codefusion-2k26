@@ -2,7 +2,7 @@
 
 This is the primary **5–7 minute** judge flow for the Cloudflare command center at https://aegis-codefusion-2k26.guptashivaani233.workers.dev. The dedicated audit surface is https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger. Do not improvise numerical claims; let the current interface show them and state their evidence class.
 
-**Release gate:** before using this runbook, the root release owner must replace the current-rehaul placeholders in `docs/GLOBE_AND_UI_ACCEPTANCE.md`, `README.md` and `COMPLETION.txt` with the exact final commit, verification totals and Worker version. Until that happens, the URLs may still serve the preceding accepted release.
+**Release gate:** completed for deployed application source `9b2d9f5` on Worker `e7142f5a-84bb-4692-8381-f4f749000147`. Check the live URL once on the presentation laptop before the judges arrive; the remaining device-specific check is the Lenovo LOQ manual pass.
 
 ## Roles
 
@@ -47,7 +47,7 @@ If feeds are quiet or degraded, search EIT directly and say that live provider s
 
 ### 1:10–2:25 — Selected location, scenario and EIT 3D flood consequence
 
-**Action:** Open **Scenarios** and point out its one-line purpose briefing and current X/Y/terrain-derived Z summary. Briefly show the three primary loaded cases—EIT Campus Flood Exercise, Guwahati Urban Flood and Miami Cyclone and Surge—then load EIT, select **Site 3D**, choose **Urban Flood**, switch to **SIMULATE**, and play or drag the timeline through rise, peak and recession. Pause at a visually clear impact minute.
+**Action:** Open **Scenarios** and point out its one-line purpose briefing and current X/Y/terrain-derived Z summary. Briefly show the three primary loaded cases—EIT Campus Flood Exercise, Tokyo Earthquake Access Exercise and Miami Cyclone and Surge—then load EIT, select **Site 3D**, choose **Urban Flood**, switch to **SIMULATE**, and play or drag the timeline through rise, peak and recession. Pause at a visually clear impact minute.
 
 **Show:**
 

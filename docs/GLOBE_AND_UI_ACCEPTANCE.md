@@ -48,7 +48,7 @@ The active interface follows a conventional GIS/emergency-operations hierarchy:
 - visible navigation names, a restrained header and a map-first 1366 × 768 layout;
 - a short purpose briefing beneath the active World map, Incident, Scenarios, Impacts, Sources and Analysis navigation title, with concise hover/rail briefings for the same destinations;
 - a Scenario panel that shows the current X longitude, Y latitude, terrain-derived Z context, hazard and selected minute;
-- three primary loaded cases—EIT campus flood, Guwahati urban flood and Miami cyclone/surge—plus a separate Tokyo coastal-inundation demonstration that is visibly disclosed as a cyclone/surge-engine tsunami proxy;
+- three primary loaded cases—EIT campus flood, Tokyo earthquake access and Miami cyclone/surge—plus a separate Sendai coastal-inundation demonstration that is visibly disclosed as a cyclone/surge-engine tsunami proxy;
 - an evacuation-procedure action in Decision support that is built from the current departure minute, staged demand, route, destination, capacity, remaining exposure and model warnings rather than a generic chat response;
 - all existing layer controls, panel dragging, docking, minimizing, resizing and reset behaviour preserved.
 
@@ -87,17 +87,16 @@ Use a clean current Chrome session at 100% zoom:
 
 Free public providers have no availability SLA. If one basemap fails, AEGIS switches to the independent fallback. If optional imagery fails while vectors remain healthy, the basemap is retained and the UI reports degraded imagery rather than discarding the world map.
 
-## Current-rehaul release record — root must complete
+## Current-rehaul release record
 
-- Final commit: `[ROOT: INSERT FINAL COMMIT]`
-- Command center Worker: `[ROOT: INSERT FINAL MAIN WORKER VERSION]`
-- Agent Ledger Worker: `[ROOT: INSERT FINAL LEDGER WORKER VERSION OR “UNCHANGED”]`
-- Canonical verification: `[ROOT: INSERT EXACT TOTAL/PASS/FAIL/SKIP COUNTS]`
-- Remote-browser evidence: `[ROOT: INSERT SEARCHES, ZOOM STEPS, ORBIT CHECK, HAZARD CHECKS AND CONSOLE RESULT]`
-- Public API smoke checks: `[ROOT: INSERT ENDPOINTS/HTTP RESULTS]`
-- Lenovo LOQ device check: `[ROOT: INSERT PASS/FAIL OR “OWNER MANUAL CHECK REMAINS”]`
-
-Do not copy the historical result below into this block unless the current-rehaul commit was actually built, deployed and replayed.
+- Deployed application source: `9b2d9f5` (`fix: keep searched locations out of EIT twin`)
+- Command center Worker: `e7142f5a-84bb-4692-8381-f4f749000147`
+- Agent Ledger Worker: `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
+- Canonical verification: 76 total tests, 75 passed, zero failed and one optional public-live-feed test skipped; production build passed.
+- Remote-browser evidence: Public 1366 × 768 replay confirmed enabled Auto orbit control, Eiffel Tower OSM search, a labelled Paris street/arrondissement view with no black canvas, generic-world Scenario context and Tokyo earthquake at T+60. Browser warning/error log was empty throughout the replay.
+- Public API smoke checks: `GET /api/health`, `GET /api/providers`, `GET /api/simulation/catalog` and Ledger `GET /api/agent-activity` each returned HTTP 200.
+- AI evacuation proof: The live command center returned a plan-grounded response through Cloudflare Workers AI (`@cf/meta/llama-3.2-3b-instruct`), labelled for human review, and rendered the calculated procedure/evidence.
+- Lenovo LOQ device check: owner manual check remains before presentation.
 
 ## Previously accepted public release — historical baseline only
 

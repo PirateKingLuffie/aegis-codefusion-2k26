@@ -40,8 +40,8 @@ require official EIT records, an owner-controlled Oracle full-stack deployment o
 credentials/artwork; they cannot be fabricated in code.
 
 
-1A. CURRENT URGENT REHAUL - SOURCE STATUS, FINAL RELEASE PENDING
-================================================================
+1A. CURRENT URGENT REHAUL - RELEASED AND VERIFIED
+==================================================
 
 [IMPLEMENTED IN SOURCE] Opaque keyless CARTO/OSM-derived street raster under the independent labels
                         overlay through high zoom, preventing the dated-imagery-to-street handoff from
@@ -59,8 +59,9 @@ credentials/artwork; they cannot be fabricated in code.
                         and operating-area workflow for the five executable hazard plugins. Local accuracy
                         remains bounded by available public map, terrain and input data.
 [IMPLEMENTED IN SOURCE] Scenario panel X/Y/terrain-derived Z context and three primary loaded cases:
-                        EIT Campus Flood Exercise, Guwahati Urban Flood and Miami Cyclone and Surge.
-[IMPLEMENTED IN SOURCE] A separate Tokyo coastal-inundation demonstration is visibly disclosed as a
+                        EIT Campus Flood Exercise, Tokyo Earthquake Access Exercise and Miami Cyclone
+                        and Surge.
+[IMPLEMENTED IN SOURCE] A separate Sendai coastal-inundation demonstration is visibly disclosed as a
                         cyclone/surge-engine tsunami proxy. It is not calibrated tsunami wave propagation,
                         run-up or official evacuation modelling.
 [IMPLEMENTED IN SOURCE] Main World map, Incident, Scenarios, Impacts, Sources and Analysis navigation
@@ -69,18 +70,21 @@ credentials/artwork; they cannot be fabricated in code.
                         departure minute, staged demand, screened route, destinations, capacity/coverage,
                         remaining exposure and plan warning.
 
-CURRENT-REHAUL RELEASE RECORD - ROOT MUST COMPLETE AFTER BUILD/DEPLOY/REMOTE REPLAY:
-  Final commit:                 [ROOT: INSERT FINAL COMMIT]
-  Main Worker version:         [ROOT: INSERT FINAL MAIN WORKER VERSION]
-  Ledger Worker version:       [ROOT: INSERT FINAL LEDGER WORKER VERSION OR "UNCHANGED"]
-  Canonical verify totals:     [ROOT: INSERT EXACT TOTAL/PASS/FAIL/SKIP]
-  Remote globe/search proof:   [ROOT: INSERT QUERIES, ZOOM STEPS, ORBIT PAUSE/RESUME AND CONSOLE RESULT]
-  Hazard animation proof:      [ROOT: INSERT FIVE-HAZARD RESULTS]
-  AI evacuation proof:         [ROOT: INSERT CURRENT-PLAN RESPONSE RESULT]
-  Lenovo LOQ manual check:     [ROOT: INSERT PASS/FAIL OR "OWNER CHECK REMAINS"]
-
-The verification and Worker IDs later in this ledger belong to the preceding accepted release. They
-must not be reused as proof of the current rehaul without a fresh build, deployment and browser replay.
+CURRENT-REHAUL RELEASE RECORD:
+  Deployed application source:  9b2d9f5 (fix: keep searched locations out of EIT twin)
+  Main Worker version:          e7142f5a-84bb-4692-8381-f4f749000147
+  Ledger Worker version:        af5d0e22-9ed7-4e83-b0ff-ea62a312114f (unchanged)
+  Canonical verify totals:      76 total / 75 passed / 0 failed / 1 optional live-feed skipped
+  Production build:             PASS
+  Public API smoke checks:      health, providers, simulation catalog and Agent Ledger all HTTP 200
+  Remote globe/search proof:    1366 x 768 public browser replay; Auto orbit enabled; Eiffel Tower search
+                                returned imported OSM place data, focused Paris with labelled streets and
+                                arrondissements, and produced no warning/error logs or black canvas.
+  Hazard animation proof:       five-plugin timeline/map test contract passed; Tokyo earthquake preset
+                                replayed at T+60 with its screening/impact state visible.
+  AI evacuation proof:          live Workers AI response returned from @cf/meta/llama-3.2-3b-instruct and
+                                the UI showed the current calculated evacuation procedure and evidence.
+  Lenovo LOQ manual check:      owner device check remains before presentation.
 
 
 2. USER EXPERIENCE AND VISUAL SYSTEM
