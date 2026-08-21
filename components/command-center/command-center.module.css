@@ -3067,17 +3067,6 @@
   white-space: nowrap;
 }
 
-.livePulse,
-.newsSignal {
-  animation: none;
-}
-
-.livePulse i,
-.newsSignal i {
-  animation: none;
-  box-shadow: none;
-}
-
 .sceneSwitch button,
 .searchButton {
   min-height: 36px;
