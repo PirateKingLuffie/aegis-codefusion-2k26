@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vinext dev",
     "build": "vinext build",
-    "start": "vinext start",
+    "start": "vinext start --port 4173",
     "demo": "vinext dev --host 0.0.0.0 --port 4173",
     "test": "npm run test:unit",
     "test:unit": "npm run build && tsx --test tests/*.test.mjs",
