@@ -1465,6 +1465,12 @@
   height: 5px;
   background: var(--red);
   border-radius: 50%;
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
 }
 
 .liveNoticeTop > div:nth-child(2),
@@ -5261,3 +5267,4 @@
   .locationIdentity > div:last-child > small { display: none; }
   .scenarioLibrary button i { display: none; }
 }
+
