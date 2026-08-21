@@ -2025,20 +2025,43 @@ export function CommandCenter() {
     setRightPanelOpen(true);
     setPanelTab("impact");
     setScenarioMenuOpen(false);
-    setPlanState("idle");
-    setEvacuationVisible(false);
+    const offsetLng = location.longitude + (location.id === "eit" ? 0.0016 : 0.003);
+    const offsetLat = location.latitude + (location.id === "eit" ? 0.0012 : 0.002);
+    const safeLng = location.longitude - (location.id === "eit" ? 0.0018 : 0.0035);
+    const safeLat = location.latitude - (location.id === "eit" ? 0.0014 : 0.003);
+    const hazardLabel = preset.hazard === "earthquake" ? "EPICENTER"
+      : preset.hazard === "wildfire" ? "IGNITION POINT"
+      : preset.hazard === "cyclone" ? "STORM CENTER"
+      : preset.hazard === "industrial" ? "RELEASE POINT"
+      : "FLOOD SOURCE";
+    setPlanState("ready");
+    setEvacuationVisible(true);
     setSurgeCapacity(false);
     setLiveRoadRoutes(null);
     setSourceIncident(undefined);
     setWeatherContext(null);
     setFieldOverlays(createFieldOverlays(location));
     setMapSelection({
-      points: [{
-        id: `hazard-${preset.id}`,
-        coordinates: [location.longitude, location.latitude],
-        role: "hazard-source",
-        label: `${preset.name} hazard origin`,
-      }],
+      points: [
+        {
+          id: `origin-${preset.id}`,
+          coordinates: [offsetLng, offsetLat],
+          role: "origin",
+          label: "EVAC ORIGIN",
+        },
+        {
+          id: `dest-${preset.id}`,
+          coordinates: [safeLng, safeLat],
+          role: "destination",
+          label: "SAFE POINT",
+        },
+        {
+          id: `hazard-${preset.id}`,
+          coordinates: [location.longitude, location.latitude],
+          role: "hazard-source",
+          label: `${preset.name} · ${hazardLabel}`,
+        },
+      ],
     });
     setFocusRequest({
       center: [location.longitude, location.latitude],
@@ -2622,6 +2645,7 @@ export function CommandCenter() {
           <Suspense fallback={<div className={styles.mapLoading}><Globe2 size={26} /><span>Loading geospatial engine</span></div>}>
             <OperationalMap
               autoFlyToEit={false}
+              hazardType={hazard}
               incidents={layerVisibility.incidents ? mapIncidents : []}
               layers={visibleMapLayers}
               twinScene={layerVisibility.structures ? twinScene : undefined}
@@ -2872,8 +2896,6 @@ export function CommandCenter() {
                 value={scenarioStrength}
                 onChange={(event) => {
                   setScenarioStrength(Number(event.target.value));
-                  setPlanState("idle");
-                  setEvacuationVisible(false);
                 }}
                 aria-label={control.label}
                 aria-valuetext={control.value}

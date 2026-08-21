@@ -363,6 +363,7 @@ export interface AegisMapProps {
   autoRotateSpeedDegPerSecond?: number;
   /** Delay after interaction before idle rotation resumes. Defaults to 3200 ms. */
   globeIdleResumeMs?: number;
+  hazardType?: string;
   defaultTool?: AegisMapTool;
   initialLayerVisibility?: Partial<Record<AegisMapLayerKey, boolean>>;
   externalOverlays?: AegisExternalOverlay[];

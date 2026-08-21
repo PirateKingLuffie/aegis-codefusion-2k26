@@ -1847,8 +1847,8 @@ function addMapLayers(
     paint: {
       "circle-radius": [
         "case",
-        ["boolean", ["get", "draft"], false], 4.5,
-        ["interpolate", ["linear"], ["zoom"], 0, 6.5, 8, 8.5, 16, 10.5],
+        ["boolean", ["get", "draft"], false], 8,
+        ["interpolate", ["linear"], ["zoom"], 0, 10, 8, 14, 16, 18],
       ],
       "circle-color": [
         "match", ["get", "role"],
@@ -1857,8 +1857,9 @@ function addMapLayers(
         "hazard-source", "#ff5970",
         "#edfaff",
       ],
-      "circle-stroke-color": "#061117",
-      "circle-stroke-width": 2,
+      "circle-stroke-color": "#ffffff",
+      "circle-stroke-width": 2.5,
+      "circle-opacity": 0.95,
     },
   } as LayerSpecification);
   addLayer(map, {
@@ -1869,18 +1870,18 @@ function addMapLayers(
     layout: {
       "text-field": ["coalesce", ["get", "label"], "POINT"],
       "text-font": MAP_FONT_STACK,
-      "text-size": ["interpolate", ["linear"], ["zoom"], 0, 10.5, 10, 12, 18, 13.5],
-      "text-offset": [0, 1.5],
+      "text-size": ["interpolate", ["linear"], ["zoom"], 0, 11, 10, 12.5, 18, 14],
+      "text-offset": [0, 1.6],
       "text-anchor": "top",
       "text-allow-overlap": true,
       "text-ignore-placement": true,
       "text-optional": false,
     },
     paint: {
-      "text-color": "#fff8f1",
-      "text-halo-color": "rgba(5,8,8,0.98)",
-      "text-halo-width": 1.8,
-      "text-halo-blur": 0.25,
+      "text-color": "#ffffff",
+      "text-halo-color": "#061117",
+      "text-halo-width": 2.2,
+      "text-halo-blur": 0.2,
     },
   } as LayerSpecification);
 }
@@ -2510,17 +2511,39 @@ function isInspectableBaseFeature(feature: MapGeoJSONFeature): boolean {
   );
 }
 
+function hazardSourceLabel(hazardType?: string): string {
+  switch (hazardType?.toLowerCase()) {
+    case "earthquake":
+      return "EPICENTER";
+    case "wildfire":
+      return "IGNITION POINT";
+    case "cyclone":
+      return "STORM CENTER";
+    case "chemical":
+    case "industrial":
+      return "RELEASE POINT";
+    case "flood":
+    default:
+      return "FLOOD SOURCE";
+  }
+}
+
 function pointForTool(
   tool: AegisMapTool,
   coordinate: AegisCoordinate,
   sequence: number,
+  hazardType?: string,
 ): AegisSelectionPoint | null {
   if (tool !== "origin" && tool !== "destination" && tool !== "hazard-source") return null;
   return {
     id: `${tool}-${sequence}`,
     coordinates: coordinate,
     role: tool,
-    label: tool === "origin" ? "EVAC ORIGIN" : tool === "destination" ? "SAFE POINT" : "FLOOD SOURCE",
+    label: tool === "origin"
+      ? "EVAC ORIGIN"
+      : tool === "destination"
+        ? "SAFE POINT"
+        : hazardSourceLabel(hazardType),
   };
 }
 
@@ -2573,6 +2596,7 @@ export function AegisMap({
   autoRotateGlobe = true,
   autoRotateSpeedDegPerSecond = WORLD_GLOBE_DEFAULT_ORBIT_SPEED,
   globeIdleResumeMs = WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS,
+  hazardType,
   defaultTool = "inspect",
   initialLayerVisibility,
   externalOverlays = EMPTY_OVERLAYS,
@@ -2621,6 +2645,7 @@ export function AegisMap({
   const autoFlightRef = useRef<number | null>(null);
   const globeIdleUntilRef = useRef(0);
   const globeRotationEnabledRef = useRef(autoRotateGlobe);
+  const hazardTypeRef = useRef(hazardType);
   const reducedMotionRef = useRef(false);
   const appliedViewModeRef = useRef<AegisMapViewMode>(viewMode ?? defaultViewMode);
 
@@ -2813,7 +2838,7 @@ export function AegisMap({
       return;
     }
     pointSequenceRef.current += 1;
-    const point = pointForTool(tool, coordinate, pointSequenceRef.current);
+    const point = pointForTool(tool, coordinate, pointSequenceRef.current, hazardTypeRef.current);
     if (!point) return;
     const current = currentSelectionRef.current;
     commitSelection({
@@ -2821,6 +2846,10 @@ export function AegisMap({
       points: [...current.points.filter((item) => item.role !== point.role), point],
     });
   }, [commitSelection, inspectCoordinate]);
+
+  useEffect(() => {
+    hazardTypeRef.current = hazardType;
+  }, [hazardType]);
 
   useEffect(() => {
     interactionRef.current = handleOperationalClick;
@@ -3308,21 +3337,7 @@ export function AegisMap({
             && visible
             && time >= globeIdleUntilRef.current;
           const mapMoving = map.isMoving();
-          if (shouldAdvanceOrbit({
-            worldView: activeViewRef.current === "world",
-            // Orbit is an overview presentation affordance. Once search or a
-            // click has descended into regional/street detail, keep that
-            // operational location fixed even after the idle timer expires.
-            enabled: globeRotationEnabledRef.current
-              && map.getZoom() <= WORLD_GLOBE_ORBIT_MAX_ZOOM
-              && worldProjectionMode === "globe",
-            reducedMotion: reducedMotionRef.current,
-            documentVisible: visible,
-            nowMs: time,
-            resumeAtMs: globeIdleUntilRef.current,
-            lastFrameMs: lastWorldRotation,
-            moving: mapMoving,
-          })) {
+          if (orbitCanRun && !mapMoving) {
             const elapsedSeconds = lastWorldRotation === 0
               ? 0
               : Math.min(0.12, (time - lastWorldRotation) / 1_000);
@@ -3336,7 +3351,7 @@ export function AegisMap({
               );
               map.setCenter([longitude, center.lat]);
             }
-          } else if (!orbitCanRun || mapMoving) {
+          } else {
             // Reset the time base while paused so resuming never jumps.
             lastWorldRotation = time;
           }

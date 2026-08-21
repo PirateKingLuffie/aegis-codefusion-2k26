@@ -229,6 +229,30 @@
   overflow: hidden;
 }
 
+@keyframes liveAlertPulse {
+  0%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 6px rgba(255, 109, 98, 0.9));
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    filter: drop-shadow(0 0 1px rgba(255, 109, 98, 0.2));
+    transform: scale(0.9);
+  }
+}
+
+@keyframes liveBadgeGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(255, 109, 98, 0.7), inset 0 0 4px rgba(255, 109, 98, 0.4);
+    border-color: rgba(255, 109, 98, 0.85);
+  }
+  50% {
+    box-shadow: 0 0 2px rgba(255, 109, 98, 0.15), inset 0 0 1px rgba(255, 109, 98, 0.1);
+    border-color: rgba(255, 109, 98, 0.3);
+  }
+}
+
 .alertLead {
   align-self: stretch;
   display: flex;
@@ -245,6 +269,7 @@
 
 .alertLead svg {
   color: var(--red);
+  animation: liveAlertPulse 1.3s ease-in-out infinite;
 }
 
 .alertStrip > button {
@@ -259,6 +284,10 @@
   color: #9cafb8;
   cursor: pointer;
   text-align: left;
+}
+
+.alertStrip > button > span:first-of-type {
+  animation: liveBadgeGlow 1.6s ease-in-out infinite;
 }
 
 .alertStrip > button strong {

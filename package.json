@@ -7,7 +7,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "vinext dev",
+    "dev": "vinext dev --port 4173",
     "build": "vinext build",
     "start": "vinext start --port 4173",
     "demo": "vinext dev --host 0.0.0.0 --port 4173",
