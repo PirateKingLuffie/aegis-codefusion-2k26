@@ -715,14 +715,7 @@ function addSources(map: MapLibreMap, data: SourceData, enableTerrain: boolean):
       data: data[key],
       generateId: true,
       lineMetrics: key === "flow" || key === "routes" || key === "hazardVectors",
-      ...(key === "incidents" ? {
-        cluster: true,
-        clusterMaxZoom: 7,
-        clusterRadius: 44,
-        clusterProperties: {
-          live_count: ["+", ["case", ["==", ["get", "live"], true], 1, 0]],
-        },
-      } : {}),
+      ...(key === "incidents" ? { cluster: false } : {}),
     });
   });
   if (enableTerrain) {
@@ -1642,7 +1635,7 @@ function addMapLayers(
     source: SOURCE_IDS.incidents,
     filter: ["has", "point_count"],
     paint: {
-      "circle-radius": ["step", ["get", "point_count"], 18, 10, 24, 40, 30],
+      "circle-radius": ["step", ["get", "point_count"], 30, 10, 36, 40, 42],
       "circle-color": ["case", [">", ["get", "live_count"], 0], "#ff263f", "#efc153"],
       "circle-opacity": 0.16,
       "circle-blur": 0.45,
@@ -1723,7 +1716,7 @@ function addMapLayers(
     source: SOURCE_IDS.incidents,
     filter: ["!", ["has", "point_count"]],
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 1, 4, 10, 7],
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 0, 14, 2, 10, 10, 7],
       "circle-color": [
         "case",
         ["==", ["get", "live"], true], "#ff263f",
