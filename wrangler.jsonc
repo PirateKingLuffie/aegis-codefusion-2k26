@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "aegis-codefusion-2k26",
+  "name": "aegis",
   "compatibility_date": "2026-08-20",
   "compatibility_flags": [
     "nodejs_compat"

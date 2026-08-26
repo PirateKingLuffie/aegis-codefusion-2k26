@@ -98,6 +98,7 @@ import {
   WORLD_IMAGERY_SOURCES,
   WORLD_RASTER_LABELS,
   WORLD_RASTER_STREETS,
+  incidentPingFrame,
   initialOrbitResumeDeadline,
   nextOrbitLongitude,
   orbitResumeDeadline,
@@ -357,13 +358,14 @@ const TOOL_OPTIONS: Array<{
   key: AegisMapTool;
   label: string;
   title: string;
+  hint: string;
   icon: ComponentType<{ size?: number; strokeWidth?: number }>;
 }> = [
-  { key: "inspect", label: "Inspect", title: "Inspect or pick a location", icon: MousePointer2 },
-  { key: "origin", label: "Origin", title: "Place evacuation origin", icon: MapPin },
-  { key: "destination", label: "Safe point", title: "Place evacuation destination", icon: Flag },
-  { key: "hazard-source", label: "Source", title: "Place flood source", icon: Waves },
-  { key: "area", label: "Area", title: "Draw operating area", icon: Crosshair },
+  { key: "inspect", label: "Inspect", title: "Inspect map feature or select a world location", hint: "Inspect feature or choose location", icon: MousePointer2 },
+  { key: "origin", label: "Origin", title: "Place the evacuation start point", hint: "Place evacuation start", icon: MapPin },
+  { key: "destination", label: "Safe point", title: "Place the screened evacuation destination", hint: "Place safe destination", icon: Flag },
+  { key: "hazard-source", label: "Source", title: "Place the active hazard source", hint: "Place hazard source", icon: Radio },
+  { key: "area", label: "Area", title: "Draw an operating area with at least three points", hint: "Draw 3+ point boundary", icon: Crosshair },
 ];
 
 const LAYER_OPTIONS: Array<{
@@ -612,6 +614,7 @@ function promoteOperationalPriorityMarkers(map: MapLibreMap): void {
     "aegis-incident-label",
     "aegis-selection-focus-halo",
     "aegis-selection-points",
+    "aegis-selection-glyphs",
     "aegis-selection-labels",
   ].forEach((id) => {
     try {
@@ -715,7 +718,14 @@ function addSources(map: MapLibreMap, data: SourceData, enableTerrain: boolean):
       data: data[key],
       generateId: true,
       lineMetrics: key === "flow" || key === "routes" || key === "hazardVectors",
-      ...(key === "incidents" ? { cluster: false } : {}),
+      ...(key === "incidents" ? {
+        cluster: true,
+        clusterMaxZoom: 7,
+        clusterRadius: 44,
+        clusterProperties: {
+          live_count: ["+", ["case", ["==", ["get", "live"], true], 1, 0]],
+        },
+      } : {}),
     });
   });
   if (enableTerrain) {
@@ -1856,6 +1866,35 @@ function addMapLayers(
     },
   } as LayerSpecification);
   addLayer(map, {
+    id: "aegis-selection-glyphs",
+    type: "symbol",
+    source: SOURCE_IDS.selection,
+    filter: ["==", ["geometry-type"], "Point"],
+    layout: {
+      "text-field": [
+        "case",
+        ["boolean", ["get", "draft"], false], ["coalesce", ["get", "label"], "+"],
+        [
+          "match", ["get", "role"],
+          "origin", "O",
+          "destination", "S",
+          "hazard-source", "!",
+          "+",
+        ],
+      ],
+      "text-font": MAP_FONT_STACK,
+      "text-size": ["interpolate", ["linear"], ["zoom"], 0, 9, 10, 11, 18, 13],
+      "text-allow-overlap": true,
+      "text-ignore-placement": true,
+      "text-optional": false,
+    },
+    paint: {
+      "text-color": "#071012",
+      "text-halo-color": "rgba(255,255,255,0.4)",
+      "text-halo-width": 0.45,
+    },
+  } as LayerSpecification);
+  addLayer(map, {
     id: "aegis-selection-labels",
     type: "symbol",
     source: SOURCE_IDS.selection,
@@ -2640,6 +2679,7 @@ export function AegisMap({
   const globeRotationEnabledRef = useRef(autoRotateGlobe);
   const hazardTypeRef = useRef(hazardType);
   const reducedMotionRef = useRef(false);
+  const globeRotationOverrideRef = useRef<boolean | null>(null);
   const appliedViewModeRef = useRef<AegisMapViewMode>(viewMode ?? defaultViewMode);
 
   const [internalSelection, setInternalSelection] = useState<AegisMapSelection>(
@@ -2658,6 +2698,7 @@ export function AegisMap({
   const [buildingsAvailable, setBuildingsAvailable] = useState(false);
   const [layerPanelOpen, setLayerPanelOpen] = useState(false);
   const [globeRotationOverride, setGlobeRotationOverride] = useState<boolean | null>(null);
+  const [reducedMotionPreference, setReducedMotionPreference] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
   const [providerState, setProviderState] = useState<MapProviderState>({
     providerId: "openfreemap-dark",
@@ -2678,10 +2719,13 @@ export function AegisMap({
   const campusTwinActive = Boolean(twinScene);
   const showCampusMassing = campusTwinActive && showEstimatedCampusMassing;
   const globeRotationEnabled = globeRotationOverride ?? autoRotateGlobe;
+  const globeRotationActive = globeRotationEnabled
+    && (!reducedMotionPreference || globeRotationOverride === true);
 
   useEffect(() => {
     globeRotationEnabledRef.current = globeRotationEnabled;
-  }, [globeRotationEnabled]);
+    globeRotationOverrideRef.current = globeRotationOverride;
+  }, [globeRotationEnabled, globeRotationOverride]);
 
   const normalizedLayers = useMemo<AegisMapLayers>(() => {
     if (!relocateLegacyEitGeometry) return layers;
@@ -2893,6 +2937,7 @@ export function AegisMap({
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const updateMotionPreference = () => {
       reducedMotionRef.current = motionQuery.matches;
+      setReducedMotionPreference(motionQuery.matches);
     };
     updateMotionPreference();
     motionQuery.addEventListener?.("change", updateMotionPreference);
@@ -3326,11 +3371,21 @@ export function AegisMap({
             && globeRotationEnabledRef.current
             && map.getZoom() <= WORLD_GLOBE_ORBIT_MAX_ZOOM
             && worldProjectionMode === "globe"
-            && !reducedMotionRef.current
             && visible
             && time >= globeIdleUntilRef.current;
           const mapMoving = map.isMoving();
-          if (orbitCanRun && !mapMoving) {
+          if (shouldAdvanceOrbit({
+            worldView: activeViewRef.current === "world",
+            enabled: globeRotationEnabledRef.current
+              && map.getZoom() <= WORLD_GLOBE_ORBIT_MAX_ZOOM
+              && worldProjectionMode === "globe",
+            reducedMotion: reducedMotionRef.current && globeRotationOverrideRef.current !== true,
+            documentVisible: visible,
+            nowMs: time,
+            resumeAtMs: globeIdleUntilRef.current,
+            lastFrameMs: lastWorldRotation,
+            moving: mapMoving,
+          })) {
             const elapsedSeconds = lastWorldRotation === 0
               ? 0
               : Math.min(0.12, (time - lastWorldRotation) / 1_000);
@@ -3344,56 +3399,62 @@ export function AegisMap({
               );
               map.setCenter([longitude, center.lat]);
             }
-          } else {
+          } else if (!orbitCanRun || mapMoving || (reducedMotionRef.current && globeRotationOverrideRef.current !== true)) {
             // Reset the time base while paused so resuming never jumps.
             lastWorldRotation = time;
           }
           if (time - lastAnimation >= 90 && visible) {
             lastAnimation = time;
             const pulse = (Math.sin(time / 430) + 1) / 2;
-            if (map.getLayer("aegis-incident-live-pulse")) {
-              map.setPaintProperty(
-                "aegis-incident-live-pulse",
-                "circle-radius",
-                ["interpolate", ["linear"], ["zoom"], 0, 10 + pulse * 18, 10, 16 + pulse * 24],
-              );
-              map.setPaintProperty("aegis-incident-live-pulse", "circle-opacity", 0.52 - pulse * 0.38);
-              map.setPaintProperty("aegis-incident-live-pulse", "circle-stroke-opacity", 0.96 - pulse * 0.72);
-            }
-            if (map.getLayer("aegis-selection-focus-halo")) {
-              map.setPaintProperty(
-                "aegis-selection-focus-halo",
-                "circle-radius",
-                ["interpolate", ["linear"], ["zoom"], 0, 9 + pulse * 8, 10, 13 + pulse * 11, 18, 18 + pulse * 15],
-              );
-              map.setPaintProperty("aegis-selection-focus-halo", "circle-opacity", 0.3 - pulse * 0.18);
-              map.setPaintProperty("aegis-selection-focus-halo", "circle-stroke-opacity", 0.9 - pulse * 0.5);
-            }
-            if (map.getLayer("aegis-hazard-footprint-outline")) {
-              map.setPaintProperty("aegis-hazard-footprint-outline", "line-opacity", 0.68 + pulse * 0.24);
-            }
-            if (map.getLayer("aegis-hazard-vector-line")) {
-              map.setPaintProperty("aegis-hazard-vector-line", "line-opacity", 0.7 + pulse * 0.26);
-            }
-            if (activeViewRef.current === "twin") {
-              if (map.getLayer("aegis-water-shoreline")) {
-                map.setPaintProperty("aegis-water-shoreline", "line-opacity", 0.64 + pulse * 0.32);
-                map.setPaintProperty("aegis-water-shoreline", "line-width", 1.8 + pulse * 1.05);
-              }
-              if (map.getLayer("aegis-water-sheen")) {
-                map.setPaintProperty("aegis-water-sheen", "fill-opacity", 0.08 + pulse * 0.1);
-              }
-              if (map.getLayer("aegis-campus-building-waterline")) {
+            try {
+              const ping = incidentPingFrame(time);
+              if (map.getLayer("aegis-incident-live-pulse")) {
                 map.setPaintProperty(
-                  "aegis-campus-building-waterline",
-                  "fill-extrusion-opacity",
-                  0.48 + pulse * 0.16,
+                  "aegis-incident-live-pulse",
+                  "circle-radius",
+                  ["interpolate", ["linear"], ["zoom"], 0, ping.worldRadius, 10, ping.streetRadius],
                 );
+                map.setPaintProperty("aegis-incident-live-pulse", "circle-opacity", ping.opacity);
+                map.setPaintProperty("aegis-incident-live-pulse", "circle-stroke-opacity", ping.strokeOpacity);
               }
-              if (routeDataRef.current?.features.length) {
-                const movers = map.getSource(SOURCE_IDS.routeMovers) as GeoJSONSource | undefined;
-                movers?.setData(buildRouteMovers(routeDataRef.current, (time / 6_500) % 1));
+              if (map.getLayer("aegis-selection-focus-halo")) {
+                map.setPaintProperty(
+                  "aegis-selection-focus-halo",
+                  "circle-radius",
+                  ["interpolate", ["linear"], ["zoom"], 0, 9 + pulse * 8, 10, 13 + pulse * 11, 18, 18 + pulse * 15],
+                );
+                map.setPaintProperty("aegis-selection-focus-halo", "circle-opacity", 0.3 - pulse * 0.18);
+                map.setPaintProperty("aegis-selection-focus-halo", "circle-stroke-opacity", 0.9 - pulse * 0.5);
               }
+              if (map.getLayer("aegis-hazard-footprint-outline")) {
+                map.setPaintProperty("aegis-hazard-footprint-outline", "line-opacity", 0.68 + pulse * 0.24);
+              }
+              if (map.getLayer("aegis-hazard-vector-line")) {
+                map.setPaintProperty("aegis-hazard-vector-line", "line-opacity", 0.7 + pulse * 0.26);
+              }
+              if (activeViewRef.current === "twin") {
+                if (map.getLayer("aegis-water-shoreline")) {
+                  map.setPaintProperty("aegis-water-shoreline", "line-opacity", 0.64 + pulse * 0.32);
+                  map.setPaintProperty("aegis-water-shoreline", "line-width", 1.8 + pulse * 1.05);
+                }
+                if (map.getLayer("aegis-water-sheen")) {
+                  map.setPaintProperty("aegis-water-sheen", "fill-opacity", 0.08 + pulse * 0.1);
+                }
+                if (map.getLayer("aegis-campus-building-waterline")) {
+                  map.setPaintProperty(
+                    "aegis-campus-building-waterline",
+                    "fill-extrusion-opacity",
+                    0.48 + pulse * 0.16,
+                  );
+                }
+                if (routeDataRef.current?.features.length) {
+                  const movers = map.getSource(SOURCE_IDS.routeMovers) as GeoJSONSource | undefined;
+                  movers?.setData(buildRouteMovers(routeDataRef.current, (time / 6_500) % 1));
+                }
+              }
+            } catch {
+              // A concurrent provider-style reload may temporarily remove a
+              // layer. Keep the animation loop alive; style.load reinstalls it.
             }
           }
           animationFrame = window.requestAnimationFrame(animate);
@@ -3575,12 +3636,15 @@ export function AegisMap({
     }
     draftAreaRef.current = [];
     setDraftArea([]);
+    activeToolRef.current = "inspect";
     setActiveTool("inspect");
   };
 
   const clearSelection = () => {
     draftAreaRef.current = [];
     setDraftArea([]);
+    activeToolRef.current = "inspect";
+    setActiveTool("inspect");
     commitSelection({ points: [] });
     setInspection(null);
     callbacksRef.current.onFeatureInspect?.(null);
@@ -3642,7 +3706,7 @@ export function AegisMap({
         {visibleConnection !== "offline" ? <i>{providerState.providerLabel.toUpperCase()}</i> : null}
         {terrainAvailable && visibleConnection !== "offline" ? <i>TERRAIN</i> : null}
         {buildingsAvailable && visibleConnection !== "offline" ? <i>3D</i> : null}
-        {activeViewMode === "world" && globeRotationEnabled ? <i>AUTO ORBIT</i> : null}
+        {activeViewMode === "world" && globeRotationActive ? <i>AUTO ORBIT</i> : null}
       </header>
 
       {showViewModeControl ? <div className={styles.modeSwitch} role="group" aria-label="Map view mode">
@@ -3667,15 +3731,19 @@ export function AegisMap({
       </div> : null}
 
       <nav className={styles.toolRail} aria-label="Map tools">
-        {TOOL_OPTIONS.map(({ key, label, title, icon: Icon }) => (
+        <span className={styles.toolRailHeading}>MAP INPUT</span>
+        {TOOL_OPTIONS.map(({ key, label, title, hint, icon: Icon }) => (
           <button
             key={key}
             type="button"
             data-active={activeTool === key}
-            aria-label={title}
+            data-tool={key}
+            data-tooltip={hint}
+            aria-label={`${title}${activeTool === key ? ". Active tool" : ""}`}
             title={title}
             aria-pressed={activeTool === key}
             onClick={() => {
+              activeToolRef.current = key;
               setActiveTool(key);
               if (key !== "area" && draftArea.length) {
                 draftAreaRef.current = [];
@@ -3688,7 +3756,14 @@ export function AegisMap({
           </button>
         ))}
         <i />
-        <button type="button" onClick={clearSelection} title="Clear selection" aria-label="Clear selection">
+        <button
+          type="button"
+          data-tool="clear"
+          data-tooltip="Clear markers and boundary"
+          onClick={clearSelection}
+          title="Clear all map selections"
+          aria-label="Clear all map selections and return to Inspect"
+        >
           <Trash2 size={16} /><span>Clear</span>
         </button>
       </nav>
@@ -3705,10 +3780,14 @@ export function AegisMap({
         {activeViewMode === "world" ? (
           <button
             type="button"
-            onClick={() => setGlobeRotationOverride((override) => !(override ?? autoRotateGlobe))}
-            aria-label={globeRotationEnabled ? "Pause automatic globe rotation" : "Resume automatic globe rotation"}
-            aria-pressed={globeRotationEnabled}
-            title={globeRotationEnabled ? "Pause globe rotation" : "Resume globe rotation"}
+            onClick={() => setGlobeRotationOverride((override) => {
+              const running = (override ?? autoRotateGlobe)
+                && (!reducedMotionPreference || override === true);
+              return running ? false : true;
+            })}
+            aria-label={globeRotationActive ? "Pause automatic globe rotation" : "Resume automatic globe rotation"}
+            aria-pressed={globeRotationActive}
+            title={globeRotationActive ? "Pause globe rotation" : "Resume globe rotation"}
           ><RotateCw size={17} /></button>
         ) : null}
         <button type="button" onClick={() => zoom(1)} aria-label="Zoom in" title="Zoom in"><ZoomIn size={17} /></button>

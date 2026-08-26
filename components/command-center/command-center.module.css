@@ -269,6 +269,9 @@
 
 .alertLead svg {
   color: var(--red);
+}
+
+.alertStrip[data-live="true"] .alertLead svg {
   animation: liveAlertPulse 1.3s ease-in-out infinite;
 }
 
@@ -286,7 +289,7 @@
   text-align: left;
 }
 
-.alertStrip > button > span:first-of-type {
+.alertStrip[data-live="true"] > button > span:first-of-type {
   animation: liveBadgeGlow 1.6s ease-in-out infinite;
 }
 
@@ -1465,6 +1468,10 @@
   height: 5px;
   background: var(--red);
   border-radius: 50%;
+  opacity: 0.55;
+}
+
+.newsSignal[data-live="true"] i {
   animation: blink 1.5s ease-in-out infinite;
 }
 

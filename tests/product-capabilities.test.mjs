@@ -21,6 +21,7 @@ import {
   WORLD_RASTER_LABELS,
   WORLD_RASTER_STREETS,
   initialOrbitResumeDeadline,
+  incidentPingFrame,
   isProviderContextLabelLayer,
   nextOrbitLongitude,
   orbitResumeDeadline,
@@ -160,7 +161,10 @@ test("style reload reinstalls street, label, marker and pulse layers below opera
   assert.ok(reloadPath.indexOf("installRasterStreetFallback(map)") < reloadPath.indexOf("addMapLayers(map"));
   assert.ok(reloadPath.indexOf("installRasterLabelFallback(map)") < reloadPath.indexOf("addMapLayers(map"));
   assert.match(source, /aegis-selection-focus-halo/);
+  assert.match(source, /aegis-selection-glyphs/);
   assert.match(source, /aegis-incident-live-pulse/);
+  assert.match(source, /clusterProperties/);
+  assert.match(source, /live_count/);
   assert.match(source, /aegis-hazard-footprint-fill/);
   assert.match(source, /aegis-hazard-vector-line/);
   assert.match(source, /hazardFootprints: asAny\(layers\.hazardFootprints\)/);
@@ -235,6 +239,17 @@ test("globe orbit advances slowly and continuously while respecting runtime gate
   assert.equal(shouldAdvanceOrbit({ ...ready, documentVisible: false }), false);
   assert.equal(shouldAdvanceOrbit({ ...ready, moving: true }), false);
   assert.equal(shouldAdvanceOrbit({ ...ready, lastFrameMs: 9_980 }), false);
+});
+
+test("live incident ping expands and fades without leaving visible bounds", () => {
+  for (const time of [0, 215, 430, 860, 1_720, 4_300]) {
+    const frame = incidentPingFrame(time);
+    assert.ok(frame.progress >= 0 && frame.progress <= 1);
+    assert.ok(frame.worldRadius >= 10 && frame.worldRadius <= 28);
+    assert.ok(frame.streetRadius >= 16 && frame.streetRadius <= 40);
+    assert.ok(frame.opacity >= 0.14 && frame.opacity <= 0.52);
+    assert.ok(frame.strokeOpacity >= 0.24 && frame.strokeOpacity <= 0.96);
+  }
 });
 
 test("controlled WORLD maps keep the globe instead of auto-flying to the twin", () => {

@@ -5,7 +5,7 @@ Project: AEGIS — Adaptive Emergency Geospatial Intelligence & Simulation
 Team: X
 Lead: Sankalp Gupta
 Institution: Echelon Institute of Technology, Faridabad
-Command center: https://aegis-codefusion-2k26.guptashivaani233.workers.dev
+Command center: https://aegis.guptashivaani233.workers.dev
 Agent Ledger: https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 Source: https://github.com/PirateKingLuffie/aegis-codefusion-2k26
 Downloads: https://github.com/PirateKingLuffie/aegis-codefusion-2k26/releases/tag/v0.1.0

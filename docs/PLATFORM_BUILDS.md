@@ -28,7 +28,7 @@ The independent manifest/hash comparison matched both files. Authenticode state 
 
 ## Public web service
 
-- Command center: https://aegis-codefusion-2k26.guptashivaani233.workers.dev
+- Command center: https://aegis.guptashivaani233.workers.dev
 - Dedicated Agent Ledger: https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 
 These Cloudflare deployments are the active judge targets. D1 stores Agent Ledger receipt revisions; it is not the full PostGIS/FastAPI operational backend.
@@ -95,7 +95,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Start-AEGIS.ps1
 For the default local URL, the launcher starts the production web server if it is not healthy, waits for `/api/health`, and then opens the newest portable AEGIS executable. To use a deployed service:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Start-AEGIS.ps1 -ServerUrl 'https://aegis-codefusion-2k26.guptashivaani233.workers.dev'
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Start-AEGIS.ps1 -ServerUrl 'https://aegis.guptashivaani233.workers.dev'
 ```
 
 The desktop executable is a Tauri/WebView2 command-center client, not a bundled database or background server. Its full durable workflow uses the same web/API deployment described below.

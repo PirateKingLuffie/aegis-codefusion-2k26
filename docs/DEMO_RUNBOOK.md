@@ -1,6 +1,6 @@
 # AEGIS demo runbook
 
-This is the primary **5–7 minute** judge flow for the Cloudflare command center at https://aegis-codefusion-2k26.guptashivaani233.workers.dev. The dedicated audit surface is https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger. Do not improvise numerical claims; let the current interface show them and state their evidence class.
+This is the primary **5–7 minute** judge flow for the Cloudflare command center at https://aegis.guptashivaani233.workers.dev. The dedicated audit surface is https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger. Do not improvise numerical claims; let the current interface show them and state their evidence class.
 
 **Release gate:** completed for deployed application source `371ae53` on Worker `c408e9e0-a0df-4177-b0e3-25eee11a307a`. Check the live URL once on the presentation laptop before the judges arrive; the remaining device-specific check is the Lenovo LOQ manual pass.
 
@@ -12,7 +12,7 @@ This is the primary **5–7 minute** judge flow for the Cloudflare command cente
 
 ## Final preflight — complete before judges enter
 
-1. Open `https://aegis-codefusion-2k26.guptashivaani233.workers.dev` in a clean, current Chrome window at 100% zoom.
+1. Open `https://aegis.guptashivaani233.workers.dev` in a clean, current Chrome window at 100% zoom.
 2. Use the Lenovo LOQ on AC power, Windows performance mode, RTX 4050 enabled and Chrome hardware acceleration on.
 3. Confirm that the slightly tilted globe renders with place labels, begins a slow orbit after its startup delay, pauses on drag/scroll and resumes only after idle at world-overview zoom.
 4. Open **Service setup** from the header. Confirm **OpenFreeMap** is primary, **CARTO Dark Matter** is fallback, and no required paid key is missing.

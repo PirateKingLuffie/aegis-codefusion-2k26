@@ -1490,6 +1490,28 @@ export function CommandCenter() {
     setSurgeCapacity(false);
   }, []);
 
+  const focusIncidentOnWorld = useCallback((incident: LiveIncidentSummary) => {
+    const coordinate = incident.location.coordinates;
+    if (!coordinate) return;
+    setViewMode("monitor");
+    focusWorldLocation({
+      id: `live-${incident.id}`,
+      name: incident.location.name || incident.title,
+      region: `${incident.provenance.sourceName} · imported incident context`,
+      latitude: coordinate.latitude,
+      longitude: coordinate.longitude,
+      type: "live-incident",
+      zoom: 5.8,
+      fidelity: "GLOBAL PROTOTYPE",
+    });
+    setSourceIncident({
+      id: incident.id,
+      title: incident.title,
+      provider: incident.provenance.sourceName,
+      observedAt: incident.observedAt,
+    });
+  }, [focusWorldLocation]);
+
   const enterWorldView = useCallback(() => {
     setSceneView("world");
     setActiveNav("global");
@@ -1807,7 +1829,21 @@ export function CommandCenter() {
     return [exercise, ...observed];
   }, [activeLocation, coreHazard, liveIntelligence, selectedHazard.label]);
   const liveMediaVideo = liveIntelligence?.media?.videos[0];
-  const headlineIncident = liveIntelligence?.incidents[0];
+  const headlineIncident = useMemo(() => {
+    const incidents = liveIntelligence?.incidents ?? [];
+    return incidents.find((incident) => (
+      incident.location.coordinates
+      && incident.provenance.status === "live"
+      && (incident.state === "active" || incident.state === "monitoring")
+    ))
+      ?? incidents.find((incident) => incident.location.coordinates)
+      ?? incidents[0];
+  }, [liveIntelligence]);
+  const headlineIsLive = Boolean(
+    headlineIncident
+    && headlineIncident.provenance.status === "live"
+    && (headlineIncident.state === "active" || headlineIncident.state === "monitoring"),
+  );
   const liveMediaLink =
     liveMediaVideo?.watchUrl ??
     liveIntelligence?.media?.links.find((link) => link.kind === "youtube-search")?.url ??
@@ -2580,14 +2616,14 @@ export function CommandCenter() {
         </section>
       ) : null}
 
-      <div className={styles.alertStrip}>
+      <div className={styles.alertStrip} data-live={headlineIsLive ? "true" : "false"}>
         <div className={styles.alertLead}>
           <Radio size={14} />
           Incident updates
         </div>
         <button onClick={() => setLiveNoticeOpen(true)}>
-            <StatusTag tone={headlineIncident?.severity === "critical" || headlineIncident?.severity === "high" ? "red" : "amber"}>
-              {headlineIncident ? "Source-labelled" : "Connecting"}
+            <StatusTag tone={headlineIsLive ? "red" : "neutral"}>
+              {headlineIsLive ? "Live source" : headlineIncident ? "Archived context" : "Connecting"}
           </StatusTag>
           <strong>{headlineIncident?.location.name || "Global incident feeds"}</strong>
           <span>{headlineIncident?.title || "Waiting for source-labelled events"}</span>
@@ -3445,8 +3481,8 @@ export function CommandCenter() {
             <GripHorizontal size={18} />
           </button>
           <div className={styles.liveNoticeTop}>
-            <div className={styles.newsSignal}><Radio size={15} /><i /></div>
-            <div><span>{liveRefreshing ? "Refreshing incident feeds" : liveChangeCount ? `${liveChangeCount} changes since last refresh` : headlineIncident ? "Source-labelled incident brief" : "Incident intelligence"}</span><strong>{headlineIncident?.title ?? "No active incident selected"}</strong></div>
+            <div className={styles.newsSignal} data-live={headlineIsLive ? "true" : "false"}><Radio size={15} /><i /></div>
+            <div><span>{liveRefreshing ? "Refreshing incident feeds" : liveChangeCount ? `${liveChangeCount} changes since last refresh` : headlineIsLive ? "Live source-labelled incident" : headlineIncident ? "Archived source-labelled context" : "Incident intelligence"}</span><strong>{headlineIncident?.title ?? "No active incident selected"}</strong></div>
             <PanelControls panel={newsPanel} label="live intelligence" onClose={() => setLiveNoticeOpen(false)} />
           </div>
           <div className={styles.liveNoticeVisual}>
@@ -3493,18 +3529,8 @@ export function CommandCenter() {
                   key={incident.id}
                   disabled={!incident.location.coordinates}
                   onClick={() => {
-                    const coordinate = incident.location.coordinates;
-                    if (!coordinate) return;
-                    focusLocation({
-                      id: `live-${incident.id}`,
-                      name: incident.location.name || incident.title,
-                      region: `${incident.provenance.sourceName} · imported incident context`,
-                      latitude: coordinate.latitude,
-                      longitude: coordinate.longitude,
-                      fidelity: "GLOBAL PROTOTYPE",
-                    });
+                    focusIncidentOnWorld(incident);
                     setLiveNoticeOpen(false);
-                    setActiveNav("incident");
                   }}
                 >
                   <i className={styles[`signal_${incident.severity === "medium" ? "amber" : incident.severity === "low" ? "blue" : "red"}`]} />
@@ -3515,7 +3541,7 @@ export function CommandCenter() {
             </div>
           ) : null}
           <div className={styles.liveNoticeSources}>
-            <StatusTag tone={headlineIncident?.severity === "critical" || headlineIncident?.severity === "high" ? "red" : "neutral"}>{headlineIncident ? "Source-labelled" : "No report"}</StatusTag>
+            <StatusTag tone={headlineIsLive ? "red" : "neutral"}>{headlineIsLive ? "Live source" : headlineIncident ? "Archived context" : "No report"}</StatusTag>
             <span>{headlineIncident ? `${headlineIncident.provenance.sourceName} · ${headlineIncident.observedAt ?? "time unavailable"}` : "No report is being presented as live"}</span>
           </div>
           <div className={styles.liveNoticeActions}>
@@ -3523,22 +3549,8 @@ export function CommandCenter() {
               <RefreshCw size={14} className={liveRefreshing ? styles.spin : ""} /> Refresh feeds
             </button>
             <button type="button" disabled={!headlineIncident?.location.coordinates} onClick={() => {
-              const coordinate = headlineIncident?.location.coordinates;
-              if (!coordinate) return;
-              focusLocation({
-                id: `live-${headlineIncident.id}`,
-                name: headlineIncident.location.name || headlineIncident.title,
-                region: `${headlineIncident.provenance.sourceName} · imported incident context`,
-                latitude: coordinate.latitude,
-                longitude: coordinate.longitude,
-                fidelity: "GLOBAL PROTOTYPE",
-              });
-              setSourceIncident({
-                id: headlineIncident.id,
-                title: headlineIncident.title,
-                provider: headlineIncident.provenance.sourceName,
-                observedAt: headlineIncident.observedAt,
-              });
+              if (!headlineIncident) return;
+              focusIncidentOnWorld(headlineIncident);
               setLiveNoticeOpen(false);
             }}><MapPinned size={14} /> Focus on map</button>
             <button type="button" disabled={!headlineIncident?.location.coordinates} onClick={() => {

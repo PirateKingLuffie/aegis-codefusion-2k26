@@ -12,7 +12,7 @@ Deferred target: phone application (documentation only)
 Operating model: single operator, no login, online-first
 Cost policy: zero-paid-key deterministic core, no billing-required map path; optional free-allocation Workers AI narrative
 Primary demo target: Lenovo LOQ, i5-12450HX, RTX 4050, 24 GB DDR5, 1366 x 768
-Live command center: https://aegis-codefusion-2k26.guptashivaani233.workers.dev
+Live command center: https://aegis.guptashivaani233.workers.dev
 Dedicated Agent Ledger: https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 Previously accepted main Worker version: 58accdae-9be1-440c-b7f2-3cec0ff45e86
 Previously accepted ledger Worker version: af5d0e22-9ed7-4e83-b0ff-ea62a312114f
@@ -582,7 +582,7 @@ The unsigned build is usable for the hackathon; signing is a distribution-trust 
 ================
 
 Use `docs\DEMO_RUNBOOK.md` for the judge flow. Open
-`https://aegis-codefusion-2k26.guptashivaani233.workers.dev` in a clean browser session, confirm one basemap
+`https://aegis.guptashivaani233.workers.dev` in a clean browser session, confirm one basemap
 reports ready, show WORLD rotation, enter SITE 3D, play flood depth/damage through time, inspect one
 building/road, generate and approve an evacuation plan, compare interventions, show cascade/recovery,
 then open source-labelled live intelligence and provider readiness. Open the dedicated Agent Ledger at

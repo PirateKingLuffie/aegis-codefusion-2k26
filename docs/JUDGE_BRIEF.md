@@ -9,7 +9,7 @@
 - **Institution:** Echelon Institute of Technology, Faridabad
 - **Active deliverables:** responsive web command center and Windows desktop shell
 - **Deferred scope:** phone application is documented, not presented as a completed build
-- **Live command center:** https://aegis-codefusion-2k26.guptashivaani233.workers.dev
+- **Live command center:** https://aegis.guptashivaani233.workers.dev
 - **Dedicated Agent Ledger:** https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 
 ## Match to the event judging criteria

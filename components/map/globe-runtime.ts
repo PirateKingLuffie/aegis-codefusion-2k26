@@ -13,9 +13,9 @@ export const WORLD_GLOBE_BEARING = -8;
 export const WORLD_GLOBE_EXIT_ZOOM = 5.25;
 export const WORLD_GLOBE_REENTRY_ZOOM = 4.7;
 export const WORLD_GLOBE_ORBIT_MAX_ZOOM = 3.6;
-export const WORLD_GLOBE_DEFAULT_ORBIT_SPEED = 2.5;
-export const WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS = 1_500;
-export const WORLD_GLOBE_INITIAL_ORBIT_DELAY_MS = 300;
+export const WORLD_GLOBE_DEFAULT_ORBIT_SPEED = 0.5;
+export const WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS = 3_200;
+export const WORLD_GLOBE_INITIAL_ORBIT_DELAY_MS = 650;
 export const WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM = 20;
 export const WORLD_DETAIL_IMAGERY_OPACITY_STOPS = [
   0, 0.92,
@@ -231,4 +231,24 @@ export function shouldAdvanceOrbit(input: {
     && input.nowMs >= input.resumeAtMs
     && input.nowMs - input.lastFrameMs >= 32
     && !input.moving;
+}
+
+export interface IncidentPingFrame {
+  progress: number;
+  worldRadius: number;
+  streetRadius: number;
+  opacity: number;
+  strokeOpacity: number;
+}
+
+/** Stable alert-ring values shared by the live map loop and its regression tests. */
+export function incidentPingFrame(timeMs: number): IncidentPingFrame {
+  const progress = (Math.sin(Math.max(0, timeMs) / 430) + 1) / 2;
+  return {
+    progress,
+    worldRadius: 10 + progress * 18,
+    streetRadius: 16 + progress * 24,
+    opacity: 0.52 - progress * 0.38,
+    strokeOpacity: 0.96 - progress * 0.72,
+  };
 }
