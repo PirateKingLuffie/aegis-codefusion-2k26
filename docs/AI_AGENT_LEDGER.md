@@ -144,7 +144,7 @@ The live dedicated surface is https://aegis-agent-ledger-codefusion-2k26.guptash
 
 ## Live release acceptance
 
-- Main Worker version: `d17fab58-065c-44b1-98bb-160f06b5082c`.
+- Main Worker version: `9aa3dea2-6254-4dc2-aed2-eec8ce39fee8`.
 - Ledger Worker version: `af5d0e22-9ed7-4e83-b0ff-ea62a312114f`.
 - D1 migration was applied in APAC; cross-deployment `GET`, `POST` and human-review `PATCH` completed successfully.
 - Workers AI returned the grounded narrative in approximately `1.94 s` during acceptance.

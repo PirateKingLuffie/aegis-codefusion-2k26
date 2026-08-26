@@ -10,8 +10,8 @@ AEGIS combines a slowly rotating and searchable 3D world view, source-labelled i
 - **Dedicated Agent Ledger:** https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 - **Source repository:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26
 - **Windows and presentation downloads:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26/releases/tag/v0.1.0
-- **Deployed application source commit:** `a78d873` (`fix: credit readable street fallback`)
-- **Main Worker version:** `d17fab58-065c-44b1-98bb-160f06b5082c`
+- **Deployed application source commit:** `8d1f94e` (`fix: prefer OSM geometry for high zoom`)
+- **Main Worker version:** `9aa3dea2-6254-4dc2-aed2-eec8ce39fee8`
 - **Ledger Worker version:** `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
 - **Canonical verification:** 77 tests total — 76 passed, 0 failed, 1 optional public-live-feed test skipped; production build passed.
 - **Remote browser:** At 1366 × 768, the clean public site loaded with no browser warnings/errors; orbit override, live-source focus, Tokyo world search, origin/safe/source tools, operating-area completion and reset were replayed successfully.

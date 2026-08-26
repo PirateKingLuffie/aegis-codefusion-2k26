@@ -89,8 +89,8 @@ Free public providers have no availability SLA. If one basemap fails, AEGIS swit
 
 ## Current-rehaul release record
 
-- Deployed application source: `a78d873` (`fix: credit readable street fallback`)
-- Command center Worker: `d17fab58-065c-44b1-98bb-160f06b5082c`
+- Deployed application source: `8d1f94e` (`fix: prefer OSM geometry for high zoom`)
+- Command center Worker: `9aa3dea2-6254-4dc2-aed2-eec8ce39fee8`
 - Agent Ledger Worker: `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
 - Canonical verification: 77 total tests, 76 passed, zero failed and one optional public-live-feed test skipped; production build passed.
 - Remote-browser evidence: Public 1366 × 768 replay confirmed orbit override, Tokyo OSM search, live-source Focus on map staying in Global map mode, Origin/Safe point/Source/Area completion and Clear reset. Browser warning/error log was empty throughout the final replay.
