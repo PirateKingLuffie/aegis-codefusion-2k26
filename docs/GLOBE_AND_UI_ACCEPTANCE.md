@@ -89,11 +89,11 @@ Free public providers have no availability SLA. If one basemap fails, AEGIS swit
 
 ## Current-rehaul release record
 
-- Deployed application source: `371ae53` (`fix: finalize generic scenario identity and release ledger`)
-- Command center Worker: `c408e9e0-a0df-4177-b0e3-25eee11a307a`
+- Deployed application source: `aed08c8` (`fix: avoid globe fog projection warning`)
+- Command center Worker: `f7ed8020-13c3-4d75-8288-e22ca531a58b`
 - Agent Ledger Worker: `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
-- Canonical verification: 76 total tests, 75 passed, zero failed and one optional public-live-feed test skipped; production build passed.
-- Remote-browser evidence: Public 1366 × 768 replay confirmed enabled Auto orbit control, Eiffel Tower OSM search, a labelled Paris street/arrondissement view with no black canvas, generic-world Scenario context and Tokyo earthquake at T+60. Browser warning/error log was empty throughout the replay.
+- Canonical verification: 77 total tests, 76 passed, zero failed and one optional public-live-feed test skipped; production build passed.
+- Remote-browser evidence: Public 1366 × 768 replay confirmed orbit override, Tokyo OSM search, live-source Focus on map staying in Global map mode, Origin/Safe point/Source/Area completion and Clear reset. Browser warning/error log was empty throughout the final replay.
 - Public API smoke checks: `GET /api/health`, `GET /api/providers`, `GET /api/simulation/catalog` and Ledger `GET /api/agent-activity` each returned HTTP 200.
 - AI evacuation proof: The live command center returned a plan-grounded response through Cloudflare Workers AI (`@cf/meta/llama-3.2-3b-instruct`), labelled for human review, and rendered the calculated procedure/evidence.
 - Lenovo LOQ device check: owner manual check remains before presentation.

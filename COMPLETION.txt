@@ -14,7 +14,7 @@ Cost policy: zero-paid-key deterministic core, no billing-required map path; opt
 Primary demo target: Lenovo LOQ, i5-12450HX, RTX 4050, 24 GB DDR5, 1366 x 768
 Live command center: https://aegis.guptashivaani233.workers.dev
 Dedicated Agent Ledger: https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
-Previously accepted main Worker version: 58accdae-9be1-440c-b7f2-3cec0ff45e86
+Current main Worker version: f7ed8020-13c3-4d75-8288-e22ca531a58b
 Previously accepted ledger Worker version: af5d0e22-9ed7-4e83-b0ff-ea62a312114f
 Ledger date: 21 August 2026
 
@@ -53,6 +53,11 @@ credentials/artwork; they cannot be fabricated in code.
                         delay, interaction pause and idle resume only at compatible globe-overview zoom.
 [IMPLEMENTED IN SOURCE] Red animated incident halo for current/live source-labelled records and clusters;
                         this is provider-derived context, not an AEGIS field observation.
+[IMPLEMENTED IN SOURCE] Live incident focus keeps the operator in Global map mode instead of opening
+                        the black close-range twin fallback; archived context is visibly non-live.
+[IMPLEMENTED IN SOURCE] Map input rail now synchronously activates Inspect, Origin, Safe point, Source
+                        and Area tools, with semantic color, accessible hints, complete/reset handling and
+                        a visible selection glyph layer.
 [IMPLEMENTED IN SOURCE] Hazard-specific, timeline-selected map/twin primitives for flood, earthquake,
                         wildfire, cyclone/surge and chemical release, with SIMULATED truth labels.
 [IMPLEMENTED IN SOURCE] Arbitrary valid world search/map coordinate plus hazard-source, origin, destination
@@ -71,15 +76,16 @@ credentials/artwork; they cannot be fabricated in code.
                         remaining exposure and plan warning.
 
 CURRENT-REHAUL RELEASE RECORD:
-  Deployed application source:  371ae53 (fix: finalize generic scenario identity and release ledger)
-  Main Worker version:          c408e9e0-a0df-4177-b0e3-25eee11a307a
+  Deployed application source:  aed08c8 (fix: avoid globe fog projection warning)
+  Main Worker version:          f7ed8020-13c3-4d75-8288-e22ca531a58b
   Ledger Worker version:        af5d0e22-9ed7-4e83-b0ff-ea62a312114f (unchanged)
-  Canonical verify totals:      76 total / 75 passed / 0 failed / 1 optional live-feed skipped
+  Canonical verify totals:      77 total / 76 passed / 0 failed / 1 optional live-feed skipped
   Production build:             PASS
   Public API smoke checks:      health, providers, simulation catalog and Agent Ledger all HTTP 200
-  Remote globe/search proof:    1366 x 768 public browser replay; Auto orbit enabled; Eiffel Tower search
-                                returned imported OSM place data, focused Paris with labelled streets and
-                                arrondissements, and produced no warning/error logs or black canvas.
+  Remote globe/search proof:    1366 x 768 public browser replay; orbit override enabled; Tokyo search
+                                returned imported OSM place data, live-source Focus on map stayed in the
+                                global view, Origin/Safe point/Source/Area tools completed and reset,
+                                and the final globe-to-street transition produced no warning/error logs.
   Hazard animation proof:       five-plugin timeline/map test contract passed; Tokyo earthquake preset
                                 replayed at T+60 with its screening/impact state visible.
   AI evacuation proof:          live Workers AI response returned from @cf/meta/llama-3.2-3b-instruct and
@@ -376,7 +382,7 @@ Public upstreams can throttle, revise or become unavailable; AEGIS reports this 
 13. ORACLE / CONTAINER DEPLOYMENT PACKAGE
 ==========================================
 
-[LIVE] Cloudflare command center Worker version 58accdae-9be1-440c-b7f2-3cec0ff45e86.
+[LIVE] Cloudflare command center Worker version f7ed8020-13c3-4d75-8288-e22ca531a58b.
 [LIVE] Dedicated Agent Ledger Worker version af5d0e22-9ed7-4e83-b0ff-ea62a312114f.
 [LIVE] D1 migration applied in APAC; cross-deployment create, read, human review and verified revision 2 passed.
 

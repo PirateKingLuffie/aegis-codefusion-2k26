@@ -10,11 +10,11 @@ AEGIS combines a slowly rotating and searchable 3D world view, source-labelled i
 - **Dedicated Agent Ledger:** https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 - **Source repository:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26
 - **Windows and presentation downloads:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26/releases/tag/v0.1.0
-- **Deployed application source commit:** `371ae53` (`fix: finalize generic scenario identity and release ledger`)
-- **Main Worker version:** `c408e9e0-a0df-4177-b0e3-25eee11a307a`
+- **Deployed application source commit:** `aed08c8` (`fix: avoid globe fog projection warning`)
+- **Main Worker version:** `f7ed8020-13c3-4d75-8288-e22ca531a58b`
 - **Ledger Worker version:** `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
-- **Canonical verification:** 76 tests total — 75 passed, 0 failed, 1 optional public-live-feed test skipped; production build passed.
-- **Remote browser:** At 1366 × 768, the public site loaded with no browser warnings/errors; the enabled Auto orbit control, world search, Paris/Eiffel Tower place selection, labelled streets/arrondissements, generic-location Scenario view, Tokyo earthquake preset and plan-grounded evacuation assistant were replayed successfully.
+- **Canonical verification:** 77 tests total — 76 passed, 0 failed, 1 optional public-live-feed test skipped; production build passed.
+- **Remote browser:** At 1366 × 768, the clean public site loaded with no browser warnings/errors; orbit override, live-source focus, Tokyo world search, origin/safe/source tools, operating-area completion and reset were replayed successfully.
 
 Cloudflare D1 is migrated and live for immutable Agent Ledger receipt revisions. Cross-deployment `GET`, `POST` and human-review `PATCH` were verified. D1 is the ledger store only; scenario history remains browser-local unless the separate FastAPI operations service is deployed.
 
