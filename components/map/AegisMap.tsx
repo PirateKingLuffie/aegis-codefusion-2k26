@@ -2435,12 +2435,13 @@ function setAtmosphere(map: MapLibreMap, world: boolean): void {
     // Street-level globe rendering can turn the canvas black when terrain is
     // enabled, so hand close-range views to Mercator before the camera flight.
     map.setProjection({ type: world ? "globe" : "mercator" });
+    // MapLibre's fog matrix is not implemented for globe projection. Keep
+    // the globe atmosphere on its supported sky fields and only use fog
+    // fields after handing off to Mercator street/detail mode. This avoids a
+    // noisy console warning and prevents a transient black frame on search.
     map.setSky(world ? {
       "sky-color": "#010305",
       "horizon-color": "#7094a3",
-      "fog-color": "#1b2d35",
-      "fog-ground-blend": 0.56,
-      "horizon-fog-blend": 0.52,
       "sky-horizon-blend": 0.68,
       "atmosphere-blend": [
         "interpolate", ["linear"], ["zoom"],
