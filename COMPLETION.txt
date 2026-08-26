@@ -14,7 +14,7 @@ Cost policy: zero-paid-key deterministic core, no billing-required map path; opt
 Primary demo target: Lenovo LOQ, i5-12450HX, RTX 4050, 24 GB DDR5, 1366 x 768
 Live command center: https://aegis.guptashivaani233.workers.dev
 Dedicated Agent Ledger: https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
-Current main Worker version: 819d39c9-84f9-4215-a655-50f6a7a9b06b
+Current main Worker version: d17fab58-065c-44b1-98bb-160f06b5082c
 Previously accepted ledger Worker version: af5d0e22-9ed7-4e83-b0ff-ea62a312114f
 Ledger date: 21 August 2026
 
@@ -76,8 +76,8 @@ credentials/artwork; they cannot be fabricated in code.
                         remaining exposure and plan warning.
 
 CURRENT-REHAUL RELEASE RECORD:
-  Deployed application source:  0c068bf (fix: keep high zoom world map readable)
-  Main Worker version:          819d39c9-84f9-4215-a655-50f6a7a9b06b
+  Deployed application source:  a78d873 (fix: credit readable street fallback)
+  Main Worker version:          d17fab58-065c-44b1-98bb-160f06b5082c
   Ledger Worker version:        af5d0e22-9ed7-4e83-b0ff-ea62a312114f (unchanged)
   Canonical verify totals:      77 total / 76 passed / 0 failed / 1 optional live-feed skipped
   Production build:             PASS
@@ -382,7 +382,7 @@ Public upstreams can throttle, revise or become unavailable; AEGIS reports this 
 13. ORACLE / CONTAINER DEPLOYMENT PACKAGE
 ==========================================
 
-[LIVE] Cloudflare command center Worker version 819d39c9-84f9-4215-a655-50f6a7a9b06b.
+[LIVE] Cloudflare command center Worker version d17fab58-065c-44b1-98bb-160f06b5082c.
 [LIVE] Dedicated Agent Ledger Worker version af5d0e22-9ed7-4e83-b0ff-ea62a312114f.
 [LIVE] D1 migration applied in APAC; cross-deployment create, read, human review and verified revision 2 passed.
 
