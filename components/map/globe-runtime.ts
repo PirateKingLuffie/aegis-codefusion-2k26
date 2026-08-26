@@ -51,20 +51,26 @@ export const WORLD_RASTER_LABELS = {
   attribution: "CARTO / OpenStreetMap contributors",
 } as const;
 
-/** Keyless high-zoom streets/buildings safety net; labels are a separate layer. */
+/** Keyless high-zoom streets/buildings safety net.
+ *
+ * The former CARTO dark/voyager tiles are valid but opaque blank tiles in
+ * low-feature regions. They hide satellite/vector context and make a zoomed
+ * world view look black or white. Esri's public World Street Map tiles retain
+ * a visible land surface plus country, city, road and POI labels without an
+ * API key. The independent CARTO label fallback remains available when the
+ * street tiles are delayed.
+ */
 export const WORLD_RASTER_STREETS = {
   sourceId: "aegis-world-carto-streets",
   layerId: "aegis-world-carto-streets-layer",
   tiles: [
-    "https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png",
-    "https://b.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png",
-    "https://c.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png",
-    "https://d.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png",
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   ],
   minzoom: 0,
-  maxzoom: 20,
+  maxzoom: 19,
   layerMinzoom: 5,
-  attribution: "CARTO / OpenStreetMap contributors",
+  attribution: "Esri World Street Map / OpenStreetMap contributors",
   opacityStops: [
     0, 0,
     5.5, 0,
