@@ -1493,7 +1493,14 @@ export function CommandCenter() {
   const focusIncidentOnWorld = useCallback((incident: LiveIncidentSummary) => {
     const coordinate = incident.location.coordinates;
     if (!coordinate) return;
-    setViewMode("monitor");
+    const nextHazard = hazardFromIncidentCategory(incident.category);
+    const incidentZoom = nextHazard === "cyclone"
+      ? 5.8
+      : nextHazard === "wildfire"
+        ? 9.2
+        : nextHazard === "industrial"
+          ? 11.2
+          : 10.4;
     focusWorldLocation({
       id: `live-${incident.id}`,
       name: incident.location.name || incident.title,
@@ -1501,9 +1508,27 @@ export function CommandCenter() {
       latitude: coordinate.latitude,
       longitude: coordinate.longitude,
       type: "live-incident",
-      zoom: 5.8,
+      // A closer regional frame makes the hazard footprint, affected roads
+      // and modelled damage layer visible immediately after a live ping is
+      // selected. Source-reported facts remain separate from the simulation.
+      zoom: incidentZoom,
       fidelity: "GLOBAL PROTOTYPE",
     });
+    setHazard(nextHazard);
+    setScenarioStrength(
+      incident.severity === "critical" ? 90 : incident.severity === "high" ? 82 : incident.severity === "medium" ? 68 : 55,
+    );
+    setViewMode("simulate");
+    setActiveNav("incident");
+    setMinute(45);
+    setRightPanelOpen(true);
+    setLayerVisibility((current) => ({
+      ...current,
+      hazard: true,
+      damage: true,
+      roads: true,
+      incidents: true,
+    }));
     setSourceIncident({
       id: incident.id,
       title: incident.title,
@@ -1511,6 +1536,44 @@ export function CommandCenter() {
       observedAt: incident.observedAt,
     });
   }, [focusWorldLocation]);
+
+  const focusMapIncident = useCallback((incident: AegisIncident) => {
+    const imported = liveIntelligence?.incidents.find((candidate) => candidate.id === incident.id);
+    if (imported) {
+      focusIncidentOnWorld(imported);
+      return;
+    }
+    const nextHazard = hazardFromIncidentCategory(incident.type);
+    const incidentZoom = nextHazard === "cyclone"
+      ? 5.8
+      : nextHazard === "wildfire"
+        ? 9.2
+        : nextHazard === "industrial"
+          ? 11.2
+          : 10.4;
+    focusWorldLocation({
+      id: `map-${incident.id}`,
+      name: incident.title,
+      region: `${incident.source ?? "AEGIS simulation"} · ${incident.live ? "imported incident context" : "simulation"}`,
+      latitude: incident.coordinates[1],
+      longitude: incident.coordinates[0],
+      type: "map-incident",
+      zoom: incidentZoom,
+      fidelity: "GLOBAL PROTOTYPE",
+    });
+    setHazard(nextHazard);
+    setViewMode("simulate");
+    setActiveNav("incident");
+    setMinute(45);
+    setRightPanelOpen(true);
+    setLayerVisibility((current) => ({ ...current, hazard: true, damage: true, roads: true, incidents: true }));
+    setSourceIncident({
+      id: incident.id,
+      title: incident.title,
+      provider: incident.source ?? "AEGIS simulation",
+      observedAt: incident.occurredAt,
+    });
+  }, [focusIncidentOnWorld, focusWorldLocation, liveIntelligence?.incidents]);
 
   const enterWorldView = useCallback(() => {
     setSceneView("world");
@@ -2696,6 +2759,7 @@ export function CommandCenter() {
               }}
               selection={mapSelection}
               onSelectionChange={updateMapSelection}
+              onIncidentSelect={focusMapIncident}
               focusRequest={focusRequest}
               viewMode={sceneView}
               onViewModeChange={setSceneView}

@@ -27,7 +27,7 @@ The corrected renderer:
 - adds a separate transparent, keyless CARTO labels-only layer through zoom 20, beneath AEGIS operational routes and hazard layers;
 - changes from globe to Mercator during zoom at the controlled threshold, with hysteresis to prevent projection flapping;
 - detaches terrain before a projection change and restores it only after the zoom settles;
-- starts idle orbit after a short initial delay, uses a restrained default speed of 0.5 degrees of longitude per second, and avoids replaying the initial world flight on unrelated renders;
+- starts idle orbit after a short initial delay, uses a restrained but clearly visible default speed of 0.8 degrees of longitude per second, and avoids replaying the initial world flight on unrelated renders;
 - pauses rotation for pointer/keyboard/map interaction, camera movement, reduced-motion preference, background tabs and close-range views, then resumes without a longitude jump;
 - displays a pulsing red halo only for incident features classified by the live-intelligence adapter as current/live, while retaining their title and source context;
 - displays a separate pulsing focus marker for the operator's selected search result so a successful search cannot visually disappear.
@@ -97,6 +97,17 @@ Free public providers have no availability SLA. If one basemap fails, AEGIS swit
 - Public API smoke checks: `GET /api/health`, `GET /api/providers`, `GET /api/simulation/catalog` and Ledger `GET /api/agent-activity` each returned HTTP 200.
 - AI evacuation proof: The live command center returned a plan-grounded response through Cloudflare Workers AI (`@cf/meta/llama-3.2-3b-instruct`), labelled for human review, and rendered the calculated procedure/evidence.
 - Lenovo LOQ device check: owner manual check remains before presentation.
+
+## Operational-marker release record — 26 August 2026
+
+- Command center Worker: `aa2b5e97-9f1d-4a3c-a989-d784f0a94c5a`.
+- Fresh public entry: `https://aegis.guptashivaani233.workers.dev/?fresh=aa2b5e97`.
+- Globe orbit: physically observed marker movement from `translate(769px, 268px)` to `translate(760px, 267px)` over approximately 3.2 seconds; the explicit pause/resume control remains authoritative.
+- Operational overlay: live red pings, blue origin, green safe point, red hazard source, numbered amber area vertices, dotted area perimeter and completed-area badge are DOM-backed MapLibre markers above the WebGL scene.
+- Tool exclusivity: incident markers are non-interactive during Origin, Safe point, Source and Area placement, so a live ping cannot consume an operator placement click.
+- Incident drill-down: selecting a live ping selects its imported source record, switches to the matching hazard in Scenario mode, moves to `T+045:00`, enables the relevant impact layers and opens the calculated impact panel.
+- Deployed-browser replay: five incident markers, three completed point selections, a three-vertex completed area and the incident drill-down all passed with an empty warning/error log.
+- Canonical verification: 77 total tests, 76 passed, zero failed and one optional public-live-feed test skipped.
 
 ## Previously accepted public release — historical baseline only
 

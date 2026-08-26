@@ -179,11 +179,11 @@ test("world camera keeps a restrained presentation tilt and orbit pauses then wr
   assert.ok(laptop.zoom > compact.zoom);
   assert.equal(worldPitchForFocus(1.84, 0), 12);
   assert.equal(worldPitchForFocus(12.2, 42), 42);
-  assert.equal(WORLD_GLOBE_DEFAULT_ORBIT_SPEED, 0.5);
-  assert.equal(WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS, 3_200);
+  assert.equal(WORLD_GLOBE_DEFAULT_ORBIT_SPEED, 0.8);
+  assert.equal(WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS, 1_500);
   assert.equal(WORLD_GLOBE_INITIAL_ORBIT_DELAY_MS, 650);
   assert.equal(initialOrbitResumeDeadline(1_000), 1_650);
-  assert.equal(orbitResumeDeadline(1_000, WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS), 4_200);
+  assert.equal(orbitResumeDeadline(1_000, WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS), 2_500);
   assert.equal(orbitResumeDeadline(1_000, 6_500, 2_400), 9_900);
   assert.equal(nextOrbitLongitude(179.99, 1.25, 0.1) < -179, true);
   assert.equal(shouldAdvanceOrbit({

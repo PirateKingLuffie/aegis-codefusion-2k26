@@ -53,6 +53,7 @@ import type {
   Map as MapLibreMap,
   MapGeoJSONFeature,
   MapMouseEvent,
+  Marker as MapLibreMarker,
 } from "maplibre-gl";
 import type {
   ExpressionSpecification,
@@ -2616,6 +2617,7 @@ export function AegisMap({
   selection,
   onSelectionChange,
   onFeatureInspect,
+  onIncidentSelect,
   onLocationPick,
   onMapReady,
   viewMode,
@@ -2646,6 +2648,7 @@ export function AegisMap({
   const callbacksRef = useRef({
     onSelectionChange,
     onFeatureInspect,
+    onIncidentSelect,
     onLocationPick,
     onMapReady,
     onViewModeChange,
@@ -2653,6 +2656,7 @@ export function AegisMap({
   });
   const controlledSelectionRef = useRef(selection);
   const currentSelectionRef = useRef<AegisMapSelection>(selection ?? { points: [] });
+  const incidentsRef = useRef<AegisIncident[]>(incidents);
   const activeToolRef = useRef<AegisMapTool>(defaultTool);
   const activeViewRef = useRef<AegisMapViewMode>(viewMode ?? defaultViewMode);
   const controlledViewRef = useRef(viewMode !== undefined);
@@ -2679,9 +2683,9 @@ export function AegisMap({
   const globeIdleUntilRef = useRef(0);
   const globeRotationEnabledRef = useRef(autoRotateGlobe);
   const hazardTypeRef = useRef(hazardType);
-  const reducedMotionRef = useRef(false);
-  const globeRotationOverrideRef = useRef<boolean | null>(null);
   const appliedViewModeRef = useRef<AegisMapViewMode>(viewMode ?? defaultViewMode);
+  const markerConstructorRef = useRef<typeof import("maplibre-gl").Marker | null>(null);
+  const operationalMarkersRef = useRef<Map<string, MapLibreMarker>>(new Map());
 
   const [internalSelection, setInternalSelection] = useState<AegisMapSelection>(
     selection ?? { points: [] },
@@ -2699,7 +2703,6 @@ export function AegisMap({
   const [buildingsAvailable, setBuildingsAvailable] = useState(false);
   const [layerPanelOpen, setLayerPanelOpen] = useState(false);
   const [globeRotationOverride, setGlobeRotationOverride] = useState<boolean | null>(null);
-  const [reducedMotionPreference, setReducedMotionPreference] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
   const [providerState, setProviderState] = useState<MapProviderState>({
     providerId: "openfreemap-dark",
@@ -2720,13 +2723,14 @@ export function AegisMap({
   const campusTwinActive = Boolean(twinScene);
   const showCampusMassing = campusTwinActive && showEstimatedCampusMassing;
   const globeRotationEnabled = globeRotationOverride ?? autoRotateGlobe;
-  const globeRotationActive = globeRotationEnabled
-    && (!reducedMotionPreference || globeRotationOverride === true);
+  // This is an operator-facing command display. Keep the requested live orbit
+  // active by default and expose an explicit pause button instead of silently
+  // inheriting an OS animation preference that can make the globe look broken.
+  const globeRotationActive = globeRotationEnabled;
 
   useEffect(() => {
     globeRotationEnabledRef.current = globeRotationEnabled;
-    globeRotationOverrideRef.current = globeRotationOverride;
-  }, [globeRotationEnabled, globeRotationOverride]);
+  }, [globeRotationEnabled]);
 
   const normalizedLayers = useMemo<AegisMapLayers>(() => {
     if (!relocateLegacyEitGeometry) return layers;
@@ -2796,6 +2800,7 @@ export function AegisMap({
     callbacksRef.current = {
       onSelectionChange,
       onFeatureInspect,
+      onIncidentSelect,
       onLocationPick,
       onMapReady,
       onViewModeChange,
@@ -2803,6 +2808,7 @@ export function AegisMap({
     };
     controlledSelectionRef.current = selection;
     currentSelectionRef.current = activeSelection;
+    incidentsRef.current = normalizedIncidents;
     activeToolRef.current = activeTool;
     activeViewRef.current = activeViewMode;
     controlledViewRef.current = viewMode !== undefined;
@@ -2821,7 +2827,9 @@ export function AegisMap({
     externalOverlays,
     layerVisibility,
     normalizedLayers.evacuationRoutes,
+    normalizedIncidents,
     onFeatureInspect,
+    onIncidentSelect,
     onLocationPick,
     onMapReady,
     onOverlayMove,
@@ -2935,13 +2943,7 @@ export function AegisMap({
     let lastWorldRotation = 0;
     let autoTimer: number | null = null;
     let worldProjectionMode: WorldProjectionMode = "globe";
-    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const updateMotionPreference = () => {
-      reducedMotionRef.current = motionQuery.matches;
-      setReducedMotionPreference(motionQuery.matches);
-    };
-    updateMotionPreference();
-    motionQuery.addEventListener?.("change", updateMotionPreference);
+    const operationalMarkerRegistry = operationalMarkersRef.current;
     const pauseIdleRotation = () => pauseOrbit();
     const candidates = buildProviderCandidates(mapStyleUrl);
     const startTimer = window.setTimeout(() => {
@@ -3022,6 +3024,7 @@ export function AegisMap({
       try {
         const maplibre = await import("maplibre-gl");
         if (disposed || !mapContainerRef.current) return;
+        markerConstructorRef.current = maplibre.Marker;
         maplibre.setWorkerCount(Math.max(2, Math.min(4, navigator.hardwareConcurrency || 4)));
         const initialProvider = candidates[0];
         setProviderState({
@@ -3316,6 +3319,14 @@ export function AegisMap({
             target = map.queryRenderedFeatures(event.point).find(isInspectableBaseFeature);
           }
           if (target) {
+            if (target.layer.id.startsWith("aegis-incident-")) {
+              const incidentId = String(target.properties?.id ?? "");
+              const incident = incidentsRef.current.find((item) => item.id === incidentId);
+              if (incident) {
+                callbacksRef.current.onIncidentSelect?.(incident);
+                return;
+              }
+            }
             const next = featureInspection(target, coordinate);
             setInspection(next);
             callbacksRef.current.onFeatureInspect?.(next);
@@ -3380,7 +3391,7 @@ export function AegisMap({
             enabled: globeRotationEnabledRef.current
               && map.getZoom() <= WORLD_GLOBE_ORBIT_MAX_ZOOM
               && worldProjectionMode === "globe",
-            reducedMotion: reducedMotionRef.current && globeRotationOverrideRef.current !== true,
+            reducedMotion: false,
             documentVisible: visible,
             nowMs: time,
             resumeAtMs: globeIdleUntilRef.current,
@@ -3400,7 +3411,7 @@ export function AegisMap({
               );
               map.setCenter([longitude, center.lat]);
             }
-          } else if (!orbitCanRun || mapMoving || (reducedMotionRef.current && globeRotationOverrideRef.current !== true)) {
+          } else if (!orbitCanRun || mapMoving) {
             // Reset the time base while paused so resuming never jumps.
             lastWorldRotation = time;
           }
@@ -3479,7 +3490,9 @@ export function AegisMap({
       if (autoTimer !== null) window.clearTimeout(autoTimer);
       if (autoFlightRef.current === autoTimer) autoFlightRef.current = null;
       window.cancelAnimationFrame(animationFrame);
-      motionQuery.removeEventListener?.("change", updateMotionPreference);
+      markerConstructorRef.current = null;
+      operationalMarkerRegistry.forEach((marker) => marker.remove());
+      operationalMarkerRegistry.clear();
       const canvas = map?.getCanvas();
       if (canvas) {
         (["pointerdown", "touchstart", "wheel", "keydown"] as Array<keyof HTMLElementEventMap>)
@@ -3503,6 +3516,142 @@ export function AegisMap({
     showCampusMassing,
     waterVerticalExaggeration,
   ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const Marker = markerConstructorRef.current;
+    if (!map || !Marker || !mapReady) return;
+    const operationalMarkerRegistry = operationalMarkersRef.current;
+
+    operationalMarkerRegistry.forEach((marker) => marker.remove());
+    operationalMarkerRegistry.clear();
+    const selectionSource = map.getSource(SOURCE_IDS.selection) as GeoJSONSource | undefined;
+    selectionSource?.setData(selectionToGeoJSON(activeSelection, draftArea));
+    const incidentSource = map.getSource(SOURCE_IDS.incidents) as GeoJSONSource | undefined;
+    incidentSource?.setData(incidentsToGeoJSON(normalizedIncidents));
+    promoteOperationalPriorityMarkers(map);
+
+    const addMarker = (
+      id: string,
+      coordinates: AegisCoordinate,
+      kind: "incident" | "origin" | "destination" | "hazard-source" | "draft" | "boundary" | "area",
+      label: string,
+      glyph: string,
+      live = false,
+      onActivate?: () => void,
+      priority: "primary" | "secondary" = "primary",
+    ) => {
+      if (!Number.isFinite(coordinates[0]) || !Number.isFinite(coordinates[1])) return;
+      const element = document.createElement("div");
+      element.className = styles.operationalMarker;
+      element.dataset.kind = kind;
+      element.dataset.live = live ? "true" : "false";
+      element.dataset.priority = priority;
+      element.setAttribute("aria-label", label);
+
+      const ring = document.createElement("i");
+      ring.className = styles.operationalMarkerRing;
+      const core = document.createElement("b");
+      core.className = styles.operationalMarkerCore;
+      core.textContent = glyph;
+      element.append(ring, core);
+      if (label && kind !== "boundary") {
+        const caption = document.createElement("span");
+        caption.className = styles.operationalMarkerLabel;
+        caption.textContent = label;
+        element.append(caption);
+      }
+      if (onActivate) {
+        element.classList.add(styles.operationalMarkerInteractive);
+        element.setAttribute("role", "button");
+        element.tabIndex = 0;
+        const activate = (event: Event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onActivate();
+        };
+        element.addEventListener("click", activate);
+        element.addEventListener("keydown", (event) => {
+          const keyboardEvent = event as KeyboardEvent;
+          if (keyboardEvent.key === "Enter" || keyboardEvent.key === " ") activate(event);
+        });
+      } else {
+        element.setAttribute("aria-hidden", "true");
+      }
+      const marker = new Marker({ element, anchor: "center" })
+        .setLngLat(coordinates)
+        .addTo(map);
+      operationalMarkerRegistry.set(id, marker);
+    };
+
+    normalizedIncidents.slice(0, 40).forEach((incident, index) => {
+      addMarker(
+        `incident-${incident.id}`,
+        incident.coordinates,
+        "incident",
+        `${incident.live ? "LIVE · " : ""}${incident.title}`,
+        "!",
+        Boolean(incident.live),
+        activeTool === "inspect"
+          ? () => callbacksRef.current.onIncidentSelect?.(incident)
+          : undefined,
+        index < 4 ? "primary" : "secondary",
+      );
+    });
+
+    activeSelection.points.forEach((point) => {
+      addMarker(
+        `selection-${point.id}`,
+        point.coordinates,
+        point.role === "waypoint" ? "draft" : point.role,
+        point.label ?? "SELECTED POINT",
+        point.role === "origin" ? "O" : point.role === "destination" ? "S" : point.role === "hazard-source" ? "!" : "+",
+      );
+    });
+
+    draftArea.forEach((coordinates, index) => {
+      addMarker(`draft-${index}`, coordinates, "draft", `AREA ${index + 1}`, String(index + 1));
+    });
+
+    const completedRing = activeSelection.area?.geometry.coordinates[0]
+      ?.slice(0, -1)
+      .map(([longitude, latitude]) => [longitude, latitude] as AegisCoordinate) ?? [];
+    const perimeter = draftArea.length >= 2 ? draftArea : completedRing;
+    if (perimeter.length >= 2) {
+      const closed = draftArea.length >= 3 || completedRing.length >= 3;
+      const segmentCount = closed ? perimeter.length : perimeter.length - 1;
+      for (let segmentIndex = 0; segmentIndex < segmentCount; segmentIndex += 1) {
+        const start = perimeter[segmentIndex];
+        const end = perimeter[(segmentIndex + 1) % perimeter.length];
+        for (let step = 1; step < 8; step += 1) {
+          const ratio = step / 8;
+          addMarker(
+            `boundary-${segmentIndex}-${step}`,
+            [
+              start[0] + (end[0] - start[0]) * ratio,
+              start[1] + (end[1] - start[1]) * ratio,
+            ],
+            "boundary",
+            "",
+            "",
+          );
+        }
+      }
+      if (completedRing.length >= 3 && !draftArea.length) {
+        const center: AegisCoordinate = [
+          completedRing.reduce((total, point) => total + point[0], 0) / completedRing.length,
+          completedRing.reduce((total, point) => total + point[1], 0) / completedRing.length,
+        ];
+        addMarker("selected-area", center, "area", "SIMULATION AREA", "A");
+      }
+    }
+
+    map.triggerRepaint();
+    return () => {
+      operationalMarkerRegistry.forEach((marker) => marker.remove());
+      operationalMarkerRegistry.clear();
+    };
+  }, [activeSelection, activeTool, draftArea, mapReady, normalizedIncidents]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -3667,7 +3816,15 @@ export function AegisMap({
   const sceneMinute = twinVisual?.minute;
 
   return (
-    <section className={wrapperClass} aria-label={ariaLabel} data-view={activeViewMode}>
+    <section
+      className={wrapperClass}
+      aria-label={ariaLabel}
+      data-view={activeViewMode}
+      data-auto-orbit={globeRotationActive ? "running" : "paused"}
+      data-selection-points={activeSelection.points.length}
+      data-area-vertices={draftArea.length || Math.max(0, (activeSelection.area?.geometry.coordinates[0]?.length ?? 1) - 1)}
+      data-incident-markers={normalizedIncidents.length}
+    >
       <div
         ref={mapContainerRef}
         className={styles.mapHost}
@@ -3782,8 +3939,7 @@ export function AegisMap({
           <button
             type="button"
             onClick={() => setGlobeRotationOverride((override) => {
-              const running = (override ?? autoRotateGlobe)
-                && (!reducedMotionPreference || override === true);
+              const running = override ?? autoRotateGlobe;
               return running ? false : true;
             })}
             aria-label={globeRotationActive ? "Pause automatic globe rotation" : "Resume automatic globe rotation"}

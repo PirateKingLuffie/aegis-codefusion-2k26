@@ -691,6 +691,100 @@
 .wrapper :global(.maplibregl-canvas-container.maplibregl-interactive:active) { cursor: grabbing; }
 .wrapper :global(.maplibregl-control-container) { display: none; }
 
+/*
+ * DOM-backed operational marks are a deliberate reliability layer. They stay
+ * legible when a globe/terrain renderer reorders draped WebGL layers, while
+ * the underlying GeoJSON remains authoritative for inspection and modelling.
+ */
+.operationalMarker {
+  --marker-tone: #eef2f3;
+  position: absolute;
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  color: #fff;
+  pointer-events: none;
+  filter: drop-shadow(0 0.35rem 0.55rem rgba(0, 0, 0, 0.72));
+}
+
+.operationalMarkerRing,
+.operationalMarkerCore {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+}
+
+.operationalMarkerRing {
+  inset: 0.05rem;
+  border: 2px solid var(--marker-tone);
+  background: color-mix(in srgb, var(--marker-tone) 18%, transparent);
+  box-shadow: 0 0 0.8rem color-mix(in srgb, var(--marker-tone) 46%, transparent);
+}
+
+.operationalMarkerCore {
+  inset: 0.36rem;
+  display: grid;
+  place-items: center;
+  color: #080a0b;
+  background: var(--marker-tone);
+  font: 900 0.62rem/1 "SFMono-Regular", Consolas, monospace;
+  font-style: normal;
+}
+
+.operationalMarkerLabel {
+  position: absolute;
+  top: calc(100% + 0.28rem);
+  left: 50%;
+  width: max-content;
+  max-width: 13rem;
+  overflow: hidden;
+  padding: 0.22rem 0.38rem;
+  color: #fff;
+  border: 1px solid color-mix(in srgb, var(--marker-tone) 54%, rgba(255,255,255,0.1));
+  border-radius: 0.2rem;
+  background: rgba(4, 5, 6, 0.94);
+  box-shadow: 0 0.45rem 1.2rem rgba(0, 0, 0, 0.58);
+  font: 800 0.62rem/1.2 "SFMono-Regular", Consolas, monospace;
+  letter-spacing: 0.055em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.operationalMarker[data-kind="incident"] { --marker-tone: #ff314a; width: 2.05rem; height: 2.05rem; z-index: 6; }
+.operationalMarker[data-kind="origin"] { --marker-tone: #2f8fff; z-index: 8; }
+.operationalMarker[data-kind="destination"] { --marker-tone: #42d98b; z-index: 8; }
+.operationalMarker[data-kind="hazard-source"] { --marker-tone: #ff4a5f; width: 2.1rem; height: 2.1rem; z-index: 9; }
+.operationalMarker[data-kind="draft"] { --marker-tone: #e3b550; width: 1.55rem; height: 1.55rem; z-index: 7; }
+.operationalMarker[data-kind="area"] { --marker-tone: #e3b550; width: 1.72rem; height: 1.72rem; z-index: 7; }
+.operationalMarker[data-kind="boundary"] { --marker-tone: #e3b550; width: 0.42rem; height: 0.42rem; z-index: 5; filter: none; }
+.operationalMarker[data-kind="boundary"] .operationalMarkerRing { inset: 0; border-width: 0; background: #e3b550; box-shadow: 0 0 0.5rem rgba(227, 181, 80, 0.82); }
+.operationalMarker[data-kind="boundary"] .operationalMarkerCore { display: none; }
+
+.operationalMarker[data-kind="incident"][data-live="true"] .operationalMarkerRing {
+  animation: operationalPing 1.45s cubic-bezier(.2,.7,.2,1) infinite;
+}
+
+.operationalMarkerInteractive { pointer-events: auto; cursor: pointer; }
+.operationalMarkerInteractive:focus-visible { outline: 2px solid #fff; outline-offset: 0.3rem; border-radius: 50%; }
+.operationalMarker[data-kind="incident"][data-priority="secondary"] .operationalMarkerLabel {
+  opacity: 0;
+  transform: translate(-50%, -0.18rem);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.operationalMarker[data-kind="incident"][data-priority="secondary"]:hover .operationalMarkerLabel,
+.operationalMarker[data-kind="incident"][data-priority="secondary"]:focus-visible .operationalMarkerLabel {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@keyframes operationalPing {
+  0% { opacity: 0.95; transform: scale(0.72); }
+  72%, 100% { opacity: 0; transform: scale(2.35); }
+}
+
 @media (max-width: 900px) {
   .statusBar { right: 0.72rem; max-width: calc(100% - 1.44rem); }
   .statusBar i { display: none; }

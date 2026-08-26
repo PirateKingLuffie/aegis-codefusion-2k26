@@ -339,6 +339,8 @@ export interface AegisMapProps {
   selection?: AegisMapSelection;
   onSelectionChange?: (selection: AegisMapSelection) => void;
   onFeatureInspect?: (inspection: AegisFeatureInspection | null) => void;
+  /** Called when an individual incident marker is activated on the map. */
+  onIncidentSelect?: (incident: AegisIncident) => void;
   /** Called for empty-ground clicks while Inspect is active in WORLD mode. */
   onLocationPick?: (coordinate: AegisCoordinate) => void;
   onMapReady?: () => void;
@@ -359,9 +361,9 @@ export interface AegisMapProps {
   autoFlyToEit?: boolean;
   /** Slowly rotates the idle world globe. Defaults to true. */
   autoRotateGlobe?: boolean;
-  /** Degrees of longitude per second while idle. Defaults to a slow, visible 0.5. */
+  /** Degrees of longitude per second while idle. Defaults to a slow, visible 0.8. */
   autoRotateSpeedDegPerSecond?: number;
-  /** Delay after interaction before idle rotation resumes. Defaults to 3200 ms. */
+  /** Delay after interaction before idle rotation resumes. Defaults to 1500 ms. */
   globeIdleResumeMs?: number;
   hazardType?: string;
   defaultTool?: AegisMapTool;

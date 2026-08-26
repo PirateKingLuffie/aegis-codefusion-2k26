@@ -49,7 +49,7 @@ credentials/artwork; they cannot be fabricated in code.
 [IMPLEMENTED IN SOURCE] Country, city, road, street and available building context remains visible through
                         provider vectors/labels; a selected search result receives a persistent named focus
                         marker so a successful world search cannot visually disappear.
-[IMPLEMENTED IN SOURCE] Slightly tilted world framing with slow 0.5 degrees/second idle orbit, short initial
+[IMPLEMENTED IN SOURCE] Slightly tilted world framing with slow 0.8 degrees/second idle orbit, short initial
                         delay, interaction pause and idle resume only at compatible globe-overview zoom.
 [IMPLEMENTED IN SOURCE] Red animated incident halo for current/live source-labelled records and clusters;
                         this is provider-derived context, not an AEGIS field observation.
@@ -594,6 +594,41 @@ building/road, generate and approve an evacuation plan, compare interventions, s
 then open source-labelled live intelligence and provider readiness. Open the dedicated Agent Ledger at
 `https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger` and show a real
 execution plus human review. Use the exact phrases IMPORTED, ESTIMATED and SIMULATED shown by AEGIS.
+
+
+21. LIVE GLOBE INTERACTION HOTFIX (26 AUGUST 2026)
+==================================================
+
+Public release:
+  https://aegis.guptashivaani233.workers.dev/?fresh=aa2b5e97
+  Cloudflare Worker version: aa2b5e97-9f1d-4a3c-a989-d784f0a94c5a
+
+Completed and verified on the deployed public build:
+  [DONE] Automatic overview orbit now runs at 0.8 degrees/second and resumes 1.5 seconds after interaction.
+  [DONE] Orbit is controlled by the visible pause/resume control and no longer silently disabled by an OS preference.
+  [DONE] Live incidents use independent red DOM-backed pings that stay above WebGL imagery, terrain and labels.
+  [DONE] Origin, safe point and hazard source use distinct blue, green and red operational markers.
+  [DONE] Area selection renders numbered amber vertices, a dotted perimeter and a completed SIMULATION AREA badge.
+  [DONE] Incident pings stop intercepting map clicks while a placement tool is active.
+  [DONE] Selecting a live incident opens the matching hazard in Scenario mode, advances to T+045:00 and exposes
+         calculated intensity, road access, population exposure, affected structures and model confidence.
+  [DONE] Imported incident context and modelled consequences remain visibly separated and truth-labelled.
+
+Public-browser evidence:
+  - A live incident marker moved from translate(769px, 268px) to translate(760px, 267px) during a 3.2-second
+    idle interval, proving that the globe camera physically rotated rather than only changing a status label.
+  - Three Area clicks produced three visible numbered vertices and a visible perimeter; Complete preserved the
+    polygon and added the SIMULATION AREA badge.
+  - Origin, Safe point and Source produced one visible marker each; the map reported three selection points.
+  - A live earthquake ping opened Scenario mode at T+045:00 with a modelled impact panel and no console errors.
+  - Final canonical suite: 77 tests, 76 passed, zero failed, one optional public-feed test skipped.
+
+Evidence images:
+  E:\CodeFusion EIT Hackathon\AEGIS-backups\AEGIS-final-globe-pings-aa2b5e97.png
+  E:\CodeFusion EIT Hackathon\AEGIS-backups\AEGIS-final-area-draft-aa2b5e97.png
+  E:\CodeFusion EIT Hackathon\AEGIS-backups\AEGIS-final-area-complete-aa2b5e97.png
+  E:\CodeFusion EIT Hackathon\AEGIS-backups\AEGIS-final-map-points-aa2b5e97.png
+  E:\CodeFusion EIT Hackathon\AEGIS-backups\AEGIS-final-live-impact-aa2b5e97.png
 
 
 END OF LEDGER
