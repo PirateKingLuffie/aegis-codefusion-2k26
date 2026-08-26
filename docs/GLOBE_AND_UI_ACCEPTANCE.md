@@ -11,7 +11,7 @@ The current rehaul is implemented in source. Its exact final test totals, browse
 3. Drag, scroll, click, search or start a camera flight. Orbit pauses immediately so the selected location stays under operator control; it resumes after the idle interval only when the camera has returned to globe-overview zoom.
 4. Search a country, city, address, street, building, landmark or coordinate. The selected result receives a persistent focus marker and name while its planning coordinate becomes the active scenario location.
 5. The camera keeps an angled geographic overview when appropriate and changes to Mercator projection for reliable close-range streets, terrain and available building geometry. Regional, street and site views never drift under auto-orbit.
-6. Continue zooming. An opaque, keyless Esri World Street Map / OpenStreetMap raster remains beneath the explicit label overlay and operational layers through zoom 19, so low-feature regions retain a visible surface and city/road labels when dated Earth imagery hands off to local detail.
+6. Continue zooming. One coherent keyless OpenStreetMap raster remains beneath provider vector labels, buildings and operational layers through zoom 19, so local regions retain a visible surface and city/road labels when dated Earth imagery hands off to street detail.
 7. Select a hazard source, origins, destinations or an operating area on the map. The same deterministic five-plugin workflow can be recalculated around any valid selected world coordinate; local detail is limited by the public map and terrain data available there.
 
 ## Root cause and correction
@@ -23,11 +23,11 @@ The corrected renderer:
 - retains and overzooms the EOX Sentinel context layer beneath vector streets through zoom 20;
 - keeps a neutral visible provider background if optional imagery is delayed;
 - adds explicit OpenMapTiles country, city, road and road-name context when a provider style is too subtle;
-- adds an opaque, keyless Esri World Street Map / OpenStreetMap street safety layer at regional and street zoom; this avoids the opaque blank CARTO dark/voyager tiles that caused black/white high-zoom regions;
-- adds a separate transparent, keyless CARTO labels-only layer through zoom 20, beneath AEGIS operational routes and hazard layers;
+- adds one coherent, keyless OpenStreetMap street source at regional and street zoom; it never mixes different providers into adjacent squares;
+- uses the standard OSM raster's own labels plus the active OpenFreeMap/CARTO vector style labels; the former CARTO raster-label request was removed because its public endpoint began returning a key-required watermark;
 - changes from globe to Mercator during zoom at the controlled threshold, with hysteresis to prevent projection flapping;
 - detaches terrain before a projection change and restores it only after the zoom settles;
-- starts idle orbit after a short initial delay, uses a restrained but clearly visible default speed of 0.8 degrees of longitude per second, and avoids replaying the initial world flight on unrelated renders;
+- starts idle orbit after a short initial delay, uses a clearly visible default speed of 1.35 degrees of longitude per second, and avoids replaying the initial world flight on unrelated renders;
 - pauses rotation for pointer/keyboard/map interaction, camera movement, reduced-motion preference, background tabs and close-range views, then resumes without a longitude jump;
 - displays a pulsing red halo only for incident features classified by the live-intelligence adapter as current/live, while retaining their title and source context;
 - displays a separate pulsing focus marker for the operator's selected search result so a successful search cannot visually disappear.
@@ -108,6 +108,18 @@ Free public providers have no availability SLA. If one basemap fails, AEGIS swit
 - Incident drill-down: selecting a live ping selects its imported source record, switches to the matching hazard in Scenario mode, moves to `T+045:00`, enables the relevant impact layers and opens the calculated impact panel.
 - Deployed-browser replay: five incident markers, three completed point selections, a three-vertex completed area and the incident drill-down all passed with an empty warning/error log.
 - Canonical verification: 77 total tests, 76 passed, zero failed and one optional public-live-feed test skipped.
+
+## Basemap-coherence release record — 27 August 2026
+
+- Command center Worker: `dc0763f4-ed97-431f-92f6-6de2cd4339ae`.
+- Fresh public entry: `https://aegis.guptashivaani233.workers.dev/?fresh=dc0763f4`.
+- Root cause fixed: the former raster source listed OSM and Esri templates together. MapLibre treats that list as equivalent load-balancing shards, so adjacent tiles used incompatible cartography and Esri placeholders appeared as real map content.
+- Free final path: one `tile.openstreetmap.org` raster template supplies coherent close-range streets and labels; OpenFreeMap remains the primary vector globe/style and CARTO Dark Matter remains only the independent vector-style failover.
+- Key-gated raster removal: CARTO `dark_nolabels` and `dark_only_labels` are not requested because the deployed replay showed their key-required watermark.
+- Loading changes: MapLibre downloads beside the lazy map component, the tile cache is 240 entries, Sentinel regional imagery starts after globe overview and reaches zero opacity before deep street zoom, and raster handoffs crossfade for 180 ms.
+- Orbit: default presentation speed is `1.35` degrees/second, with the same explicit pause and 1.5-second interaction resume contract.
+- Public replay: New Delhi search plus five more zoom steps retained the selected location, reported OpenStreetMap streets in attribution and produced no browser warning/error log.
+- Canonical verification: 77 total tests, 76 passed, zero failed and one optional public-live-feed test skipped; public health returned HTTP 200 with 12/12 providers ready.
 
 ## Previously accepted public release — historical baseline only
 

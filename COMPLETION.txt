@@ -43,13 +43,13 @@ credentials/artwork; they cannot be fabricated in code.
 1A. CURRENT URGENT REHAUL - RELEASED AND VERIFIED
 ==================================================
 
-[IMPLEMENTED IN SOURCE] Opaque keyless Esri World Street Map / OpenStreetMap street raster under the
-                        independent labels overlay through zoom 19. This replaces opaque blank CARTO
-                        dark/voyager tiles that could expose a black/white region at high zoom.
+[IMPLEMENTED IN SOURCE] Coherent keyless OpenStreetMap street raster with built-in labels beneath
+                        provider vector labels through zoom 19. This replaces the mixed OSM/Esri tile
+                        array that produced mismatched squares and provider placeholder tiles.
 [IMPLEMENTED IN SOURCE] Country, city, road, street and available building context remains visible through
                         provider vectors/labels; a selected search result receives a persistent named focus
                         marker so a successful world search cannot visually disappear.
-[IMPLEMENTED IN SOURCE] Slightly tilted world framing with slow 0.8 degrees/second idle orbit, short initial
+[IMPLEMENTED IN SOURCE] Slightly tilted world framing with visible 1.35 degrees/second idle orbit, short initial
                         delay, interaction pause and idle resume only at compatible globe-overview zoom.
 [IMPLEMENTED IN SOURCE] Red animated incident halo for current/live source-labelled records and clusters;
                         this is provider-derived context, not an AEGIS field observation.
@@ -128,7 +128,7 @@ CURRENT-REHAUL RELEASE RECORD:
 [IMPLEMENTED] Smooth world-to-location and world-to-EIT camera transitions.
 [IMPLEMENTED] Explicit globe-to-Mercator handoff for high-zoom landmark/street focus and local twin views
               before terrain and 3D detail, avoiding the globe/terrain black-canvas descent.
-[IMPLEMENTED] Opaque keyless Esri World Street Map / OpenStreetMap street safety layer plus separate
+[IMPLEMENTED] Coherent keyless OpenStreetMap street safety layer with its own labels plus provider vector
               country/city/road/street label overlay through zoom 19, underneath AEGIS operational layers.
 [IMPLEMENTED] Persistent named focus marker for the selected country, city, address, street, building,
               landmark or coordinate result.
@@ -604,7 +604,7 @@ Public release:
   Cloudflare Worker version: aa2b5e97-9f1d-4a3c-a989-d784f0a94c5a
 
 Completed and verified on the deployed public build:
-  [DONE] Automatic overview orbit now runs at 0.8 degrees/second and resumes 1.5 seconds after interaction.
+  [DONE] Automatic overview orbit now runs at 1.35 degrees/second and resumes 1.5 seconds after interaction.
   [DONE] Orbit is controlled by the visible pause/resume control and no longer silently disabled by an OS preference.
   [DONE] Live incidents use independent red DOM-backed pings that stay above WebGL imagery, terrain and labels.
   [DONE] Origin, safe point and hazard source use distinct blue, green and red operational markers.
@@ -629,6 +629,34 @@ Evidence images:
   E:\CodeFusion EIT Hackathon\AEGIS-backups\AEGIS-final-area-complete-aa2b5e97.png
   E:\CodeFusion EIT Hackathon\AEGIS-backups\AEGIS-final-map-points-aa2b5e97.png
   E:\CodeFusion EIT Hackathon\AEGIS-backups\AEGIS-final-live-impact-aa2b5e97.png
+
+
+22. BASEMAP COHERENCE AND LOAD HOTFIX (27 AUGUST 2026)
+=====================================================
+
+Public release:
+  https://aegis.guptashivaani233.workers.dev/?fresh=dc0763f4
+  Cloudflare Worker version: dc0763f4-ed97-431f-92f6-6de2cd4339ae
+
+Completed and verified on the deployed public build:
+  [DONE] Globe default orbit increased from 0.8 to 1.35 degrees/second.
+  [DONE] Removed the invalid OSM/Esri raster template mixture. A MapLibre tiles array load-balances
+         templates; it does not fail over, so the former configuration produced mismatched adjacent squares.
+  [DONE] Removed Esri placeholder tiles that displayed "Map data not yet available" as map content.
+  [DONE] Removed key-gated CARTO raster streets/labels after public replay exposed its watermark.
+  [DONE] Close-range continuity now uses one coherent standard OpenStreetMap raster source, with the active
+         provider's vector labels and available building context above it.
+  [DONE] Regional Sentinel imagery no longer loads during the initial globe view and fades out completely
+         before deep street zoom instead of leaving overzoomed image squares.
+  [DONE] The map component and MapLibre engine download in parallel; the retained tile cache increased from
+         150 to 240 tiles and raster handoffs use a short 180 ms crossfade.
+
+Verification:
+  - Fresh public New Delhi search selected the imported OSM result and survived five additional zoom steps.
+  - Public UI reported OpenStreetMap street attribution and contained no CARTO-raster attribution.
+  - Public browser warning/error log remained empty through globe load, city search and deep zoom.
+  - Health API returned HTTP 200 with 12 of 12 providers ready.
+  - Final suite: 77 tests, 76 passed, zero failed, one optional public-feed test skipped.
 
 
 END OF LEDGER

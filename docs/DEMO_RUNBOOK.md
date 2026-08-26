@@ -157,7 +157,7 @@ Use the first working level and continue. Never hide provider failure or invent 
 2. Check whether the browser has WebGL/hardware acceleration enabled.
 3. Select **World** again to reset the projection and camera.
 4. Use **Retry live globe** once after connectivity returns.
-5. Confirm the opaque Esri/OSM street layer and separate labels layer have loaded at close zoom; optional dated imagery may still be degraded. Low-feature regions should retain a visible land surface instead of a black/white tile.
+5. Confirm the coherent OpenStreetMap street layer and provider vector labels have loaded at close zoom; optional dated imagery may still be degraded. Adjacent squares must use the same cartography and no provider placeholder or key-required watermark may appear.
 6. If both providers remain unavailable, continue with the continuity renderer and evidence packet.
 
 ### Search returns no result

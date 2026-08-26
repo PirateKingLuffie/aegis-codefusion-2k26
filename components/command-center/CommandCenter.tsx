@@ -122,7 +122,13 @@ import { WorldLocationSearch } from "./WorldLocationSearch";
 import { searchOfflineWorldPlaces, type WorldLocationSelection } from "./world-search";
 
 const OperationalMap = lazy(async () => {
-  const mapModule = await import("@/components/map/OperationalMap");
+  // Fetch the renderer and its large WebGL dependency together. AegisMap's
+  // internal import then resolves from the module cache instead of introducing
+  // a second network round-trip after the loading shell has mounted.
+  const [mapModule] = await Promise.all([
+    import("@/components/map/OperationalMap"),
+    import("maplibre-gl"),
+  ]);
   return { default: mapModule.OperationalMap };
 });
 const CommandPalette = lazy(async () => {

@@ -9,6 +9,7 @@ import {
 } from "../components/map/providers.ts";
 import {
   WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM,
+  WORLD_DETAIL_IMAGERY_LAYER_MIN_ZOOM,
   WORLD_DETAIL_IMAGERY_OPACITY_STOPS,
   WORLD_CONTEXT_LAYER_IDS,
   WORLD_GLOBE_EXIT_ZOOM,
@@ -18,7 +19,6 @@ import {
   WORLD_GLOBE_INITIAL_ORBIT_DELAY_MS,
   WORLD_IMAGERY_LAYER_IDS,
   WORLD_IMAGERY_SOURCES,
-  WORLD_RASTER_LABELS,
   WORLD_RASTER_STREETS,
   initialOrbitResumeDeadline,
   incidentPingFrame,
@@ -78,15 +78,16 @@ test("world surface uses independent keyless imagery with a street-detail handof
   assert.equal(new URL(WORLD_IMAGERY_SOURCES[1].tiles[0]).hostname, "tiles.maps.eox.at");
   assert.equal(WORLD_IMAGERY_SOURCES.every((source) => !/[?&](key|token)=/i.test(source.tiles[0])), true);
   assert.ok(WORLD_IMAGERY_SOURCES.every((source) => source.maxzoom >= 8));
-  assert.equal(WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM, 20);
+  assert.equal(WORLD_DETAIL_IMAGERY_LAYER_MIN_ZOOM, 3.25);
+  assert.equal(WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM, 15);
   const imageryOpacityByZoom = new Map(
     Array.from({ length: WORLD_DETAIL_IMAGERY_OPACITY_STOPS.length / 2 }, (_, index) => [
       WORLD_DETAIL_IMAGERY_OPACITY_STOPS[index * 2],
       WORLD_DETAIL_IMAGERY_OPACITY_STOPS[index * 2 + 1],
     ]),
   );
-  assert.equal(imageryOpacityByZoom.get(14), 0.34);
-  assert.ok(imageryOpacityByZoom.get(18) <= 0.1);
+  assert.equal(imageryOpacityByZoom.get(14), 0.22);
+  assert.equal(imageryOpacityByZoom.get(15), 0);
   assert.equal(worldFocusUsesGlobe(4.7), true);
   assert.equal(worldFocusUsesGlobe(6.5), false);
   assert.equal(worldFocusUsesGlobe(14.2), false);
@@ -105,32 +106,19 @@ test("provider-independent world context defines roads, road names, countries an
   assert.ok(Object.values(WORLD_CONTEXT_LAYER_IDS).every((id) => id.startsWith("aegis-world-")));
 });
 
-test("glyph-free CARTO label tiles cover world through street zoom and degrade independently", () => {
-  assert.equal(WORLD_RASTER_LABELS.minzoom, 0);
-  assert.equal(WORLD_RASTER_LABELS.maxzoom, 20);
-  assert.equal(WORLD_RASTER_LABELS.tiles.length, 4);
-  assert.ok(WORLD_RASTER_LABELS.tiles.every((url) => (
-    new URL(url).hostname.endsWith("basemaps.cartocdn.com")
-      && url.includes("/dark_only_labels/")
-      && !/[?&](?:key|token)=/i.test(url)
-  )));
-  assert.match(WORLD_RASTER_LABELS.attribution, /CARTO/);
-  assert.match(WORLD_RASTER_LABELS.attribution, /OpenStreetMap/);
-  assert.equal(classifyMapFailure({
-    sourceId: WORLD_RASTER_LABELS.sourceId,
-    message: "label tile request failed",
-    styleReady: true,
-  }), "optional");
+test("world raster safety path excludes key-gated and mixed-provider tiles", async () => {
+  const source = await readFile(new URL("../components/map/globe-runtime.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /dark_only_labels|dark_nolabels|arcgisonline/i);
+  assert.equal(WORLD_RASTER_STREETS.tiles.length, 1);
+  assert.equal(new URL(WORLD_RASTER_STREETS.tiles[0]).hostname, "tile.openstreetmap.org");
 });
 
-test("keyless Esri/OSM street base replaces satellite overzoom at every location", () => {
-  assert.equal(WORLD_RASTER_STREETS.layerMinzoom, 5);
+test("street-detail raster uses one coherent keyless OpenStreetMap tile family", () => {
+  assert.equal(WORLD_RASTER_STREETS.layerMinzoom, 5.25);
   assert.equal(WORLD_RASTER_STREETS.maxzoom, 19);
-  assert.equal(WORLD_RASTER_STREETS.tiles.length, 2);
+  assert.equal(WORLD_RASTER_STREETS.tiles.length, 1);
   assert.ok(WORLD_RASTER_STREETS.tiles[0].includes("tile.openstreetmap.org"));
-  assert.ok(WORLD_RASTER_STREETS.tiles.some((url) => (
-    url.includes("arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile")
-  )));
+  assert.equal(WORLD_RASTER_STREETS.tiles.some((url) => /arcgisonline|cartocdn/.test(url)), false);
   assert.ok(WORLD_RASTER_STREETS.tiles.every((url) => !/[?&](?:key|token)=/i.test(url)));
   const streetOpacityByZoom = new Map(
     Array.from({ length: WORLD_RASTER_STREETS.opacityStops.length / 2 }, (_, index) => [
@@ -147,7 +135,7 @@ test("keyless Esri/OSM street base replaces satellite overzoom at every location
   }), "optional");
 });
 
-test("style reload reinstalls street, label, marker and pulse layers below operations", async () => {
+test("style reload reinstalls street, marker and pulse layers below operations", async () => {
   const source = await readFile(new URL("../components/map/AegisMap.tsx", import.meta.url), "utf8");
   const styleLoadStart = source.indexOf('map.on("style.load"');
   const styleLoadEnd = source.indexOf('map.on("mousedown"', styleLoadStart);
@@ -156,10 +144,8 @@ test("style reload reinstalls street, label, marker and pulse layers below opera
   assert.match(reloadPath, /installWorldImagery\(map\)/);
   assert.match(reloadPath, /installRasterStreetFallback\(map\)/);
   assert.match(reloadPath, /enableProviderVectorContext\(map\)/);
-  assert.match(reloadPath, /installRasterLabelFallback\(map\)/);
   assert.match(reloadPath, /promoteOperationalPriorityMarkers\(map\)/);
   assert.ok(reloadPath.indexOf("installRasterStreetFallback(map)") < reloadPath.indexOf("addMapLayers(map"));
-  assert.ok(reloadPath.indexOf("installRasterLabelFallback(map)") < reloadPath.indexOf("addMapLayers(map"));
   assert.match(source, /aegis-selection-focus-halo/);
   assert.match(source, /aegis-selection-glyphs/);
   assert.match(source, /aegis-incident-live-pulse/);
@@ -179,7 +165,7 @@ test("world camera keeps a restrained presentation tilt and orbit pauses then wr
   assert.ok(laptop.zoom > compact.zoom);
   assert.equal(worldPitchForFocus(1.84, 0), 12);
   assert.equal(worldPitchForFocus(12.2, 42), 42);
-  assert.equal(WORLD_GLOBE_DEFAULT_ORBIT_SPEED, 0.8);
+  assert.equal(WORLD_GLOBE_DEFAULT_ORBIT_SPEED, 1.35);
   assert.equal(WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS, 1_500);
   assert.equal(WORLD_GLOBE_INITIAL_ORBIT_DELAY_MS, 650);
   assert.equal(initialOrbitResumeDeadline(1_000), 1_650);

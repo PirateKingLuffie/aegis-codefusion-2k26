@@ -361,7 +361,7 @@ export interface AegisMapProps {
   autoFlyToEit?: boolean;
   /** Slowly rotates the idle world globe. Defaults to true. */
   autoRotateGlobe?: boolean;
-  /** Degrees of longitude per second while idle. Defaults to a slow, visible 0.8. */
+  /** Degrees of longitude per second while idle. Defaults to a clearly visible 1.35. */
   autoRotateSpeedDegPerSecond?: number;
   /** Delay after interaction before idle rotation resumes. Defaults to 1500 ms. */
   globeIdleResumeMs?: number;

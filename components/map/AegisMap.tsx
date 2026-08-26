@@ -90,6 +90,7 @@ import {
 } from "./providers";
 import {
   WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM,
+  WORLD_DETAIL_IMAGERY_LAYER_MIN_ZOOM,
   WORLD_DETAIL_IMAGERY_OPACITY_STOPS,
   WORLD_CONTEXT_LAYER_IDS,
   WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS,
@@ -97,7 +98,6 @@ import {
   WORLD_GLOBE_ORBIT_MAX_ZOOM,
   WORLD_IMAGERY_LAYER_IDS,
   WORLD_IMAGERY_SOURCES,
-  WORLD_RASTER_LABELS,
   WORLD_RASTER_STREETS,
   incidentPingFrame,
   initialOrbitResumeDeadline,
@@ -1968,7 +1968,9 @@ function installWorldImagery(map: MapLibreMap): boolean {
           type: "raster",
           tiles: [...source.tiles],
           tileSize: 256,
-          minzoom: 0,
+          minzoom: source.id === WORLD_IMAGERY_SOURCES[1].id
+            ? WORLD_DETAIL_IMAGERY_LAYER_MIN_ZOOM
+            : 0,
           maxzoom: source.maxzoom,
           attribution: source.attribution,
         });
@@ -2009,11 +2011,10 @@ function installWorldImagery(map: MapLibreMap): boolean {
       id: WORLD_IMAGERY_LAYER_IDS[1],
       type: "raster",
       source: WORLD_IMAGERY_SOURCES[1].id,
-      minzoom: 0,
-      // The EOX source publishes through z14. Keeping the layer active above
-      // that level lets MapLibre overzoom the last good tile underneath the
-      // provider's vector streets, labels and buildings instead of exposing a
-      // black background between imagery and local detail.
+      // Do not fetch the regional imagery while the overview texture already
+      // covers the globe. It hands off to vector street detail after one level
+      // of overzoom instead of keeping stale raster squares alive at z16-z20.
+      minzoom: WORLD_DETAIL_IMAGERY_LAYER_MIN_ZOOM,
       maxzoom: WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM,
       paint: {
         "raster-opacity": [
@@ -2024,7 +2025,7 @@ function installWorldImagery(map: MapLibreMap): boolean {
         "raster-contrast": 0.13,
         "raster-brightness-min": 0.035,
         "raster-brightness-max": 0.92,
-        "raster-fade-duration": 0,
+        "raster-fade-duration": 180,
       },
     } as LayerSpecification, beforeBaseContext);
   } catch {
@@ -2061,47 +2062,12 @@ function installRasterStreetFallback(map: MapLibreMap): boolean {
           "interpolate", ["linear"], ["zoom"],
           ...WORLD_RASTER_STREETS.opacityStops,
         ],
-        "raster-fade-duration": 0,
+        "raster-fade-duration": 180,
       },
     } as LayerSpecification, firstSymbolLayerId(map));
     return true;
   } catch {
     // EOX and both vector providers remain independent fallbacks.
-    return false;
-  }
-}
-
-/**
- * Transparent, pre-rendered labels remain readable when a browser/GPU drops
- * vector glyph buckets. Insertion before provider symbols means the later
- * AEGIS operational layers stay visually and semantically dominant.
- */
-function installRasterLabelFallback(map: MapLibreMap): boolean {
-  try {
-    if (!map.getSource(WORLD_RASTER_LABELS.sourceId)) {
-      map.addSource(WORLD_RASTER_LABELS.sourceId, {
-        type: "raster",
-        tiles: [...WORLD_RASTER_LABELS.tiles],
-        tileSize: 256,
-        minzoom: WORLD_RASTER_LABELS.minzoom,
-        maxzoom: WORLD_RASTER_LABELS.maxzoom,
-        attribution: WORLD_RASTER_LABELS.attribution,
-      });
-    }
-    addLayer(map, {
-      id: WORLD_RASTER_LABELS.layerId,
-      type: "raster",
-      source: WORLD_RASTER_LABELS.sourceId,
-      minzoom: WORLD_RASTER_LABELS.minzoom,
-      maxzoom: WORLD_RASTER_LABELS.maxzoom,
-      paint: {
-        "raster-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.9, 5, 0.94, 20, 0.98],
-        "raster-fade-duration": 0,
-      },
-    } as LayerSpecification, firstSymbolLayerId(map));
-    return true;
-  } catch {
-    // Vector labels remain the primary path; this independent fallback is optional.
     return false;
   }
 }
@@ -3048,7 +3014,10 @@ export function AegisMap({
           attributionControl: false,
           // Symbol placement stays deterministic during continuous globe motion.
           fadeDuration: 0,
-          maxTileCacheSize: 150,
+          // Retain recently viewed parent/detail tiles during fast wheel zooms.
+          // The target LOQ has ample memory; this avoids visible re-fetch boxes
+          // without increasing simulation or animation work per frame.
+          maxTileCacheSize: 240,
           refreshExpiredTiles: false,
           collectResourceTiming: false,
           crossSourceCollisions: false,
@@ -3170,7 +3139,6 @@ export function AegisMap({
           // Install provider-backed buildings before operational extrusions so
           // damage, flood waterlines and the campus twin remain visually on top.
           const baseBuildings = enableBaseBuildings(map);
-          installRasterLabelFallback(map);
           addSources(map, sourceDataRef.current, enableTerrain);
           addMapLayers(map, waterVerticalExaggeration, enableTerrain);
           promoteProviderContextLabels(map);
@@ -4057,10 +4025,10 @@ export function AegisMap({
               {" / "}<a href="https://www.earthdata.nasa.gov/gibs" target="_blank" rel="noreferrer">NASA EOSDIS GIBS</a>
               {providerState.providerId === "openfreemap-dark" ? (
                 <>{" / "}<a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap / OpenMapTiles</a></>
+              ) : providerState.providerId === "carto-dark" ? (
+                <>{" / "}<a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO vector style</a></>
               ) : null}
-              {" / "}<a href="https://developers.arcgis.com/terms/" target="_blank" rel="noreferrer">Esri World Street Map</a>
-              {" / "}<a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO labels</a>
-              {" / "}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>
+              {" / "}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap streets and contributors</a>
             </>
           ) : providerState.providerId === "carto-dark" ? (
             <><a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO</a>{" / "}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a></>

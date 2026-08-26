@@ -13,19 +13,20 @@ export const WORLD_GLOBE_BEARING = -8;
 export const WORLD_GLOBE_EXIT_ZOOM = 5.25;
 export const WORLD_GLOBE_REENTRY_ZOOM = 4.7;
 export const WORLD_GLOBE_ORBIT_MAX_ZOOM = 3.6;
-export const WORLD_GLOBE_DEFAULT_ORBIT_SPEED = 0.8;
+export const WORLD_GLOBE_DEFAULT_ORBIT_SPEED = 1.35;
 export const WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS = 1_500;
 export const WORLD_GLOBE_INITIAL_ORBIT_DELAY_MS = 650;
-export const WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM = 20;
+export const WORLD_DETAIL_IMAGERY_LAYER_MIN_ZOOM = 3.25;
+export const WORLD_DETAIL_IMAGERY_LAYER_MAX_ZOOM = 15;
 export const WORLD_DETAIL_IMAGERY_OPACITY_STOPS = [
   0, 0.92,
-  5.5, 0.88,
-  8, 0.78,
-  11, 0.62,
-  14, 0.34,
-  16, 0.16,
-  18, 0.08,
-  20, 0.04,
+  5.5, 0.84,
+  8, 0.72,
+  11, 0.5,
+  13, 0.34,
+  14, 0.22,
+  14.75, 0,
+  15, 0,
 ] as const;
 
 export const WORLD_CONTEXT_LAYER_IDS = {
@@ -36,42 +37,26 @@ export const WORLD_CONTEXT_LAYER_IDS = {
   cityLabels: "aegis-world-city-context-labels",
 } as const;
 
-/** Glyph-free label safety net used when a WebGL runtime drops vector symbols. */
-export const WORLD_RASTER_LABELS = {
-  sourceId: "aegis-world-carto-labels",
-  layerId: "aegis-world-carto-labels-layer",
-  tiles: [
-    "https://a.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png",
-    "https://b.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png",
-    "https://c.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png",
-    "https://d.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png",
-  ],
-  minzoom: 0,
-  maxzoom: 20,
-  attribution: "CARTO / OpenStreetMap contributors",
-} as const;
-
 /** Keyless high-zoom streets/buildings safety net.
  *
- * The former CARTO dark/voyager tiles are valid but opaque blank tiles in
- * low-feature regions. They hide satellite/vector context and make a zoomed
- * world view look black or white. OpenStreetMap's public raster tiles retain
- * mapped land, country, city, road and POI detail without an API key; Esri's
- * World Street Map is kept as an independent alternate for coverage gaps.
- * The independent CARTO label fallback remains available when street tiles
- * are delayed.
+ * A raster source's `tiles` array is load balancing, not provider failover.
+ * Mixing OSM and Esri templates in that array caused adjacent squares to use
+ * different cartography and exposed Esri's "Map data not yet available"
+ * placeholder as real map content. Keep this source visually atomic. The
+ * independent vector-style failover in providers.ts remains the actual second
+ * basemap path. The standard OSM raster already contains labels; OpenFreeMap's
+ * vector labels and buildings remain above it.
  */
 export const WORLD_RASTER_STREETS = {
-  sourceId: "aegis-world-carto-streets",
-  layerId: "aegis-world-carto-streets-layer",
+  sourceId: "aegis-world-osm-streets",
+  layerId: "aegis-world-osm-streets-layer",
   tiles: [
     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
   ],
   minzoom: 0,
   maxzoom: 19,
-  layerMinzoom: 5,
-  attribution: "OpenStreetMap contributors / Esri World Street Map",
+  layerMinzoom: 5.25,
+  attribution: "OpenStreetMap contributors",
   opacityStops: [
     0, 0,
     5.5, 0,
