@@ -2,7 +2,7 @@
 
 This is the primary **5–7 minute** judge flow for the Cloudflare command center at https://aegis.guptashivaani233.workers.dev. The dedicated audit surface is https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger. Do not improvise numerical claims; let the current interface show them and state their evidence class.
 
-**Release gate:** completed for deployed application source `aed08c8` on Worker `f7ed8020-13c3-4d75-8288-e22ca531a58b`. Check the live URL once on the presentation laptop before the judges arrive; the remaining device-specific check is the Lenovo LOQ manual pass.
+**Release gate:** completed for deployed application source `0c068bf` on Worker `819d39c9-84f9-4215-a655-50f6a7a9b06b`. Check the live URL once on the presentation laptop before the judges arrive; the remaining device-specific check is the Lenovo LOQ manual pass.
 
 ## Roles
 
@@ -157,7 +157,7 @@ Use the first working level and continue. Never hide provider failure or invent 
 2. Check whether the browser has WebGL/hardware acceleration enabled.
 3. Select **World** again to reset the projection and camera.
 4. Use **Retry live globe** once after connectivity returns.
-5. Confirm the opaque CARTO/OSM-derived street layer and separate labels layer have loaded at close zoom; optional dated imagery may still be degraded.
+5. Confirm the opaque Esri/OSM street layer and separate labels layer have loaded at close zoom; optional dated imagery may still be degraded. Low-feature regions should retain a visible land surface instead of a black/white tile.
 6. If both providers remain unavailable, continue with the continuity renderer and evidence packet.
 
 ### Search returns no result

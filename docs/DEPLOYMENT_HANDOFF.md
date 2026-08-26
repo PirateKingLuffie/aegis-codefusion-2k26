@@ -6,10 +6,10 @@ This is the owner-action checklist for GitHub publication, immediate Cloudflare 
 
 | Surface | URL | Worker version |
 | --- | --- | --- |
-| Command center | https://aegis.guptashivaani233.workers.dev | `f7ed8020-13c3-4d75-8288-e22ca531a58b` |
+| Command center | https://aegis.guptashivaani233.workers.dev | `819d39c9-84f9-4215-a655-50f6a7a9b06b` |
 | Dedicated Agent Ledger | https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger | `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` |
 
-The D1 migration is applied and live in APAC. Cross-deployment ledger `GET`, `POST` and human-review `PATCH` were accepted, including a D1-persisted approved revision 2 with verified SHA-256 receipt links. Remote-browser acceptance also confirmed globe rotation, country/city/street labels, New Delhi search, deep zoom without a black canvas and a clean console. The remaining acceptance item is repetition on the target Lenovo LOQ for device-specific GPU and Chrome validation.
+The D1 migration is applied and live in APAC. Cross-deployment ledger `GET`, `POST` and human-review `PATCH` were accepted, including a D1-persisted approved revision 2 with verified SHA-256 receipt links. Remote-browser acceptance also confirmed globe rotation, country/city/street labels, Tokyo search, deep zoom with the Esri/OSM readable fallback and a clean console. The remaining acceptance item is repetition on the target Lenovo LOQ for device-specific GPU and Chrome validation.
 
 ## Deployment split
 

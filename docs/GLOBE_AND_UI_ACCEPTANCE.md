@@ -11,7 +11,7 @@ The current rehaul is implemented in source. Its exact final test totals, browse
 3. Drag, scroll, click, search or start a camera flight. Orbit pauses immediately so the selected location stays under operator control; it resumes after the idle interval only when the camera has returned to globe-overview zoom.
 4. Search a country, city, address, street, building, landmark or coordinate. The selected result receives a persistent focus marker and name while its planning coordinate becomes the active scenario location.
 5. The camera keeps an angled geographic overview when appropriate and changes to Mercator projection for reliable close-range streets, terrain and available building geometry. Regional, street and site views never drift under auto-orbit.
-6. Continue zooming. An opaque, keyless CARTO/OSM-derived street raster remains beneath the explicit label overlay and operational layers through zoom 20, so there is no black gap when dated Earth imagery hands off to roads, boundaries, places and buildings.
+6. Continue zooming. An opaque, keyless Esri World Street Map / OpenStreetMap raster remains beneath the explicit label overlay and operational layers through zoom 19, so low-feature regions retain a visible surface and city/road labels when dated Earth imagery hands off to local detail.
 7. Select a hazard source, origins, destinations or an operating area on the map. The same deterministic five-plugin workflow can be recalculated around any valid selected world coordinate; local detail is limited by the public map and terrain data available there.
 
 ## Root cause and correction
@@ -23,7 +23,7 @@ The corrected renderer:
 - retains and overzooms the EOX Sentinel context layer beneath vector streets through zoom 20;
 - keeps a neutral visible provider background if optional imagery is delayed;
 - adds explicit OpenMapTiles country, city, road and road-name context when a provider style is too subtle;
-- adds an opaque, keyless CARTO `dark_nolabels` street/building safety layer at regional and street zoom;
+- adds an opaque, keyless Esri World Street Map / OpenStreetMap street safety layer at regional and street zoom; this avoids the opaque blank CARTO dark/voyager tiles that caused black/white high-zoom regions;
 - adds a separate transparent, keyless CARTO labels-only layer through zoom 20, beneath AEGIS operational routes and hazard layers;
 - changes from globe to Mercator during zoom at the controlled threshold, with hysteresis to prevent projection flapping;
 - detaches terrain before a projection change and restores it only after the zoom settles;
@@ -89,8 +89,8 @@ Free public providers have no availability SLA. If one basemap fails, AEGIS swit
 
 ## Current-rehaul release record
 
-- Deployed application source: `aed08c8` (`fix: avoid globe fog projection warning`)
-- Command center Worker: `f7ed8020-13c3-4d75-8288-e22ca531a58b`
+- Deployed application source: `0c068bf` (`fix: keep high zoom world map readable`)
+- Command center Worker: `819d39c9-84f9-4215-a655-50f6a7a9b06b`
 - Agent Ledger Worker: `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
 - Canonical verification: 77 total tests, 76 passed, zero failed and one optional public-live-feed test skipped; production build passed.
 - Remote-browser evidence: Public 1366 × 768 replay confirmed orbit override, Tokyo OSM search, live-source Focus on map staying in Global map mode, Origin/Safe point/Source/Area completion and Clear reset. Browser warning/error log was empty throughout the final replay.

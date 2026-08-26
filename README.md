@@ -10,8 +10,8 @@ AEGIS combines a slowly rotating and searchable 3D world view, source-labelled i
 - **Dedicated Agent Ledger:** https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 - **Source repository:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26
 - **Windows and presentation downloads:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26/releases/tag/v0.1.0
-- **Deployed application source commit:** `aed08c8` (`fix: avoid globe fog projection warning`)
-- **Main Worker version:** `f7ed8020-13c3-4d75-8288-e22ca531a58b`
+- **Deployed application source commit:** `0c068bf` (`fix: keep high zoom world map readable`)
+- **Main Worker version:** `819d39c9-84f9-4215-a655-50f6a7a9b06b`
 - **Ledger Worker version:** `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
 - **Canonical verification:** 77 tests total — 76 passed, 0 failed, 1 optional public-live-feed test skipped; production build passed.
 - **Remote browser:** At 1366 × 768, the clean public site loaded with no browser warnings/errors; orbit override, live-source focus, Tokyo world search, origin/safe/source tools, operating-area completion and reset were replayed successfully.
@@ -35,7 +35,7 @@ Public upstreams can throttle, revise or become unavailable. AEGIS exposes their
 
 - The initial Earth uses a slightly tilted globe projection and a restrained idle orbit. Pointer, wheel, keyboard and camera interaction pause rotation; it resumes only after idle while the camera remains at globe-overview zoom. Reduced-motion preference and background tabs also pause it.
 - Nominatim search accepts countries, cities, addresses, streets, buildings, landmarks and coordinates. A selected result receives a persistent focus marker/name and becomes the active planning coordinate.
-- At regional/street zoom, an opaque keyless CARTO/OSM-derived street raster is kept beneath a separate labels overlay and AEGIS operational layers. This provides a non-black handoff when optional dated Earth imagery or subtle provider-vector fills are unavailable.
+- At regional/street zoom, an opaque keyless Esri World Street Map / OpenStreetMap raster is kept beneath a separate labels overlay and AEGIS operational layers. This prevents the opaque blank CARTO dark/voyager tiles from turning low-feature regions black or white when optional dated Earth imagery or subtle provider-vector fills are unavailable.
 - Place labels, roads and available building context come from public OpenStreetMap/OpenMapTiles/CARTO sources. Coverage is not uniform and the imagery is not live satellite.
 - Source-labelled current/live incidents can pulse red. That status is inherited from the named provider record and freshness rules; it is not an AEGIS field observation and is not mixed with simulated hazard geometry.
 - The operator can place a hazard source, evacuation origins/destinations and an operating area, then run any of the five implemented hazard plugins around the selected world location. “Any location” does not mean survey-grade fidelity everywhere, and “five plugins” does not mean literally every disaster type is modelled.
