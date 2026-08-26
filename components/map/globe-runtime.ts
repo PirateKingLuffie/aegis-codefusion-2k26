@@ -55,22 +55,23 @@ export const WORLD_RASTER_LABELS = {
  *
  * The former CARTO dark/voyager tiles are valid but opaque blank tiles in
  * low-feature regions. They hide satellite/vector context and make a zoomed
- * world view look black or white. Esri's public World Street Map tiles retain
- * a visible land surface plus country, city, road and POI labels without an
- * API key. The independent CARTO label fallback remains available when the
- * street tiles are delayed.
+ * world view look black or white. OpenStreetMap's public raster tiles retain
+ * mapped land, country, city, road and POI detail without an API key; Esri's
+ * World Street Map is kept as an independent alternate for coverage gaps.
+ * The independent CARTO label fallback remains available when street tiles
+ * are delayed.
  */
 export const WORLD_RASTER_STREETS = {
   sourceId: "aegis-world-carto-streets",
   layerId: "aegis-world-carto-streets-layer",
   tiles: [
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
   ],
   minzoom: 0,
   maxzoom: 19,
   layerMinzoom: 5,
-  attribution: "Esri World Street Map / OpenStreetMap contributors",
+  attribution: "OpenStreetMap contributors / Esri World Street Map",
   opacityStops: [
     0, 0,
     5.5, 0,

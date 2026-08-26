@@ -127,10 +127,10 @@ test("keyless Esri/OSM street base replaces satellite overzoom at every location
   assert.equal(WORLD_RASTER_STREETS.layerMinzoom, 5);
   assert.equal(WORLD_RASTER_STREETS.maxzoom, 19);
   assert.equal(WORLD_RASTER_STREETS.tiles.length, 2);
+  assert.ok(WORLD_RASTER_STREETS.tiles[0].includes("tile.openstreetmap.org"));
   assert.ok(WORLD_RASTER_STREETS.tiles.some((url) => (
     url.includes("arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile")
   )));
-  assert.ok(WORLD_RASTER_STREETS.tiles.some((url) => url.includes("tile.openstreetmap.org")));
   assert.ok(WORLD_RASTER_STREETS.tiles.every((url) => !/[?&](?:key|token)=/i.test(url)));
   const streetOpacityByZoom = new Map(
     Array.from({ length: WORLD_RASTER_STREETS.opacityStops.length / 2 }, (_, index) => [
