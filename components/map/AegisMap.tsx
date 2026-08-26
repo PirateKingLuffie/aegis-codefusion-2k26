@@ -3902,7 +3902,8 @@ export function AegisMap({
               {providerState.providerId === "openfreemap-dark" ? (
                 <>{" / "}<a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap / OpenMapTiles</a></>
               ) : null}
-              {" / "}<a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO basemap / labels</a>
+              {" / "}<a href="https://developers.arcgis.com/terms/" target="_blank" rel="noreferrer">Esri World Street Map</a>
+              {" / "}<a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO labels</a>
               {" / "}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>
             </>
           ) : providerState.providerId === "carto-dark" ? (
