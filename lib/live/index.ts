@@ -2,7 +2,13 @@ export { aggregateLiveIntelligence } from "./aggregate";
 export { clearLiveMemoryCache } from "./cache";
 export { getOfflineScenarioPreviews, getVerifiedSourceSnapshots } from "./fallback";
 export { fetchGoogleNewsIncidents } from "./google-news";
-export { searchIncidentMedia, buildSafeMediaLinks } from "./media";
+export { searchIncidentMedia, buildSafeMediaLinks, getCuratedOpenMediaContext } from "./media";
+export {
+  deriveSafeDirectVideoUrl,
+  deriveSafeYouTubeEmbedUrl,
+  resolveMediaPlayback,
+  youtubeVideoIdFromUrl,
+} from "./embed";
 export { fetchNasaEonetEvents } from "./nasa-eonet";
 export { parseBoolean, parseBoundingBox, parseLiveOptions, parseProximity } from "./query";
 export { fetchReliefWebReports } from "./reliefweb";

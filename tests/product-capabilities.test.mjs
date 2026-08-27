@@ -165,7 +165,7 @@ test("world camera keeps a restrained presentation tilt and orbit pauses then wr
   assert.ok(laptop.zoom > compact.zoom);
   assert.equal(worldPitchForFocus(1.84, 0), 12);
   assert.equal(worldPitchForFocus(12.2, 42), 42);
-  assert.equal(WORLD_GLOBE_DEFAULT_ORBIT_SPEED, 1.35);
+  assert.equal(WORLD_GLOBE_DEFAULT_ORBIT_SPEED, 1.6);
   assert.equal(WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS, 1_500);
   assert.equal(WORLD_GLOBE_INITIAL_ORBIT_DELAY_MS, 650);
   assert.equal(initialOrbitResumeDeadline(1_000), 1_650);

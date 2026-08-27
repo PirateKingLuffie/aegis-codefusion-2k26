@@ -20,6 +20,47 @@
   font-family: Inter, "Segoe UI", system-ui, sans-serif;
 }
 
+/*
+ * A static geospatial reference field gives the space around the spherical
+ * Earth an intentional operations-map finish. The radial mask keeps the
+ * lattice away from the globe itself, so imagery and labels stay clear. This
+ * is one composited CSS layer: no canvas loop, texture request or asset load.
+ */
+.wrapper[data-view="world"]::before {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  content: "";
+  opacity: 0.26;
+  background:
+    repeating-conic-gradient(
+      from -8deg at 50% 48%,
+      rgba(132, 190, 203, 0.22) 0 0.28deg,
+      transparent 0.28deg 15deg
+    ),
+    radial-gradient(
+      circle at 50% 48%,
+      transparent 0 47%,
+      rgba(130, 190, 202, 0.24) 47.15% 47.35%,
+      transparent 47.5% 58%,
+      rgba(130, 190, 202, 0.12) 58.15% 58.35%,
+      transparent 58.5%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(111, 170, 183, 0.1) 0 1px,
+      transparent 1px 72px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(111, 170, 183, 0.08) 0 1px,
+      transparent 1px 72px
+    );
+  -webkit-mask-image: radial-gradient(circle at 50% 48%, transparent 0 43%, #000 58% 100%);
+  mask-image: radial-gradient(circle at 50% 48%, transparent 0 43%, #000 58% 100%);
+}
+
 .wrapper::after {
   position: absolute;
   inset: 0;

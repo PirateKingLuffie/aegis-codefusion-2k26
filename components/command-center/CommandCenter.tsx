@@ -13,7 +13,6 @@ import {
   Command,
   Crosshair,
   Database,
-  ExternalLink,
   Eye,
   FastForward,
   FolderOpen,
@@ -116,6 +115,7 @@ import {
   type WorkspaceLayoutId,
 } from "@/lib/workspace";
 import type { CommandAction } from "./ProductPanels";
+import { LiveMediaDialog } from "./LiveMediaDialog";
 import { COMING_SOON, HAZARDS, type HazardId } from "./catalog";
 import styles from "./command-center.module.css";
 import { WorldLocationSearch } from "./WorldLocationSearch";
@@ -988,6 +988,7 @@ export function CommandCenter() {
   const [playing, setPlaying] = useState(false);
   const [evacuationVisible, setEvacuationVisible] = useState(false);
   const [liveNoticeOpen, setLiveNoticeOpen] = useState(false);
+  const [liveMediaOpen, setLiveMediaOpen] = useState(false);
   const [scenarioMenuOpen, setScenarioMenuOpen] = useState(false);
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
@@ -1913,11 +1914,6 @@ export function CommandCenter() {
     && headlineIncident.provenance.status === "live"
     && (headlineIncident.state === "active" || headlineIncident.state === "monitoring"),
   );
-  const liveMediaLink =
-    liveMediaVideo?.watchUrl ??
-    liveIntelligence?.media?.links.find((link) => link.kind === "youtube-search")?.url ??
-    `https://www.youtube.com/results?search_query=${encodeURIComponent(`${headlineIncident?.title ?? "current disaster"} official field report`)}`;
-
   useEffect(() => {
     if (!playing) return;
     const timer = window.setInterval(() => {
@@ -1942,6 +1938,7 @@ export function CommandCenter() {
         setCascadeOpen(false);
         setCopilotOpen(false);
         setLiveNoticeOpen(false);
+        setLiveMediaOpen(false);
         setScenarioMenuOpen(false);
         setLayerPanelOpen(false);
         setProviderPanelOpen(false);
@@ -2948,13 +2945,13 @@ export function CommandCenter() {
               <GripHorizontal size={18} />
             </button>
             <div className={styles.scenarioHeader}>
-              <div>
-                <span>Scenario settings <StatusTag tone="blue">Planning model</StatusTag></span>
-                <small>Hazard inputs and saved planning cases</small>
+              <div className={styles.scenarioHeading}>
+                <div><span>Scenario setup</span><StatusTag tone="neutral">Planning model</StatusTag></div>
+                <small>Configure the hazard, operating area and case</small>
               </div>
-              <button onClick={() => setScenarioMenuOpen((value) => !value)} aria-expanded={scenarioMenuOpen}>
+              <button className={styles.hazardSelector} onClick={() => setScenarioMenuOpen((value) => !value)} aria-expanded={scenarioMenuOpen}>
                 <SelectedHazardIcon size={16} />
-                {selectedHazard.label}
+                <span><small>Hazard model</small><strong>{selectedHazard.label}</strong></span>
                 <ChevronDown size={14} />
               </button>
               <PanelControls panel={scenarioPanel} label="scenario" />
@@ -2991,11 +2988,12 @@ export function CommandCenter() {
             )}
 
             <div className={styles.scenarioInputs}>
-              <div>
-                <span>{control.label}</span>
-                <strong>{control.value}</strong>
+              <div className={styles.scenarioInputHeading}>
+                <label htmlFor="scenario-strength"><span>Hazard intensity</span><strong>{control.label}</strong></label>
+                <output htmlFor="scenario-strength">{control.value}</output>
               </div>
               <input
+                id="scenario-strength"
                 type="range"
                 min="20"
                 max="140"
@@ -3012,14 +3010,20 @@ export function CommandCenter() {
             </div>
 
             <div className={styles.scenarioContext}>
-              <span>Current map selection</span>
-              <strong>{activeLocation.name} · {activeLocation.region}</strong>
-              <small>X {activeLocation.longitude.toFixed(5)} · Y {activeLocation.latitude.toFixed(5)} · Z terrain-derived · {selectedHazard.shortLabel} · T+{minute} min</small>
+              <header><span>Operating area</span><small>Current map selection</small></header>
+              <strong title={`${activeLocation.name} · ${activeLocation.region}`}>{activeLocation.name}</strong>
+              <small className={styles.scenarioRegion}>{activeLocation.region}</small>
+              <div className={styles.scenarioCoordinates}>
+                <span><b>X</b>{activeLocation.longitude.toFixed(4)}</span>
+                <span><b>Y</b>{activeLocation.latitude.toFixed(4)}</span>
+                <span><b>Z</b>Terrain</span>
+                <span><b>TIME</b>T+{minute} min</span>
+              </div>
               <p>{operatingAreaMessage}</p>
             </div>
 
             <section className={styles.scenarioLibrary} aria-label="Loaded planning scenarios">
-              <header><span>Loaded scenarios</span><small>Three primary presets plus one clearly labelled proxy</small></header>
+              <header><span>Loaded scenarios</span><small>{LOADED_PLANNING_SCENARIOS.length} ready-to-run planning cases</small></header>
               <div>
                 {LOADED_PLANNING_SCENARIOS.map((preset) => {
                   const location = QUICK_LOCATIONS.find((candidate) => candidate.id === preset.locationId);
@@ -3032,11 +3036,20 @@ export function CommandCenter() {
                       key={preset.id}
                       aria-pressed={scenarioName === preset.name}
                       onClick={() => loadPlanningScenario(preset)}
+                      style={{ "--scenario-accent": hazardDefinition.accent } as CSSProperties}
                     >
-                      <span><strong>{preset.name}</strong><small>{preset.brief}</small></span>
-                      {preset.proxyLabel ? <i>{preset.proxyLabel}</i> : null}
-                      <em>X {location.longitude.toFixed(4)} · Y {location.latitude.toFixed(4)} · Z terrain-derived</em>
-                      <b>{hazardDefinition.shortLabel} · {presetControl.label}: {presetControl.value} · T+{preset.minute} min</b>
+                      <span className={styles.scenarioPresetTop}>
+                        <i aria-hidden="true" />
+                        <span><strong>{preset.name}</strong><small>{location.name} · {location.region}</small></span>
+                        {scenarioName === preset.name ? <Check size={13} aria-hidden="true" /> : <ArrowUpRight size={13} aria-hidden="true" />}
+                      </span>
+                      <p>{preset.brief}</p>
+                      <span className={styles.scenarioPresetMeta}>
+                        <b>{hazardDefinition.shortLabel}</b>
+                        <span>{presetControl.value}</span>
+                        <span>T+{preset.minute} min</span>
+                      </span>
+                      {preset.proxyLabel ? <em className={styles.scenarioProxyLabel}>{preset.proxyLabel}</em> : null}
                     </button>
                   );
                 })}
@@ -3580,7 +3593,7 @@ export function CommandCenter() {
               <div className={styles.satelliteScan}>
                 <Globe2 size={35} />
                 <span>Near-real-time source scan</span>
-                <small>Ground media opens from its original publisher</small>
+                <small>Open the source viewer for embeddable incident media</small>
               </div>
             )}
             <div className={styles.newsStats}>
@@ -3647,12 +3660,19 @@ export function CommandCenter() {
               setLiveNoticeOpen(false);
               recordAudit("Incident converted to scenario", `${headlineIncident.title} · ${nextHazard}`, "imported-context");
             }}><Boxes size={14} /> Create scenario</button>
-            <a href={liveMediaLink} target="_blank" rel="noreferrer">
-              <Video size={14} /> {liveMediaVideo ? "Open footage source" : "Find ground footage"} <ExternalLink size={12} />
-            </a>
+            <button type="button" onClick={() => setLiveMediaOpen(true)}>
+              <Video size={14} /> View source media
+            </button>
           </div>
         </div>
       ) : null}
+
+      <LiveMediaDialog
+        open={liveMediaOpen}
+        onClose={() => setLiveMediaOpen(false)}
+        incident={headlineIncident}
+        media={liveIntelligence?.media}
+      />
 
       <Suspense fallback={null}>
       {commandPaletteOpen ? (

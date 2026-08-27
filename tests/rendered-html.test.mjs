@@ -36,10 +36,12 @@ test("server-renders the AEGIS operations center", async () => {
 });
 
 test("keeps simulation, live intelligence, provider failover and wrappers wired", async () => {
-  const [page, layout, commandCenter, mapTypes, providers, aegisMap] = await Promise.all([
+  const [page, layout, commandCenter, liveMediaDialog, liveEmbed, mapTypes, providers, aegisMap] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/command-center/CommandCenter.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/command-center/LiveMediaDialog.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/live/embed.ts", import.meta.url), "utf8"),
     readFile(new URL("../components/map/types.ts", import.meta.url), "utf8"),
     readFile(new URL("../components/map/providers.ts", import.meta.url), "utf8"),
     readFile(new URL("../components/map/AegisMap.tsx", import.meta.url), "utf8"),
@@ -51,7 +53,14 @@ test("keeps simulation, live intelligence, provider failover and wrappers wired"
   assert.match(commandCenter, /createEvacuationPlan/);
   assert.match(commandCenter, /\/api\/live/);
   assert.match(commandCenter, /\/api\/geocode/);
+  assert.match(commandCenter, /<LiveMediaDialog/);
+  assert.match(commandCenter, /View source media/);
+  assert.doesNotMatch(commandCenter, /liveMediaLink/);
   assert.match(commandCenter, /GLOBAL PROTOTYPE/);
+  assert.match(liveMediaDialog, /\/api\/live\/media\?q=/);
+  assert.match(liveMediaDialog, /resolveMediaPlayback/);
+  assert.match(liveEmbed, /youtube-nocookie/);
+  assert.match(liveMediaDialog, /role="dialog"/);
   assert.match(mapTypes, /"origin"[\s\S]*"destination"[\s\S]*"hazard-source"[\s\S]*"area"/);
   assert.match(providers, /OpenFreeMap Dark/);
   assert.match(providers, /CARTO Dark Matter/);

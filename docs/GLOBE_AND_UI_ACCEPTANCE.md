@@ -7,7 +7,7 @@ The current rehaul is implemented in source. Its exact final test totals, browse
 ## Intended operator flow
 
 1. Open **Global map**. A large, slightly tilted Earth is visible rather than a flat placeholder.
-2. Leave the pointer idle. The globe begins a slow eastward orbit after a short startup delay while retaining the slightly tilted overview framing.
+2. Leave the pointer idle. The globe begins a deliberate eastward orbit after a short startup delay while retaining the slightly tilted overview framing. A faint static reference lattice and range rings make the surrounding space useful without obscuring Earth imagery.
 3. Drag, scroll, click, search or start a camera flight. Orbit pauses immediately so the selected location stays under operator control; it resumes after the idle interval only when the camera has returned to globe-overview zoom.
 4. Search a country, city, address, street, building, landmark or coordinate. The selected result receives a persistent focus marker and name while its planning coordinate becomes the active scenario location.
 5. The camera keeps an angled geographic overview when appropriate and changes to Mercator projection for reliable close-range streets, terrain and available building geometry. Regional, street and site views never drift under auto-orbit.
@@ -27,7 +27,8 @@ The corrected renderer:
 - uses the standard OSM raster's own labels plus the active OpenFreeMap/CARTO vector style labels; the former CARTO raster-label request was removed because its public endpoint began returning a key-required watermark;
 - changes from globe to Mercator during zoom at the controlled threshold, with hysteresis to prevent projection flapping;
 - detaches terrain before a projection change and restores it only after the zoom settles;
-- starts idle orbit after a short initial delay, uses a clearly visible default speed of 1.35 degrees of longitude per second, and avoids replaying the initial world flight on unrelated renders;
+- starts idle orbit after a short initial delay, uses a clearly visible default speed of 1.6 degrees of longitude per second, and avoids replaying the initial world flight on unrelated renders;
+- uses a masked, static CSS reference lattice and range rings around the spherical Earth so the viewport reads as an intentional global operations field without adding another animation loop, remote asset or canvas renderer;
 - pauses rotation for pointer/keyboard/map interaction, camera movement, reduced-motion preference, background tabs and close-range views, then resumes without a longitude jump;
 - displays a pulsing red halo only for incident features classified by the live-intelligence adapter as current/live, while retaining their title and source context;
 - displays a separate pulsing focus marker for the operator's selected search result so a successful search cannot visually disappear.
@@ -48,7 +49,9 @@ The active interface follows a conventional GIS/emergency-operations hierarchy:
 - visible navigation names, a restrained header and a map-first 1366 × 768 layout;
 - a short purpose briefing beneath the active World map, Incident, Scenarios, Impacts, Sources and Analysis navigation title, with concise hover/rail briefings for the same destinations;
 - a Scenario panel that shows the current X longitude, Y latitude, terrain-derived Z context, hazard and selected minute;
+- a two-level Scenario setup header, explicit hazard selector, readable intensity output, compact X/Y/Z/time chips and keyboard-visible loaded-case selection that remain contained at 1366 × 768;
 - three primary loaded cases—EIT campus flood, Tokyo earthquake access and Miami cyclone/surge—plus a separate Sendai coastal-inundation demonstration that is visibly disclosed as a cyclone/surge-engine tsunami proxy;
+- an in-product Incident Source Viewer that queries media for the selected report, embeds privacy-enhanced YouTube or direct Wikimedia video when available, keeps the AEGIS URL unchanged and identifies non-live contextual fallback footage explicitly;
 - an evacuation-procedure action in Decision support that is built from the current departure minute, staged demand, route, destination, capacity, remaining exposure and model warnings rather than a generic chat response;
 - all existing layer controls, panel dragging, docking, minimizing, resizing and reset behaviour preserved.
 
@@ -80,6 +83,7 @@ Use a clean current Chrome session at 100% zoom:
 - let the initial orbit advance, interact to pause it, wait for the idle interval at overview zoom and confirm that it resumes slowly without a camera jump;
 - confirm a source-labelled current/live incident has a pulsing red mark; if no upstream event meets the freshness rule, do not fabricate one merely to satisfy this check;
 - load each of the three primary scenario cards, then the clearly labelled coastal-inundation proxy, and confirm location, coordinates, hazard and minute change together;
+- open **Incident updates**, select **View source media** and confirm the dialog remains inside AEGIS, shows publisher/time/licence context and never describes contextual media as a verified live camera;
 - play/seek all five executable hazards and confirm that each produces its own time-varying footprint/vector vocabulary;
 - ask **Explain evacuation procedure** and confirm the answer cites the current plan's stages, route, destination/capacity, remaining exposure and warning;
 - check 1366 × 768 for clipped search, scene, layer, timeline or decision controls;
@@ -87,15 +91,16 @@ Use a clean current Chrome session at 100% zoom:
 
 Free public providers have no availability SLA. If one basemap fails, AEGIS switches to the independent fallback. If optional imagery fails while vectors remain healthy, the basemap is retained and the UI reports degraded imagery rather than discarding the world map.
 
-## Current-rehaul release record
+## Current-rehaul release record — 27 August 2026
 
-- Deployed application source: `8d1f94e` (`fix: prefer OSM geometry for high zoom`)
-- Command center Worker: `9aa3dea2-6254-4dc2-aed2-eec8ce39fee8`
-- Agent Ledger Worker: `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
-- Canonical verification: 77 total tests, 76 passed, zero failed and one optional public-live-feed test skipped; production build passed.
-- Remote-browser evidence: Public 1366 × 768 replay confirmed orbit override, Tokyo OSM search, live-source Focus on map staying in Global map mode, Origin/Safe point/Source/Area completion and Clear reset. Browser warning/error log was empty throughout the final replay.
-- Public API smoke checks: `GET /api/health`, `GET /api/providers`, `GET /api/simulation/catalog` and Ledger `GET /api/agent-activity` each returned HTTP 200.
-- AI evacuation proof: The live command center returned a plan-grounded response through Cloudflare Workers AI (`@cf/meta/llama-3.2-3b-instruct`), labelled for human review, and rendered the calculated procedure/evidence.
+- Command center Worker: `1e12ba63-1fe8-4112-bda9-b6ebd3b460b0`.
+- Fresh public entry: `https://aegis.guptashivaani233.workers.dev/?fresh=1e12ba63`.
+- Canonical verification: 82 total tests, 81 passed, zero failed and one optional public-live-feed test skipped; production build, TypeScript and ESLint passed.
+- Globe evidence: a current incident marker moved from `translate(686px, 274px)` to `translate(666px, 271px)` over 2.5 seconds at the new 1.6-degree/second orbit setting.
+- Scenario evidence: at 1366 × 768 the panel remained inside the viewport at 326 × 501 px, exposed the EIT, Tokyo, Miami and Sendai cases, and used intentional internal scrolling for the complete 930 px workflow.
+- Media evidence: **View source media** opened the in-site dialog without changing the AEGIS URL; the selected cyclone report produced one playable direct-video element and a visible non-live/context warning.
+- Public API checks: health and the incident media endpoint returned HTTP 200; the zero-key media path returned `open-media` with one source-linked Commons clip.
+- Browser warning/error log: empty after globe, Scenario and Incident Source Viewer replay.
 - Lenovo LOQ device check: owner manual check remains before presentation.
 
 ## Operational-marker release record — 26 August 2026

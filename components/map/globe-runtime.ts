@@ -13,7 +13,9 @@ export const WORLD_GLOBE_BEARING = -8;
 export const WORLD_GLOBE_EXIT_ZOOM = 5.25;
 export const WORLD_GLOBE_REENTRY_ZOOM = 4.7;
 export const WORLD_GLOBE_ORBIT_MAX_ZOOM = 3.6;
-export const WORLD_GLOBE_DEFAULT_ORBIT_SPEED = 1.35;
+// Fast enough to read as a live global operations view, but restrained enough
+// that country labels remain legible while the operator is observing the map.
+export const WORLD_GLOBE_DEFAULT_ORBIT_SPEED = 1.6;
 export const WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS = 1_500;
 export const WORLD_GLOBE_INITIAL_ORBIT_DELAY_MS = 650;
 export const WORLD_DETAIL_IMAGERY_LAYER_MIN_ZOOM = 3.25;

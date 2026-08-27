@@ -659,5 +659,35 @@ Verification:
   - Final suite: 77 tests, 76 passed, zero failed, one optional public-feed test skipped.
 
 
+23. SCENARIO, GLOBE AMBIENCE AND IN-SITE MEDIA RELEASE (27 AUGUST 2026)
+========================================================================
+
+Public release:
+  https://aegis.guptashivaani233.workers.dev/?fresh=1e12ba63
+  Cloudflare Worker version: 1e12ba63-1fe8-4112-bda9-b6ebd3b460b0
+
+Completed and verified on the deployed public build:
+  [DONE] Globe orbit increased from 1.35 to 1.6 degrees/second and physically verified on a live marker.
+  [DONE] Added a static masked operations lattice and range rings behind the world globe without another
+         animation loop, canvas renderer, asset request or hit-testing layer.
+  [DONE] Rebuilt Scenario setup with an explicit hazard selector, readable intensity output, compact X/Y/Z/time
+         context, four concise loaded cases, selected-state feedback and narrow-panel scrolling.
+  [DONE] Replaced the Incident updates footage redirect with an in-product Incident Source Viewer.
+  [DONE] The viewer queries the selected incident on demand and plays HTTPS Commons video or a privacy-enhanced
+         YouTube embed when provider metadata is available.
+  [DONE] Added a source-linked, zero-key Wikimedia context fallback so a provider outage does not leave the demo
+         empty; it is explicitly labelled cached, non-live and not incident-specific evidence.
+  [DONE] Added strict HTTPS/YouTube allow-list playback resolution, publisher/time/licence context, keyboard focus,
+         Escape/backdrop close handling and responsive modal layout.
+
+Verification:
+  - Final suite: 82 tests, 81 passed, zero failed, one optional public-feed test skipped.
+  - TypeScript, ESLint and production build passed.
+  - 1366 x 768 Scenario panel stayed within the viewport at 326 x 501 px and exposed all four cases.
+  - Globe marker moved from translate(686px, 274px) to translate(666px, 271px) over 2.5 seconds.
+  - Incident Source Viewer preserved the AEGIS URL, rendered one direct video and displayed the context warning.
+  - Public health and media endpoints returned HTTP 200; browser warning/error log remained empty.
+
+
 END OF LEDGER
 =============

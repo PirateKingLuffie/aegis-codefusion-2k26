@@ -24,6 +24,104 @@ interface YouTubeSearchResponse {
   }>;
 }
 
+type CuratedOpenMedia = {
+  terms: RegExp;
+  id: string;
+  title: string;
+  directUrl: string;
+  watchUrl: string;
+  publishedAt: string;
+  license: string;
+  contributor: string;
+};
+
+/**
+ * Small, source-linked Commons safety set for when a live search provider is
+ * unavailable at the edge. These clips are hazard context only: never live or
+ * incident-specific evidence. Keeping the metadata here guarantees that the
+ * in-product viewer remains demonstrable without a paid key or a redirect.
+ */
+const CURATED_OPEN_MEDIA: CuratedOpenMedia[] = [
+  {
+    terms: /cyclone|hurricane|typhoon|storm|surge/i,
+    id: "commons-cyclone-dudzai-eye-2026",
+    title: "Tropical Cyclone Dudzai eye — CIRA satellite loop",
+    directUrl: "https://upload.wikimedia.org/wikipedia/commons/7/73/Tropical_Cyclone_Dudzai%E2%80%99s_Eye_%28CIRA_2026-01-12_-_labels%29.webm",
+    watchUrl: "https://commons.wikimedia.org/wiki/File:Tropical_Cyclone_Dudzai%E2%80%99s_Eye_(CIRA_2026-01-12_-_labels).webm",
+    publishedAt: "2026-01-15T09:38:44.000Z",
+    license: "Public domain",
+    contributor: "CIRA / Wikimedia Commons",
+  },
+  {
+    terms: /earthquake|seismic|quake/i,
+    id: "commons-earthquake-plant-shaking",
+    title: "Plant shaking after an earthquake",
+    directUrl: "https://upload.wikimedia.org/wikipedia/commons/d/db/Plant_shaking_after_earthquake.mpg",
+    watchUrl: "https://commons.wikimedia.org/wiki/File:Plant_shaking_after_earthquake.mpg",
+    publishedAt: "2024-10-19T02:08:38.000Z",
+    license: "CC BY-SA 4.0",
+    contributor: "Panamitsu / Wikimedia Commons",
+  },
+  {
+    terms: /wildfire|forest fire|bushfire|fire/i,
+    id: "commons-wildfire-pyrocumulus",
+    title: "Pyrocumulus over a wildfire in Czechia",
+    directUrl: "https://upload.wikimedia.org/wikipedia/commons/9/9f/Pyrocumulus_2022_Czechia.webm",
+    watchUrl: "https://commons.wikimedia.org/wiki/File:Pyrocumulus_2022_Czechia.webm",
+    publishedAt: "2024-07-29T07:26:00.000Z",
+    license: "CC BY 4.0",
+    contributor: "Phoenix CZE / Wikimedia Commons",
+  },
+  {
+    terms: /landslide|mudslide|debris flow/i,
+    id: "commons-landslide-shuicheng-2019",
+    title: "2019 Shuicheng County landslide",
+    directUrl: "https://upload.wikimedia.org/wikipedia/commons/7/77/2019_China_Guizhou_Shuicheng_County_Jichang_Town_Landslide.webm",
+    watchUrl: "https://commons.wikimedia.org/wiki/File:2019_China_Guizhou_Shuicheng_County_Jichang_Town_Landslide.webm",
+    publishedAt: "2019-07-24T09:43:57.000Z",
+    license: "CC0",
+    contributor: "Huangdan2060 / Wikimedia Commons",
+  },
+  {
+    terms: /flood|inundation|monsoon|tsunami|disaster/i,
+    id: "commons-flood-azraq-2023",
+    title: "Azraq flooding — May 2023",
+    directUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c2/Azraq_flooding_May_2023.webm",
+    watchUrl: "https://commons.wikimedia.org/wiki/File:Azraq_flooding_May_2023.webm",
+    publishedAt: "2024-02-22T19:25:12.000Z",
+    license: "CC0",
+    contributor: "Iainsimpsonstewart / Wikimedia Commons",
+  },
+];
+
+export function getCuratedOpenMediaContext(queryValue: string, maxResults = 2): MediaVideo[] {
+  const query = sanitizeQuery(queryValue, "disaster response");
+  const matching = CURATED_OPEN_MEDIA.filter((item) => item.terms.test(query));
+  const selected = matching.length ? matching : CURATED_OPEN_MEDIA.slice(-1);
+  const retrievedAt = new Date().toISOString();
+  return selected.slice(0, Math.max(1, Math.min(2, maxResults))).map((item) => ({
+    id: item.id,
+    title: item.title,
+    channelTitle: item.contributor,
+    publishedAt: item.publishedAt,
+    watchUrl: item.watchUrl,
+    directUrl: item.directUrl,
+    mimeType: item.directUrl.endsWith(".mpg") ? "video/mpeg" : "video/webm",
+    license: item.license,
+    provenance: {
+      sourceId: "aegis-verified-cache",
+      sourceName: "Wikimedia Commons context set",
+      dataset: "Curated open-media fallback",
+      upstreamUrl: item.watchUrl,
+      retrievedAt,
+      publishedAt: item.publishedAt,
+      status: "cached",
+      license: item.license,
+      notice: "Context footage only. It is not live, incident-specific or proof of the selected event; verify the Commons file page before operational use.",
+    },
+  }));
+}
+
 export function buildSafeMediaLinks(queryValue: string): MediaLink[] {
   const query = sanitizeQuery(queryValue, "disaster response");
   const encoded = encodeURIComponent(query);
@@ -99,12 +197,19 @@ export async function searchIncidentMedia(queryValue: string, maxResults = 5): P
         };
       }
     } catch {
-      // Safe links below remain available when Commons has no usable result.
+      // The source-linked open-media context set below remains available when
+      // the edge cannot complete a live Commons API query.
     }
-    return fallback(
-      new Date().toISOString(),
-      "No keyless open-media result was available. Safe publisher, official and search links remain active."
-    );
+    const retrievedAt = new Date().toISOString();
+    return {
+      query,
+      mode: "open-media",
+      status: "cached",
+      retrievedAt,
+      videos: getCuratedOpenMediaContext(query, maxResults),
+      links: safeLinks,
+      notice: "The live open-media search returned no playable clip, so AEGIS is showing source-linked hazard context from Wikimedia Commons. It is not live or incident-specific evidence.",
+    };
   }
 
   const url = new URL(YOUTUBE_SEARCH_ENDPOINT);
