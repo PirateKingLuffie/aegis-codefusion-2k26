@@ -105,9 +105,9 @@ Free public providers have no availability SLA. If one basemap fails, AEGIS swit
 - Globe evidence: a current incident marker moved from `translate(686px, 274px)` to `translate(666px, 271px)` over 2.5 seconds at the new 1.6-degree/second orbit setting.
 - Scenario evidence: at 1366 × 768 the panel remained inside the viewport at 326 × 501 px, exposed the EIT, Tokyo, Miami and Sendai cases, and used intentional internal scrolling for the complete 930 px workflow.
 - Media evidence: **View source media** opened the in-site dialog without changing the AEGIS URL; the selected cyclone report produced one playable direct-video element and a visible non-live/context warning.
-- Public API checks on the deployed Worker: health and the incident media endpoint returned HTTP 200; the
-  zero-key media path returned `open-media` with one source-linked Commons clip. The source-only follow-up
-  below intentionally removes unrelated fallback clips.
+- Public API checks on this historical Worker: health and the incident media endpoint returned HTTP 200; the
+  zero-key media path returned `open-media` with one source-linked Commons clip. The deployed 28 August
+  follow-up below supersedes that behavior by refusing unrelated fallback clips.
 - Browser warning/error log: empty after globe, Scenario and Incident Source Viewer replay.
 - Lenovo LOQ device check: owner manual check remains before presentation.
 
