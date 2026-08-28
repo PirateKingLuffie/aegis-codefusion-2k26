@@ -26,39 +26,50 @@
  * lattice away from the globe itself, so imagery and labels stay clear. This
  * is one composited CSS layer: no canvas loop, texture request or asset load.
  */
-.wrapper[data-view="world"]::before {
+.wrapper[data-view="world"][data-world-overview="true"]::before {
   position: absolute;
   inset: 0;
   z-index: 2;
   pointer-events: none;
   content: "";
-  opacity: 0.26;
+  opacity: 0.68;
   background:
+    /* A sparse, static star field keeps the stage legible without an image
+       request or a per-frame canvas loop. */
+    radial-gradient(circle at 8% 16%, rgba(224, 236, 238, 0.82) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 17% 73%, rgba(174, 206, 214, 0.58) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 29% 24%, rgba(214, 231, 234, 0.62) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 72% 18%, rgba(214, 231, 234, 0.68) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 86% 33%, rgba(174, 206, 214, 0.56) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 92% 79%, rgba(224, 236, 238, 0.72) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 63% 86%, rgba(174, 206, 214, 0.5) 0 1px, transparent 1.7px),
     repeating-conic-gradient(
       from -8deg at 50% 48%,
-      rgba(132, 190, 203, 0.22) 0 0.28deg,
+      rgba(132, 190, 203, 0.32) 0 0.28deg,
       transparent 0.28deg 15deg
     ),
     radial-gradient(
       circle at 50% 48%,
-      transparent 0 47%,
-      rgba(130, 190, 202, 0.24) 47.15% 47.35%,
-      transparent 47.5% 58%,
-      rgba(130, 190, 202, 0.12) 58.15% 58.35%,
-      transparent 58.5%
+      transparent 0 38%,
+      rgba(151, 200, 211, 0.34) 38.15% 38.42%,
+      transparent 38.65% 49%,
+      rgba(130, 190, 202, 0.24) 49.15% 49.42%,
+      transparent 49.65% 62%,
+      rgba(130, 190, 202, 0.15) 62.15% 62.42%,
+      transparent 62.65%
     ),
     repeating-linear-gradient(
       90deg,
-      rgba(111, 170, 183, 0.1) 0 1px,
+      rgba(111, 170, 183, 0.14) 0 1px,
       transparent 1px 72px
     ),
     repeating-linear-gradient(
       0deg,
-      rgba(111, 170, 183, 0.08) 0 1px,
+      rgba(111, 170, 183, 0.12) 0 1px,
       transparent 1px 72px
     );
-  -webkit-mask-image: radial-gradient(circle at 50% 48%, transparent 0 43%, #000 58% 100%);
-  mask-image: radial-gradient(circle at 50% 48%, transparent 0 43%, #000 58% 100%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 48%, transparent 0 30%, #000 43% 100%);
+  mask-image: radial-gradient(ellipse at 50% 48%, transparent 0 30%, #000 43% 100%);
 }
 
 .wrapper::after {
@@ -795,6 +806,25 @@
 }
 
 .operationalMarker[data-kind="incident"] { --marker-tone: #ff314a; width: 2.05rem; height: 2.05rem; z-index: 6; }
+.operationalMarker[data-kind="simulation"] {
+  --marker-tone: #e4b34e;
+  width: 1.92rem;
+  height: 1.92rem;
+  z-index: 5;
+}
+.operationalMarker[data-kind="simulation"] .operationalMarkerRing {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--marker-tone) 12%, transparent);
+}
+.operationalMarker[data-kind="simulation"] .operationalMarkerCore { border-radius: 0.22rem; }
+.operationalMarker[data-kind="context"] {
+  --marker-tone: #9aa4a8;
+  width: 1.62rem;
+  height: 1.62rem;
+  z-index: 4;
+  opacity: 0.9;
+}
+.operationalMarker[data-kind="context"] .operationalMarkerCore { border-radius: 0.18rem; }
 .operationalMarker[data-kind="origin"] { --marker-tone: #2f8fff; z-index: 8; }
 .operationalMarker[data-kind="destination"] { --marker-tone: #42d98b; z-index: 8; }
 .operationalMarker[data-kind="hazard-source"] { --marker-tone: #ff4a5f; width: 2.1rem; height: 2.1rem; z-index: 9; }
@@ -815,8 +845,21 @@
   transform: translate(-50%, -0.18rem);
   transition: opacity 120ms ease, transform 120ms ease;
 }
+.operationalMarker[data-kind="simulation"][data-priority="secondary"] .operationalMarkerLabel,
+.operationalMarker[data-kind="context"][data-priority="secondary"] .operationalMarkerLabel {
+  opacity: 0;
+  transform: translate(-50%, -0.18rem);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
 .operationalMarker[data-kind="incident"][data-priority="secondary"]:hover .operationalMarkerLabel,
 .operationalMarker[data-kind="incident"][data-priority="secondary"]:focus-visible .operationalMarkerLabel {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.operationalMarker[data-kind="simulation"][data-priority="secondary"]:hover .operationalMarkerLabel,
+.operationalMarker[data-kind="simulation"][data-priority="secondary"]:focus-visible .operationalMarkerLabel,
+.operationalMarker[data-kind="context"][data-priority="secondary"]:hover .operationalMarkerLabel,
+.operationalMarker[data-kind="context"][data-priority="secondary"]:focus-visible .operationalMarkerLabel {
   opacity: 1;
   transform: translate(-50%, 0);
 }
@@ -874,7 +917,18 @@
   --muted: #979da0;
   --cyan: #d9dddf;
   border-color: rgba(255, 255, 255, 0.1);
-  background: #020303;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(26, 43, 48, 0.42), transparent 54%),
+    #020303;
+}
+
+/* Keep a little depth in the empty operations field while the globe is at
+   overview scale. The detail map takes over completely once zoomed in. */
+.wrapper[data-view="world"][data-world-overview="true"] {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(37, 65, 73, 0.5), transparent 48%),
+    radial-gradient(circle at 12% 22%, rgba(74, 112, 121, 0.12), transparent 28%),
+    #020303;
 }
 
 .wrapper::after {

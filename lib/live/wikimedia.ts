@@ -70,7 +70,7 @@ export async function searchCommonsDisasterMedia(queryValue: string, limit = 5):
         apiUrl: url.toString(),
         retrievedAt: payload.retrievedAt,
         publishedAt: info.timestamp,
-        status: "live",
+        status: "cached",
         license,
         notice: "Open-media search result, not a verified live camera. Confirm the file description, date, location and licence before use.",
       },

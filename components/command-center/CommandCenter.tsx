@@ -1785,7 +1785,11 @@ export function CommandCenter() {
       try {
         let response: Response | null = null;
         for (let attempt = 0; attempt < 2; attempt += 1) {
-          response = await fetch("/api/live?limit=18&days=30&includeMedia=true&mediaQuery=current%20disaster%20official%20field%20report", {
+          // Incident metadata and source media have different identities. Keep
+          // the feed light and fetch media only for the headline selected by the
+          // operator; this prevents a generic clip from appearing beside the
+          // wrong incident while the specific query is still pending.
+          response = await fetch("/api/live?limit=18&days=30&includeMedia=false", {
             signal: controller.signal,
             cache: "no-store",
           });
@@ -1896,9 +1900,12 @@ export function CommandCenter() {
         description: incident.summary,
         source: incident.provenance.sourceName,
       }));
-    return [exercise, ...observed];
-  }, [activeLocation, coreHazard, liveIntelligence, selectedHazard.label]);
-  const liveMediaVideo = liveIntelligence?.media?.videos[0];
+    // Keep the exercise as a distinct amber record in Scenario/Response while
+    // retaining the observed/context records for situational awareness. The
+    // map renderer classifies them independently, so a preset can never be
+    // mistaken for a live disaster report even when both are on screen.
+    return viewMode === "monitor" ? observed : [exercise, ...observed];
+  }, [activeLocation, coreHazard, liveIntelligence, selectedHazard.label, viewMode]);
   const headlineIncident = useMemo(() => {
     const incidents = liveIntelligence?.incidents ?? [];
     return incidents.find((incident) => (
@@ -3023,7 +3030,7 @@ export function CommandCenter() {
             </div>
 
             <section className={styles.scenarioLibrary} aria-label="Loaded planning scenarios">
-              <header><span>Loaded scenarios</span><small>{LOADED_PLANNING_SCENARIOS.length} ready-to-run planning cases</small></header>
+              <header><span>Simulation presets</span><small>{LOADED_PLANNING_SCENARIOS.length} ready-to-run cases · separate from live reports</small></header>
               <div>
                 {LOADED_PLANNING_SCENARIOS.map((preset) => {
                   const location = QUICK_LOCATIONS.find((candidate) => candidate.id === preset.locationId);
@@ -3569,33 +3576,11 @@ export function CommandCenter() {
             <PanelControls panel={newsPanel} label="live intelligence" onClose={() => setLiveNoticeOpen(false)} />
           </div>
           <div className={styles.liveNoticeVisual}>
-            {liveMediaVideo?.directUrl ? (
-              <video
-                className={styles.groundVideo}
-                src={liveMediaVideo.directUrl}
-                title={`${liveMediaVideo.title} · ${liveMediaVideo.channelTitle}`}
-                muted
-                loop
-                controls
-                playsInline
-                preload="metadata"
-              />
-            ) : liveMediaVideo?.embedUrl ? (
-              <iframe
-                className={styles.groundVideo}
-                src={liveMediaVideo.embedUrl}
-                title={`${liveMediaVideo.title} · ${liveMediaVideo.channelTitle}`}
-                loading="lazy"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            ) : (
-              <div className={styles.satelliteScan}>
-                <Globe2 size={35} />
-                <span>Near-real-time source scan</span>
-                <small>Open the source viewer for embeddable incident media</small>
-              </div>
-            )}
+            <div className={styles.satelliteScan}>
+              <Radio size={35} />
+              <span>{headlineIsLive ? "Live incident source scan" : "Source-labelled incident context"}</span>
+              <small>Open source media only when a matching publisher asset is returned. No unrelated footage is substituted.</small>
+            </div>
             <div className={styles.newsStats}>
               {(headlineIncident?.impactMetrics ?? []).slice(0, 3).map((metric) => (
                 <div key={metric.key}><b>{String(metric.value)}{metric.unit ? ` ${metric.unit}` : ""}</b><span>{metric.label}</span></div>

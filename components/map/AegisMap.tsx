@@ -64,6 +64,10 @@ import styles from "./AegisMap.module.css";
 import { OfflineCampusTwin } from "./OfflineCampusTwin";
 import { WorldContinuity } from "./WorldContinuity";
 import {
+  incidentMarkerPresentation,
+  type IncidentMarkerKind,
+} from "./incident-presentation";
+import {
   EIT_CAMPUS_BOUNDARY,
   EIT_CAMPUS_BUILDINGS,
   EIT_CAMPUS_ROADS,
@@ -725,6 +729,8 @@ function addSources(map: MapLibreMap, data: SourceData, enableTerrain: boolean):
         clusterRadius: 44,
         clusterProperties: {
           live_count: ["+", ["case", ["==", ["get", "live"], true], 1, 0]],
+          simulation_count: ["+", ["case", ["==", ["get", "status"], "simulated"], 1, 0]],
+          context_count: ["+", ["case", ["all", ["!=", ["get", "live"], true], ["!=", ["get", "status"], "simulated"]], 1, 0]],
         },
       } : {}),
     });
@@ -1647,7 +1653,12 @@ function addMapLayers(
     filter: ["has", "point_count"],
     paint: {
       "circle-radius": ["step", ["get", "point_count"], 30, 10, 36, 40, 42],
-      "circle-color": ["case", [">", ["get", "live_count"], 0], "#ff263f", "#efc153"],
+      "circle-color": [
+        "case",
+        [">", ["get", "live_count"], 0], "#ff263f",
+        [">", ["get", "simulation_count"], 0], "#e4b34e",
+        "#7e8a8e",
+      ],
       "circle-opacity": 0.16,
       "circle-blur": 0.45,
     },
@@ -1660,7 +1671,12 @@ function addMapLayers(
     paint: {
       "circle-radius": ["step", ["get", "point_count"], 10, 10, 13, 40, 16],
       "circle-color": "#17191a",
-      "circle-stroke-color": ["case", [">", ["get", "live_count"], 0], "#ff263f", "#efc153"],
+      "circle-stroke-color": [
+        "case",
+        [">", ["get", "live_count"], 0], "#ff263f",
+        [">", ["get", "simulation_count"], 0], "#e4b34e",
+        "#7e8a8e",
+      ],
       "circle-stroke-width": 2,
     },
   } as LayerSpecification);
@@ -1749,7 +1765,9 @@ function addMapLayers(
         "case",
         ["==", ["get", "live"], true],
         ["concat", "LIVE | ", ["coalesce", ["get", "title"], "ACTIVE DISASTER"]],
-        ["coalesce", ["get", "title"], "INCIDENT"],
+        ["==", ["get", "status"], "simulated"],
+        ["concat", "SIM | ", ["coalesce", ["get", "title"], "SCENARIO"]],
+        ["concat", "CTX | ", ["coalesce", ["get", "title"], "INCIDENT"]],
       ],
       "text-font": MAP_FONT_STACK,
       "text-size": 10,
@@ -2669,6 +2687,10 @@ export function AegisMap({
   const [buildingsAvailable, setBuildingsAvailable] = useState(false);
   const [layerPanelOpen, setLayerPanelOpen] = useState(false);
   const [globeRotationOverride, setGlobeRotationOverride] = useState<boolean | null>(null);
+  // The operations field belongs to the globe overview only. Once the operator
+  // zooms into a city or campus, the basemap owns the pixels and the decorative
+  // field is removed so it cannot veil streets, labels or structures.
+  const [worldOverview, setWorldOverview] = useState(true);
   const [retryKey, setRetryKey] = useState(0);
   const [providerState, setProviderState] = useState<MapProviderState>({
     providerId: "openfreemap-dark",
@@ -2884,6 +2906,7 @@ export function AegisMap({
     pauseOrbit(mode === "world" ? 2_400 : 3_500);
     activeViewRef.current = mode;
     appliedViewModeRef.current = mode;
+    setWorldOverview(mode === "world" && (mapRef.current ? worldFocusUsesGlobe(mapRef.current.getZoom()) : true));
     if (viewMode === undefined) setInternalViewMode(mode);
     callbacksRef.current.onViewModeChange?.(mode);
     const map = mapRef.current;
@@ -3129,6 +3152,7 @@ export function AegisMap({
           const mode = activeViewRef.current;
           const globeOverview = mode === "world" && worldFocusUsesGlobe(map.getZoom());
           worldProjectionMode = globeOverview ? "globe" : "mercator";
+          setWorldOverview(globeOverview);
           setAtmosphere(map, globeOverview);
           stabilizeProviderStreetContext(map);
           installWorldImagery(map);
@@ -3316,6 +3340,8 @@ export function AegisMap({
 
         const syncWorldProjection = (finalizeTerrain = false) => {
           if (!map || !styleLoaded || activeViewRef.current !== "world") return;
+          const overview = worldFocusUsesGlobe(map.getZoom());
+          setWorldOverview((current) => current === overview ? current : overview);
           const nextProjection = worldProjectionModeForZoom(map.getZoom(), worldProjectionMode);
           try {
             if (nextProjection !== worldProjectionMode) {
@@ -3502,7 +3528,7 @@ export function AegisMap({
     const addMarker = (
       id: string,
       coordinates: AegisCoordinate,
-      kind: "incident" | "origin" | "destination" | "hazard-source" | "draft" | "boundary" | "area",
+      kind: IncidentMarkerKind | "origin" | "destination" | "hazard-source" | "draft" | "boundary" | "area",
       label: string,
       glyph: string,
       live = false,
@@ -3553,13 +3579,14 @@ export function AegisMap({
     };
 
     normalizedIncidents.slice(0, 40).forEach((incident, index) => {
+      const presentation = incidentMarkerPresentation(incident);
       addMarker(
         `incident-${incident.id}`,
         incident.coordinates,
-        "incident",
-        `${incident.live ? "LIVE · " : ""}${incident.title}`,
-        "!",
-        Boolean(incident.live),
+        presentation.kind,
+        presentation.label,
+        presentation.glyph,
+        presentation.live,
         activeTool === "inspect"
           ? () => callbacksRef.current.onIncidentSelect?.(incident)
           : undefined,
@@ -3646,6 +3673,7 @@ export function AegisMap({
     if (!map || !mapReady) return;
     if (appliedViewModeRef.current === activeViewMode) return;
     appliedViewModeRef.current = activeViewMode;
+    setWorldOverview(activeViewMode === "world" && worldFocusUsesGlobe(map.getZoom()));
     const duration = activeViewMode === "world" ? 2_200 : 2_800;
     pauseOrbit(duration);
     if (activeViewMode === "world") flyWorld(map, duration);
@@ -3788,6 +3816,7 @@ export function AegisMap({
       className={wrapperClass}
       aria-label={ariaLabel}
       data-view={activeViewMode}
+      data-world-overview={activeViewMode === "world" && worldOverview ? "true" : "false"}
       data-auto-orbit={globeRotationActive ? "running" : "paused"}
       data-selection-points={activeSelection.points.length}
       data-area-vertices={draftArea.length || Math.max(0, (activeSelection.area?.geometry.coordinates[0]?.length ?? 1) - 1)}

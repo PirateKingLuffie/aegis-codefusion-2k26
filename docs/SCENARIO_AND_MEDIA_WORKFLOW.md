@@ -18,12 +18,17 @@ Open **Incident updates**, then choose **View source media**. The action opens a
 
 When the dialog opens, AEGIS queries `/api/live/media` using the selected incident title, location and hazard category. Playback priority is:
 
-1. a provider-returned HTTPS direct video;
-2. a privacy-enhanced `youtube-nocookie.com` embed when YouTube Data API metadata is configured;
-3. a live Wikimedia Commons API result;
-4. a small source-linked Wikimedia Commons context set when the free live search cannot return a playable result.
+1. a provider-returned HTTPS direct video whose metadata matches the selected incident;
+2. a privacy-enhanced `youtube-nocookie.com` embed whose metadata matches the selected incident;
+3. a matching Wikimedia Commons API result;
+4. no in-site video, with safe publisher/search links and an explicit unavailable state when no
+   incident-specific playable result is returned.
 
-The fourth path exists so the zero-key demo remains visual. It is always labelled as cached hazard context—not live footage, not incident-specific evidence and not proof of damage at the selected location. Publisher page, capture time, contributor and licence remain visible for verification.
+The fourth path is deliberate: a generic disaster clip is not evidence for the selected incident. The
+viewer states that no verified live camera is available and offers source-linked search/report pages for
+independent verification. Any matching open media is still labelled contextual, not live footage and not
+proof of damage at the selected location; publisher page, publication time, contributor and licence
+remain visible for verification.
 
 Only HTTPS video resources and allow-listed YouTube URL forms can reach the player. Search and publisher links remain secondary, explicit actions; opening the primary viewer never leaves AEGIS.
 
@@ -32,7 +37,9 @@ Only HTTPS video resources and allow-listed YouTube URL forms can reach the play
 1. Leave **Global map** idle and confirm the Earth rotates.
 2. Choose **Scenario** and load a scenario card; verify hazard, X/Y/Z and time change together.
 3. Open **Incident updates** and select **View source media**.
-4. Confirm the AEGIS URL does not change and the media dialog shows a clip or a truthful unavailable state.
+4. Confirm the AEGIS URL does not change and the media dialog shows a matching clip or a truthful unavailable state; no unrelated example footage should appear.
 5. Read the green observed/simulated label and amber footage-verification warning before using the media as context.
 
-The public acceptance release for this workflow is Worker `1e12ba63-1fe8-4112-bda9-b6ebd3b460b0`.
+The public acceptance release for this workflow is Worker `1e12ba63-1fe8-4112-bda9-b6ebd3b460b0`. The
+follow-up source verification in `docs/GLOBE_AND_UI_ACCEPTANCE.md` is not deployed until a new Worker
+release is recorded.

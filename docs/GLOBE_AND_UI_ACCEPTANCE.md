@@ -2,7 +2,9 @@
 
 This note records the August 2026 globe-to-street and operations-interface rehaul. It is both the source contract and the release checklist for the world map. It does not turn public map context into surveyed terrain, live satellite imagery, a verified disaster perimeter or a live sensor feed.
 
-The current rehaul is implemented in source. Its exact final test totals, browser evidence and deployment version must be inserted in **Current-rehaul release record** after the root release pass; the older published acceptance at the end of this file is retained only as historical evidence.
+The current rehaul is implemented in source. The deployed Worker record below is kept separate from the
+source-only verification record because the working tree may contain changes that have not yet been
+published. Older deployed records at the end of this file are retained as historical evidence.
 
 ## Intended operator flow
 
@@ -20,7 +22,9 @@ The previous EOX raster display layer stopped at zoom 9. OpenFreeMap Dark intent
 
 The corrected renderer:
 
-- retains and overzooms the EOX Sentinel context layer beneath vector streets through zoom 20;
+- retains EOX Sentinel context beneath vector streets through its configured zoom 15 layer limit (the
+  source tiles are native through zoom 14); the coherent keyless OpenStreetMap street raster carries
+  close-range context through zoom 19;
 - keeps a neutral visible provider background if optional imagery is delayed;
 - adds explicit OpenMapTiles country, city, road and road-name context when a provider style is too subtle;
 - adds one coherent, keyless OpenStreetMap street source at regional and street zoom; it never mixes different providers into adjacent squares;
@@ -51,7 +55,10 @@ The active interface follows a conventional GIS/emergency-operations hierarchy:
 - a Scenario panel that shows the current X longitude, Y latitude, terrain-derived Z context, hazard and selected minute;
 - a two-level Scenario setup header, explicit hazard selector, readable intensity output, compact X/Y/Z/time chips and keyboard-visible loaded-case selection that remain contained at 1366 × 768;
 - three primary loaded cases—EIT campus flood, Tokyo earthquake access and Miami cyclone/surge—plus a separate Sendai coastal-inundation demonstration that is visibly disclosed as a cyclone/surge-engine tsunami proxy;
-- an in-product Incident Source Viewer that queries media for the selected report, embeds privacy-enhanced YouTube or direct Wikimedia video when available, keeps the AEGIS URL unchanged and identifies non-live contextual fallback footage explicitly;
+- an in-product Incident Source Viewer that queries media for the selected report, embeds privacy-enhanced
+  YouTube or a matching Wikimedia video when available, keeps the AEGIS URL unchanged and shows an
+  explicit unavailable state plus safe source links when no incident-specific asset is returned; no
+  unrelated fallback footage is substituted;
 - an evacuation-procedure action in Decision support that is built from the current departure minute, staged demand, route, destination, capacity, remaining exposure and model warnings rather than a generic chat response;
 - all existing layer controls, panel dragging, docking, minimizing, resizing and reset behaviour preserved.
 
@@ -99,9 +106,25 @@ Free public providers have no availability SLA. If one basemap fails, AEGIS swit
 - Globe evidence: a current incident marker moved from `translate(686px, 274px)` to `translate(666px, 271px)` over 2.5 seconds at the new 1.6-degree/second orbit setting.
 - Scenario evidence: at 1366 × 768 the panel remained inside the viewport at 326 × 501 px, exposed the EIT, Tokyo, Miami and Sendai cases, and used intentional internal scrolling for the complete 930 px workflow.
 - Media evidence: **View source media** opened the in-site dialog without changing the AEGIS URL; the selected cyclone report produced one playable direct-video element and a visible non-live/context warning.
-- Public API checks: health and the incident media endpoint returned HTTP 200; the zero-key media path returned `open-media` with one source-linked Commons clip.
+- Public API checks on the deployed Worker: health and the incident media endpoint returned HTTP 200; the
+  zero-key media path returned `open-media` with one source-linked Commons clip. The source-only follow-up
+  below intentionally removes unrelated fallback clips.
 - Browser warning/error log: empty after globe, Scenario and Incident Source Viewer replay.
 - Lenovo LOQ device check: owner manual check remains before presentation.
+
+## Current source verification — 27 August 2026 (not yet deployed)
+
+The shared working tree includes the follow-up media-accuracy and incident-presentation changes. They
+must not be described as part of Worker `1e12ba63-1fe8-4112-bda9-b6ebd3b460b0` until a new deployment is
+completed.
+
+- `npm run test:unit`: **85 total, 84 passed, 0 failed, 1 optional public-live-feed test skipped**.
+- TypeScript, ESLint and production build: PASS (the build emits only the existing large-chunk advisory).
+- Keyless media now returns only incident-matching Commons results; when no match/provider result exists,
+  the API returns `safe-search-links` with an explicit unavailable notice. Generic or unrelated clips are
+  never substituted.
+- Incident markers classify explicit live, simulated and context records separately; only live records
+  receive the red/pulsing treatment.
 
 ## Operational-marker release record — 26 August 2026
 

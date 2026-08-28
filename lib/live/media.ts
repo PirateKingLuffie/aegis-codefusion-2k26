@@ -24,102 +24,29 @@ interface YouTubeSearchResponse {
   }>;
 }
 
-type CuratedOpenMedia = {
-  terms: RegExp;
-  id: string;
-  title: string;
-  directUrl: string;
-  watchUrl: string;
-  publishedAt: string;
-  license: string;
-  contributor: string;
-};
+// Keep provider results tied to the selected incident. A generic flood clip
+// from another country is not evidence for this incident. When a query has no
+// identifying terms, the upstream provider's own relevance ranking is used;
+// the viewer still labels that footage as unverified.
+const GENERIC_MEDIA_TERMS = new Set([
+  "aegis", "alert", "camera", "current", "disaster", "emergency", "event", "field", "footage",
+  "incident", "live", "official", "public", "record", "report", "response", "source", "video",
+  "watch", "worldwide", "global", "the", "and", "for", "with", "flood", "floods", "flooding",
+  "inundation", "monsoon", "cyclone", "hurricane", "typhoon", "tropical", "storm", "surge",
+  "earthquake", "seismic", "quake", "wildfire", "forest", "fire", "landslide", "mudslide",
+  "tsunami", "drought", "volcano", "eruption", "heatwave", "coldwave",
+]);
 
-/**
- * Small, source-linked Commons safety set for when a live search provider is
- * unavailable at the edge. These clips are hazard context only: never live or
- * incident-specific evidence. Keeping the metadata here guarantees that the
- * in-product viewer remains demonstrable without a paid key or a redirect.
- */
-const CURATED_OPEN_MEDIA: CuratedOpenMedia[] = [
-  {
-    terms: /cyclone|hurricane|typhoon|storm|surge/i,
-    id: "commons-cyclone-dudzai-eye-2026",
-    title: "Tropical Cyclone Dudzai eye — CIRA satellite loop",
-    directUrl: "https://upload.wikimedia.org/wikipedia/commons/7/73/Tropical_Cyclone_Dudzai%E2%80%99s_Eye_%28CIRA_2026-01-12_-_labels%29.webm",
-    watchUrl: "https://commons.wikimedia.org/wiki/File:Tropical_Cyclone_Dudzai%E2%80%99s_Eye_(CIRA_2026-01-12_-_labels).webm",
-    publishedAt: "2026-01-15T09:38:44.000Z",
-    license: "Public domain",
-    contributor: "CIRA / Wikimedia Commons",
-  },
-  {
-    terms: /earthquake|seismic|quake/i,
-    id: "commons-earthquake-plant-shaking",
-    title: "Plant shaking after an earthquake",
-    directUrl: "https://upload.wikimedia.org/wikipedia/commons/d/db/Plant_shaking_after_earthquake.mpg",
-    watchUrl: "https://commons.wikimedia.org/wiki/File:Plant_shaking_after_earthquake.mpg",
-    publishedAt: "2024-10-19T02:08:38.000Z",
-    license: "CC BY-SA 4.0",
-    contributor: "Panamitsu / Wikimedia Commons",
-  },
-  {
-    terms: /wildfire|forest fire|bushfire|fire/i,
-    id: "commons-wildfire-pyrocumulus",
-    title: "Pyrocumulus over a wildfire in Czechia",
-    directUrl: "https://upload.wikimedia.org/wikipedia/commons/9/9f/Pyrocumulus_2022_Czechia.webm",
-    watchUrl: "https://commons.wikimedia.org/wiki/File:Pyrocumulus_2022_Czechia.webm",
-    publishedAt: "2024-07-29T07:26:00.000Z",
-    license: "CC BY 4.0",
-    contributor: "Phoenix CZE / Wikimedia Commons",
-  },
-  {
-    terms: /landslide|mudslide|debris flow/i,
-    id: "commons-landslide-shuicheng-2019",
-    title: "2019 Shuicheng County landslide",
-    directUrl: "https://upload.wikimedia.org/wikipedia/commons/7/77/2019_China_Guizhou_Shuicheng_County_Jichang_Town_Landslide.webm",
-    watchUrl: "https://commons.wikimedia.org/wiki/File:2019_China_Guizhou_Shuicheng_County_Jichang_Town_Landslide.webm",
-    publishedAt: "2019-07-24T09:43:57.000Z",
-    license: "CC0",
-    contributor: "Huangdan2060 / Wikimedia Commons",
-  },
-  {
-    terms: /flood|inundation|monsoon|tsunami|disaster/i,
-    id: "commons-flood-azraq-2023",
-    title: "Azraq flooding — May 2023",
-    directUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c2/Azraq_flooding_May_2023.webm",
-    watchUrl: "https://commons.wikimedia.org/wiki/File:Azraq_flooding_May_2023.webm",
-    publishedAt: "2024-02-22T19:25:12.000Z",
-    license: "CC0",
-    contributor: "Iainsimpsonstewart / Wikimedia Commons",
-  },
-];
+function identityTokens(query: string): string[] {
+  return [...new Set(query.toLowerCase().match(/[a-z0-9]{4,}/g) ?? [])]
+    .filter((token) => !GENERIC_MEDIA_TERMS.has(token));
+}
 
-export function getCuratedOpenMediaContext(queryValue: string, maxResults = 2): MediaVideo[] {
-  const query = sanitizeQuery(queryValue, "disaster response");
-  const matching = CURATED_OPEN_MEDIA.filter((item) => item.terms.test(query));
-  const selected = matching.length ? matching : CURATED_OPEN_MEDIA.slice(-1);
-  const retrievedAt = new Date().toISOString();
-  return selected.slice(0, Math.max(1, Math.min(2, maxResults))).map((item) => ({
-    id: item.id,
-    title: item.title,
-    channelTitle: item.contributor,
-    publishedAt: item.publishedAt,
-    watchUrl: item.watchUrl,
-    directUrl: item.directUrl,
-    mimeType: item.directUrl.endsWith(".mpg") ? "video/mpeg" : "video/webm",
-    license: item.license,
-    provenance: {
-      sourceId: "aegis-verified-cache",
-      sourceName: "Wikimedia Commons context set",
-      dataset: "Curated open-media fallback",
-      upstreamUrl: item.watchUrl,
-      retrievedAt,
-      publishedAt: item.publishedAt,
-      status: "cached",
-      license: item.license,
-      notice: "Context footage only. It is not live, incident-specific or proof of the selected event; verify the Commons file page before operational use.",
-    },
-  }));
+function isIncidentMediaMatch(video: MediaVideo, query: string): boolean {
+  const tokens = identityTokens(query);
+  if (!tokens.length) return true;
+  const haystack = `${video.title} ${video.channelTitle}`.toLowerCase();
+  return tokens.some((token) => haystack.includes(token));
 }
 
 export function buildSafeMediaLinks(queryValue: string): MediaLink[] {
@@ -175,7 +102,7 @@ export async function searchIncidentMedia(queryValue: string, maxResults = 5): P
   const fallback = (retrievedAt: string, notice: string): IncidentMediaResult => ({
     query,
     mode: "safe-search-links",
-    status: "cached",
+    status: "unavailable",
     retrievedAt,
     videos: [],
     links: safeLinks,
@@ -185,31 +112,28 @@ export async function searchIncidentMedia(queryValue: string, maxResults = 5): P
   if (!apiKey) {
     try {
       const commons = await searchCommonsDisasterMedia(query, maxResults);
-      if (commons.videos.length) {
+      const matchingVideos = commons.videos.filter((video) => isIncidentMediaMatch(video, query));
+      if (matchingVideos.length) {
         return {
           query,
           mode: "open-media",
-          status: "live",
+          // The request is current, but the underlying Commons recording is
+          // archival/context media. Keep retrieval state separate from whether
+          // the footage itself is live (which AEGIS never assumes).
+          status: "cached",
           retrievedAt: commons.retrievedAt,
-          videos: commons.videos,
+          videos: matchingVideos,
           links: safeLinks,
           notice: "Keyless open-licensed media is provided for visual context. It is not a verified live camera; confirm date, place and licence on the source page.",
         };
       }
     } catch {
-      // The source-linked open-media context set below remains available when
-      // the edge cannot complete a live Commons API query.
+      // Do not substitute another disaster's footage when this query fails.
     }
-    const retrievedAt = new Date().toISOString();
-    return {
-      query,
-      mode: "open-media",
-      status: "cached",
-      retrievedAt,
-      videos: getCuratedOpenMediaContext(query, maxResults),
-      links: safeLinks,
-      notice: "The live open-media search returned no playable clip, so AEGIS is showing source-linked hazard context from Wikimedia Commons. It is not live or incident-specific evidence.",
-    };
+    return fallback(
+      new Date().toISOString(),
+      "No incident-specific embeddable footage was returned. A verified live camera is not available from the configured sources. Unrelated or archived example clips are never substituted."
+    );
   }
 
   const url = new URL(YOUTUBE_SEARCH_ENDPOINT);
@@ -233,8 +157,7 @@ export async function searchIncidentMedia(queryValue: string, maxResults = 5): P
       const thumbnailUrl = safeHttpsUrl(
         snippet.thumbnails?.high?.url ?? snippet.thumbnails?.medium?.url ?? snippet.thumbnails?.default?.url
       );
-      return [
-        {
+      const video: MediaVideo = {
           id: videoId,
           title: snippet.title,
           channelTitle: snippet.channelTitle ?? "YouTube publisher",
@@ -254,8 +177,8 @@ export async function searchIncidentMedia(queryValue: string, maxResults = 5): P
             notice:
               "Metadata is live from YouTube. AEGIS does not certify that footage is live, authentic or captured at the incident location.",
           },
-        },
-      ];
+      };
+      return isIncidentMediaMatch(video, query) ? [video] : [];
     });
 
     return {

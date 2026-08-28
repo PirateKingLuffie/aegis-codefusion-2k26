@@ -254,6 +254,17 @@ test("a searched global location never inherits the EIT campus twin", async () =
   assert.match(source, /flyTwin\(map, activeTwinCenterRef\.current, 1_700/);
 });
 
+test("monitor incidents and simulation presets remain separate and the globe field is overview-only", async () => {
+  const commandCenter = await readFile(new URL("../components/command-center/CommandCenter.tsx", import.meta.url), "utf8");
+  const mapSource = await readFile(new URL("../components/map/AegisMap.tsx", import.meta.url), "utf8");
+  const mapStyles = await readFile(new URL("../components/map/AegisMap.module.css", import.meta.url), "utf8");
+  assert.match(commandCenter, /return viewMode === "monitor" \? observed : \[exercise, \.\.\.observed\]/);
+  assert.match(commandCenter, /Simulation presets/);
+  assert.match(mapSource, /data-world-overview=/);
+  assert.match(mapSource, /incidentMarkerPresentation/);
+  assert.match(mapStyles, /data-world-overview="true"/);
+});
+
 test("provider geographic labels are distinguishable from AEGIS overlay symbols", () => {
   assert.equal(isProviderContextLabelLayer({
     id: "road-label",

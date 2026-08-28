@@ -7,7 +7,8 @@ import {
   resolveMediaPlayback,
   youtubeVideoIdFromUrl,
 } from "../lib/live/embed.ts";
-import { getCuratedOpenMediaContext } from "../lib/live/media.ts";
+import { buildSafeMediaLinks } from "../lib/live/media.ts";
+import { readFile } from "node:fs/promises";
 
 const ID = "dQw4w9WgXcQ";
 
@@ -51,17 +52,15 @@ test("playback prefers direct open media and degrades safely", () => {
   }), { kind: "unavailable" });
 });
 
-test("curated zero-key media stays playable and truth-labelled by hazard", () => {
-  const cyclone = getCuratedOpenMediaContext("Tropical Cyclone SAUDEL official footage", 2);
-  const flood = getCuratedOpenMediaContext("Assam monsoon flood", 2);
+test("safe incident media links never imply that a search result is live footage", () => {
+  const links = buildSafeMediaLinks("Assam monsoon flood");
+  assert.ok(links.some((link) => link.kind === "youtube-search"));
+  assert.ok(links.every((link) => link.notice === undefined || /search|verify|dated/i.test(link.notice)));
+});
 
-  assert.equal(cyclone.length, 1);
-  assert.match(cyclone[0].title, /Cyclone/i);
-  assert.equal(resolveMediaPlayback(cyclone[0]).kind, "direct");
-  assert.equal(cyclone[0].provenance.status, "cached");
-  assert.match(cyclone[0].provenance.notice ?? "", /not live|not live,/i);
-
-  assert.equal(flood.length, 1);
-  assert.match(flood[0].title, /flood/i);
-  assert.equal(resolveMediaPlayback(flood[0]).kind, "direct");
+test("zero-key media has no generic curated clip substitution", async () => {
+  const source = await readFile(new URL("../lib/live/media.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /CURATED_OPEN_MEDIA|Curated open-media fallback/);
+  assert.match(source, /Do not substitute another disaster/);
+  assert.match(source, /isIncidentMediaMatch/);
 });

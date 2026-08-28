@@ -2,7 +2,7 @@ export { aggregateLiveIntelligence } from "./aggregate";
 export { clearLiveMemoryCache } from "./cache";
 export { getOfflineScenarioPreviews, getVerifiedSourceSnapshots } from "./fallback";
 export { fetchGoogleNewsIncidents } from "./google-news";
-export { searchIncidentMedia, buildSafeMediaLinks, getCuratedOpenMediaContext } from "./media";
+export { searchIncidentMedia, buildSafeMediaLinks } from "./media";
 export {
   deriveSafeDirectVideoUrl,
   deriveSafeYouTubeEmbedUrl,

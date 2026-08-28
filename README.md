@@ -10,10 +10,11 @@ AEGIS combines a slowly rotating and searchable 3D world view, source-labelled i
 - **Dedicated Agent Ledger:** https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 - **Source repository:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26
 - **Windows and presentation downloads:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26/releases/tag/v0.1.0
-- **Deployed application source commit:** `8d1f94e` (`fix: prefer OSM geometry for high zoom`)
-- **Main Worker version:** `9aa3dea2-6254-4dc2-aed2-eec8ce39fee8`
+- **Deployed application source commit:** `e67eec7` (`feat: refine scenarios globe and incident media`)
+- **Main Worker version:** `1e12ba63-1fe8-4112-bda9-b6ebd3b460b0`
 - **Ledger Worker version:** `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
-- **Canonical verification:** 77 tests total — 76 passed, 0 failed, 1 optional public-live-feed test skipped; production build passed.
+- **Deployed verification:** 82 tests total — 81 passed, 0 failed, 1 optional public-live-feed test skipped; production build passed.
+- **Current source-only verification:** 85 tests total — 84 passed, 0 failed, 1 optional public-live-feed test skipped. The follow-up media/incident-presentation changes are not public until a new Worker release is recorded.
 - **Remote browser:** At 1366 × 768, the clean public site loaded with no browser warnings/errors; orbit override, live-source focus, Tokyo world search, origin/safe/source tools, operating-area completion and reset were replayed successfully.
 
 Cloudflare D1 is migrated and live for immutable Agent Ledger receipt revisions. Cross-deployment `GET`, `POST` and human-review `PATCH` were verified. D1 is the ledger store only; scenario history remains browser-local unless the separate FastAPI operations service is deployed.
@@ -35,7 +36,7 @@ Public upstreams can throttle, revise or become unavailable. AEGIS exposes their
 
 - The initial Earth uses a slightly tilted globe projection and a restrained idle orbit. Pointer, wheel, keyboard and camera interaction pause rotation; it resumes only after idle while the camera remains at globe-overview zoom. Reduced-motion preference and background tabs also pause it.
 - Nominatim search accepts countries, cities, addresses, streets, buildings, landmarks and coordinates. A selected result receives a persistent focus marker/name and becomes the active planning coordinate.
-- At regional/street zoom, an opaque keyless Esri World Street Map / OpenStreetMap raster is kept beneath a separate labels overlay and AEGIS operational layers. This prevents the opaque blank CARTO dark/voyager tiles from turning low-feature regions black or white when optional dated Earth imagery or subtle provider-vector fills are unavailable.
+- At regional/street zoom, one coherent keyless OpenStreetMap raster is kept beneath provider labels and AEGIS operational layers through zoom 19. Sentinel context imagery is optional and fades out by its configured zoom-15 layer limit, preventing opaque provider placeholders or blank low-feature regions when imagery or subtle vector fills are unavailable.
 - Place labels, roads and available building context come from public OpenStreetMap/OpenMapTiles/CARTO sources. Coverage is not uniform and the imagery is not live satellite.
 - Source-labelled current/live incidents can pulse red. That status is inherited from the named provider record and freshness rules; it is not an AEGIS field observation and is not mixed with simulated hazard geometry.
 - The operator can place a hazard source, evacuation origins/destinations and an operating area, then run any of the five implemented hazard plugins around the selected world location. “Any location” does not mean survey-grade fidelity everywhere, and “five plugins” does not mean literally every disaster type is modelled.
