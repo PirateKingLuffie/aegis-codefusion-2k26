@@ -19,6 +19,10 @@ AEGIS combines a slowly rotating and searchable 3D world view, source-labelled i
 
 Cloudflare D1 is migrated and live for immutable Agent Ledger receipt revisions. Cross-deployment `GET`, `POST` and human-review `PATCH` were verified. D1 is the ledger store only; scenario history remains browser-local unless the separate FastAPI operations service is deployed.
 
+### Source-only companion surfaces
+
+Two additive routes are implemented in the current source tree but are **not included in the public Worker version above**: `/live-context` provides a source-labelled incident/evidence desk, and `/automation` provides deterministic regional watch evaluation with browser-local, dry-run alert previews. Neither route sends an emergency notification or changes the existing command center. See [Automation and live evidence](docs/AUTOMATION_AND_LIVE_EVIDENCE.md) for architecture, truth classes, limitations, verification and controlled deployment.
+
 ## Zero-cost stack
 
 - OpenFreeMap is the primary live MapLibre globe; CARTO Dark Matter is the independent automatic fallback.
@@ -95,6 +99,7 @@ All hazard consequences and evacuation outcomes are prototype planning estimates
 - [Architecture](docs/ARCHITECTURE.md)
 - [Judge brief](docs/JUDGE_BRIEF.md)
 - [Agent Ledger](docs/AI_AGENT_LEDGER.md)
+- [Automation and live evidence](docs/AUTOMATION_AND_LIVE_EVIDENCE.md)
 - [API and providers](docs/API_AND_PROVIDERS.md)
 - [Data provenance](docs/DATA_PROVENANCE.md)
 - [EIT authoritative-data import](docs/EIT_DATA_IMPORT.md)

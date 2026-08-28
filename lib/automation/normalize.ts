@@ -38,8 +38,7 @@ function eventTimestamp(incident: LiveIncident) {
     parseTime(incident.updatedAt) ??
     parseTime(incident.observedAt) ??
     parseTime(incident.freshness.observedAt) ??
-    parseTime(incident.provenance.publishedAt) ??
-    parseTime(incident.provenance.retrievedAt)
+    parseTime(incident.provenance.publishedAt)
   );
 }
 

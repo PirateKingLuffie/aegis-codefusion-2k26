@@ -111,7 +111,19 @@ export const automationIncidentSchema = z.object({
 
 export const automationRequestSchema = z.object({
   mode: z.enum(["live", "demo"]).default("live"),
-  regions: z.array(automationRegionSchema).min(1).max(32).optional(),
+  regions: z.array(automationRegionSchema).min(1).max(32).superRefine((regions, context) => {
+    const seen = new Set<string>();
+    regions.forEach((region, index) => {
+      if (seen.has(region.id)) {
+        context.addIssue({
+          code: "custom",
+          message: "Region IDs must be unique within an automation request.",
+          path: [index, "id"],
+        });
+      }
+      seen.add(region.id);
+    });
+  }).optional(),
   policy: automationPolicySchema.optional(),
   previousReceipts: z.array(receiptSchema).max(512).optional(),
   incidents: z.array(automationIncidentSchema).max(500).optional(),
@@ -123,6 +135,7 @@ export function requestToEvaluationInput(
   request: AutomationRequest,
   incidents: AutomationEvaluationInput["incidents"],
   regions: AutomationEvaluationInput["regions"],
+  sources?: AutomationEvaluationInput["sources"],
 ): AutomationEvaluationInput {
   return {
     mode: request.mode,
@@ -130,5 +143,6 @@ export function requestToEvaluationInput(
     previousReceipts: request.previousReceipts,
     incidents,
     regions,
+    sources,
   };
 }

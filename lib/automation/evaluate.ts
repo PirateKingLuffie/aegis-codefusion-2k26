@@ -25,6 +25,8 @@ import type {
 
 const EARTH_RADIUS_KM = 6371.0088;
 const MAX_RETURNED_RECEIPTS = 512;
+const MAX_RETURNED_MATCHES_PER_REGION = 100;
+const MAX_PROPOSED_ALERTS_PER_REGION = 50;
 const SEVERITIES: IncidentSeverity[] = ["unknown", "low", "medium", "high", "critical"];
 
 function clamp(value: number, minimum: number, maximum: number) {
@@ -94,11 +96,11 @@ function matchReason(
   if (normalized.incident.state === "closed" && !demoSimulation) return { reason: "closed-record", distanceKm };
   if (mode === "live" && normalized.isSimulated) return { reason: "simulated-live-mode", distanceKm };
   const maxAgeMinutes = Math.min(policy.maxAgeMinutes, Math.max(1, region.maxAgeMinutes));
-  if (!demoSimulation && normalized.ageMinutes !== undefined && normalized.ageMinutes > maxAgeMinutes) {
-    return { reason: "stale-observation", distanceKm };
-  }
-  if (!demoSimulation && normalized.retrievalAgeMinutes !== undefined && normalized.retrievalAgeMinutes > policy.maxRetrievalAgeMinutes) {
-    return { reason: "stale-source-retrieval", distanceKm };
+  if (!demoSimulation) {
+    if (normalized.ageMinutes === undefined) return { reason: "missing-observation-time", distanceKm };
+    if (normalized.retrievalAgeMinutes === undefined) return { reason: "missing-retrieval-time", distanceKm };
+    if (normalized.ageMinutes > maxAgeMinutes) return { reason: "stale-observation", distanceKm };
+    if (normalized.retrievalAgeMinutes > policy.maxRetrievalAgeMinutes) return { reason: "stale-source-retrieval", distanceKm };
   }
   // A demo simulation is intentionally allowed only in demo mode. For live
   // observations, an official source is required by the default policy.
@@ -146,7 +148,10 @@ function createAlert(
   kind: NonNullable<ReturnType<typeof alertKind>>,
 ) {
   const key = dedupeKey(region.id, normalized);
-  const alertId = `aegis-alert-${stableHash(`${key}|${normalized.fingerprint}|${kind}`)}`;
+  // A reminder represents a new delivery opportunity after cooldown, so its
+  // ID must differ from prior reminders for the same unchanged incident.
+  const reminderCycle = kind === "reminder" ? `|${safeIso(now)}` : "";
+  const alertId = `aegis-alert-${stableHash(`${key}|${normalized.fingerprint}|${kind}${reminderCycle}`)}`;
   const expires = new Date(now.getTime() + Math.max(60, Math.min(24 * 60, region.maxAgeMinutes)) * 60_000);
   return {
     id: alertId,
@@ -180,6 +185,7 @@ function evaluateRegion(
   mode: AutomationMode,
   now: Date,
   receiptMap: Map<string, AutomationReceipt>,
+  sourceCoverageDegraded: boolean,
 ) {
   const matches: AutomationIncidentMatch[] = [];
   const proposedAlerts: AutomationAlert[] = [];
@@ -187,12 +193,14 @@ function evaluateRegion(
   let stale = 0;
   let unverified = 0;
   let eligible = 0;
+  let candidates = 0;
 
   for (const normalized of normalizedIncidents) {
     const result = matchReason(region, normalized, policy, mode);
     // Keep only records that have a geographic relationship with this watch;
     // missing-location records cannot be safely assigned to a region.
     if (result.reason === "outside-region" || result.reason === "missing-location") continue;
+    candidates += 1;
     const match: AutomationIncidentMatch = {
       incident: normalized.incident,
       distanceKm: result.distanceKm,
@@ -202,8 +210,13 @@ function evaluateRegion(
       sourceFreshnessMinutes: normalized.retrievalAgeMinutes,
       officialSource: normalized.isOfficialSource,
     };
-    matches.push(match);
-    if (result.reason === "stale-observation" || result.reason === "stale-source-retrieval") stale += 1;
+    if (matches.length < MAX_RETURNED_MATCHES_PER_REGION) matches.push(match);
+    if (
+      result.reason === "stale-observation" ||
+      result.reason === "stale-source-retrieval" ||
+      result.reason === "missing-observation-time" ||
+      result.reason === "missing-retrieval-time"
+    ) stale += 1;
     if (result.reason === "unverified-source") unverified += 1;
     if (result.reason !== "eligible") continue;
     eligible += 1;
@@ -211,6 +224,22 @@ function evaluateRegion(
     const previous = receiptMap.get(key);
     const kind = alertKind(previous, normalized, now.getTime(), region.cooldownMinutes * 60_000);
     if (kind) {
+      if (proposedAlerts.length >= MAX_PROPOSED_ALERTS_PER_REGION) {
+        suppressedCount += 1;
+        receiptMap.set(key, {
+          dedupeKey: key,
+          regionId: region.id,
+          incidentId: normalized.incident.id,
+          sourceId: normalized.sourceId,
+          fingerprint: normalized.fingerprint,
+          severity: normalized.severity,
+          firstSeenAt: previous?.firstSeenAt ?? safeIso(now),
+          lastSeenAt: safeIso(now),
+          lastProposedAt: previous?.lastProposedAt,
+          lastAlertId: previous?.lastAlertId,
+        });
+        continue;
+      }
       const alert = createAlert(region, normalized, mode, now, kind);
       proposedAlerts.push(alert);
       receiptMap.set(key, {
@@ -244,11 +273,11 @@ function evaluateRegion(
 
   const status = proposedAlerts.length
     ? "attention"
-    : !matches.length
-      ? "no-current-match"
+    : candidates === 0
+      ? sourceCoverageDegraded ? "degraded" : "no-current-match"
       : eligible
         ? "watch"
-        : stale + unverified === matches.length
+        : stale + unverified === candidates
           ? "degraded"
           : "watch";
   return {
@@ -260,7 +289,7 @@ function evaluateRegion(
     proposedAlerts,
     suppressedCount,
     counts: {
-      candidates: matches.length,
+      candidates,
       eligible,
       stale,
       unverified,
@@ -275,13 +304,21 @@ export function evaluateAutomation(input: AutomationEvaluationInput): Automation
   const regions = input.regions.slice(0, policy.maxRegions);
   const incidents = input.incidents.slice(0, policy.maxIncidents);
   const normalized = incidents.map((incident) => normalizeIncident(incident, now));
+  const sourceTelemetry = input.sources ?? incidents.map((incident) => ({
+    sourceId: incident.provenance.sourceId,
+    sourceName: incident.provenance.sourceName,
+    recordCount: 1,
+    retrievedAt: incident.provenance.retrievedAt,
+    status: incident.provenance.status,
+  }));
+  const sourceCoverageDegraded = mode === "live" && !sourceTelemetry.some((source) => source.status === "live");
   const receiptMap = new Map<string, AutomationReceipt>();
   for (const receipt of (input.previousReceipts ?? []).slice(0, MAX_RETURNED_RECEIPTS)) {
     const safe = asReceipt(receipt);
     if (safe) receiptMap.set(safe.dedupeKey, safe);
   }
   const evaluations = regions.map((region) => region.enabled
-    ? evaluateRegion(region, normalized, policy, mode, now, receiptMap)
+    ? evaluateRegion(region, normalized, policy, mode, now, receiptMap, sourceCoverageDegraded)
     : {
         regionId: region.id,
         regionName: region.name,

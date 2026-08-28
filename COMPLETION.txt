@@ -709,5 +709,50 @@ The follow-up accuracy pass is deployed in commit `638e063` on Worker
     playable clips.
 
 
+25. SOURCE-ONLY REGIONAL AUTOMATION AND LIVE EVIDENCE (29 AUGUST 2026)
+========================================================================
+
+Release state:
+  [SOURCE COMPLETE] Additive routes are implemented and verified in the repository.
+  [NOT DEPLOYED] The recorded public Worker remains on version
+                 97819d30-6091-41ec-9b57-6320eca81edf until an owner-approved release.
+  [UNCHANGED] Existing Monitor, Scenario and Response command-center renderer files were not modified.
+
+Completed:
+  [DONE] Added `/automation`, an isolated regional-watch console with browser-local watch definitions,
+         circle/bounds matching, hazard and severity policies, observation/retrieval age gates,
+         official-source checks, deterministic deduplication, cooldowns, updates and escalations.
+  [DONE] Live automation mode obtains observed records from the existing provider aggregator and rejects
+         caller-supplied or simulated incidents. Demo mode remains explicitly labelled and separated.
+  [DONE] Every automation result is a human-review proposal with `delivery: not-sent`; the API performs no
+         SMS, phone, email, government warning, siren, dispatch or other external side effect.
+  [DONE] Optional browser notifications require an explicit permission click and operate only for the
+         consenting browser/device while the console is active. In-page notification history is local.
+  [DONE] Added `/live-context`, a source-labelled evidence desk with provider health, freshness, hazard and
+         place filters, official/source links, reported impact fields, embedded incident media handling,
+         NASA Worldview and Copernicus EMS evidence links, and visible truth classifications.
+  [DONE] Added bounded `/api/automation` GET/POST contracts: 768 KB body, 32 regions, 500 incidents,
+         512 prior receipts, source fail-soft behavior and no external dispatch.
+  [DONE] Prevented search filtering from issuing a network request on every keystroke and prevented the
+         automatic-evaluation timer from restarting after every returned evaluation.
+  [DONE] Added `docs/AUTOMATION_AND_LIVE_EVIDENCE.md` with architecture, provider semantics, safety limits,
+         verification, controlled deployment and an authorised future Web Push/CAP integration path.
+
+Verification:
+  - TypeScript: PASS.
+  - ESLint, including JSX accessibility rules: PASS.
+  - Vinext/Cloudflare production build: PASS; only the pre-existing large-chunk advisory remains.
+  - Full suite: 99 tests, 98 passed, zero failed, one optional public-feed test skipped.
+  - Focused automation/evidence suite: 14 tests, 14 passed.
+
+Exact non-claims:
+  - Browser polling is not a server scheduler and stops when the page/tab is not active.
+  - A browser notification is not an official phone, CAP or government alert.
+  - Provider reports and contextual imagery are not continuous live multi-angle camera coverage.
+  - AEGIS does not certify external footage as authentic, current or incident-local.
+  - Government delivery requires the responsible authority's permission, credentials, approval workflow
+    and audit controls; none are implied or bypassed by this prototype.
+
+
 END OF LEDGER
 =============

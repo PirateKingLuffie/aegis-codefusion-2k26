@@ -67,6 +67,10 @@ export const AUTOMATION_CAPABILITIES: AutomationCapabilities = {
   maxIncidents: AUTOMATION_POLICY_DEFAULTS.maxIncidents,
   supportedHazards: AUTOMATION_SUPPORTED_HAZARDS,
   supportedChannels: ["in-app"],
+  scheduledPolling: false,
+  browserNotifications: true,
+  serverDelivery: false,
+  deterministicEvaluation: true,
   notes: [
     "Calculations run deterministically from the supplied feed and watch regions.",
     "No SMS, phone call, email, push notification or dispatch action is sent by this endpoint.",

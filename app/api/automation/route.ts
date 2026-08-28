@@ -13,10 +13,29 @@ export const runtime = "nodejs";
 const HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Origin": "*",
   "Cache-Control": "no-store",
   "X-Content-Type-Options": "nosniff",
 };
+
+const RATE_WINDOW_MS = 60_000;
+const RATE_LIMIT = 30;
+const rateWindows = new Map<string, { count: number; resetAt: number }>();
+
+function rateLimitResponse(request: Request) {
+  const now = Date.now();
+  const forwarded = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const client = (forwarded || "unknown-client").slice(0, 96);
+  const existing = rateWindows.get(client);
+  const entry = !existing || existing.resetAt <= now ? { count: 0, resetAt: now + RATE_WINDOW_MS } : existing;
+  entry.count += 1;
+  rateWindows.set(client, entry);
+  if (rateWindows.size > 2_000) {
+    for (const [key, value] of rateWindows) if (value.resetAt <= now) rateWindows.delete(key);
+  }
+  if (entry.count <= RATE_LIMIT) return undefined;
+  const retryAfterSeconds = Math.max(1, Math.ceil((entry.resetAt - now) / 1_000));
+  return json({ error: "Automation evaluation rate limit exceeded." }, 429, { "Retry-After": String(retryAfterSeconds) });
+}
 
 function json(data: unknown, status = 200, headers: Record<string, string> = {}) {
   return Response.json(data, { status, headers: { ...HEADERS, ...headers } });
@@ -46,6 +65,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const limited = rateLimitResponse(request);
+  if (limited) return limited;
   let parsedBody: ReturnType<typeof automationRequestSchema.parse>;
   try {
     parsedBody = automationRequestSchema.parse(await boundedJson(request));
@@ -98,6 +119,7 @@ export async function POST(request: Request) {
     parsedBody,
     incidents,
     parsedBody.regions ?? DEFAULT_AUTOMATION_REGIONS,
+    feedSources,
   ));
   return json({
     apiVersion: "2026-08-29",

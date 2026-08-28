@@ -74,6 +74,8 @@ export type MatchRejectionReason =
   | "outside-region"
   | "category-filter"
   | "below-severity-threshold"
+  | "missing-observation-time"
+  | "missing-retrieval-time"
   | "stale-observation"
   | "stale-source-retrieval"
   | "unverified-source"
@@ -182,6 +184,7 @@ export interface AutomationEvaluationInput {
   policy?: Partial<AutomationPolicy>;
   now?: Date | string;
   mode?: AutomationMode;
+  /** Provider telemetry for distinguishing a true no-match from total feed failure. */
   sources?: AutomationEvaluation["sources"];
 }
 
@@ -194,5 +197,10 @@ export interface AutomationCapabilities {
   maxIncidents: number;
   supportedHazards: IncidentCategory[];
   supportedChannels: ["in-app"];
+  /** Client-side helper flags exposed for the automation console. */
+  scheduledPolling: false;
+  browserNotifications: true;
+  serverDelivery: false;
+  deterministicEvaluation: true;
   notes: string[];
 }

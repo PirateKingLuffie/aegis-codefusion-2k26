@@ -6,6 +6,7 @@ import {
   evaluateAutomation,
   normalizePolicy,
 } from "../lib/automation/index.ts";
+import { automationRequestSchema } from "../lib/automation/schemas.ts";
 
 const NOW = "2026-08-29T12:00:00.000Z";
 
@@ -68,6 +69,18 @@ test("cooldown receipt suppresses duplicate proposals", () => {
   assert.equal(second.regions[0].suppressedCount, 1);
 });
 
+test("a reminder after cooldown receives a new alert id", () => {
+  const first = evaluateAutomation({ regions: [faridabad], incidents: [incident()], now: NOW });
+  const reminder = evaluateAutomation({
+    regions: [faridabad],
+    incidents: [incident({ retrievedAt: "2026-08-29T12:56:00.000Z" })],
+    previousReceipts: first.receipts,
+    now: "2026-08-29T13:01:00.000Z",
+  });
+  assert.equal(reminder.alerts[0].kind, "reminder");
+  assert.notEqual(reminder.alerts[0].id, first.alerts[0].id);
+});
+
 test("severity escalation bypasses cooldown and is labelled", () => {
   const first = evaluateAutomation({ regions: [faridabad], incidents: [incident({ severity: "medium" })], now: NOW });
   const second = evaluateAutomation({
@@ -93,6 +106,46 @@ test("stale and unverified records are visible but cannot alert by default", () 
   assert.equal(result.alerts.length, 0);
   assert.equal(result.regions[0].matchedIncidents[0].reason, "stale-observation");
   assert.equal(result.regions[0].status, "degraded");
+});
+
+test("missing observation or retrieval time cannot become a live proposal", () => {
+  const missingObservation = incident({ id: "usgs:missing-observation" });
+  delete missingObservation.observedAt;
+  delete missingObservation.updatedAt;
+  delete missingObservation.freshness.observedAt;
+  delete missingObservation.provenance.publishedAt;
+  const noObservation = evaluateAutomation({ regions: [faridabad], incidents: [missingObservation], now: NOW });
+  assert.equal(noObservation.alerts.length, 0);
+  assert.equal(noObservation.regions[0].matchedIncidents[0].reason, "missing-observation-time");
+
+  const missingRetrieval = incident({ id: "usgs:missing-retrieval" });
+  missingRetrieval.provenance.retrievedAt = "invalid";
+  missingRetrieval.freshness.retrievedAt = "invalid";
+  const noRetrieval = evaluateAutomation({ regions: [faridabad], incidents: [missingRetrieval], now: NOW });
+  assert.equal(noRetrieval.alerts.length, 0);
+  assert.equal(noRetrieval.regions[0].matchedIncidents[0].reason, "missing-retrieval-time");
+});
+
+test("total provider failure is degraded rather than a clear no-match", () => {
+  const result = evaluateAutomation({
+    regions: [faridabad],
+    incidents: [],
+    sources: [{
+      sourceId: "usgs-earthquakes",
+      sourceName: "U.S. Geological Survey",
+      recordCount: 0,
+      retrievedAt: NOW,
+      status: "degraded",
+    }],
+    now: NOW,
+  });
+  assert.equal(result.regions[0].status, "degraded");
+});
+
+test("request validation rejects duplicate region ids", () => {
+  const parsed = automationRequestSchema.safeParse({ mode: "live", regions: [faridabad, { ...faridabad }] });
+  assert.equal(parsed.success, false);
+  assert.match(parsed.error.issues[0].message, /unique/i);
 });
 
 test("demo simulations are accepted only in demo mode and stay labelled", () => {
