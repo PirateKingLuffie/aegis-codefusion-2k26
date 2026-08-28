@@ -14,9 +14,9 @@ Cost policy: zero-paid-key deterministic core, no billing-required map path; opt
 Primary demo target: Lenovo LOQ, i5-12450HX, RTX 4050, 24 GB DDR5, 1366 x 768
 Live command center: https://aegis.guptashivaani233.workers.dev
 Dedicated Agent Ledger: https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
-Current main Worker version: 1e12ba63-1fe8-4112-bda9-b6ebd3b460b0
+Current main Worker version: 97819d30-6091-41ec-9b57-6320eca81edf
 Previously accepted ledger Worker version: af5d0e22-9ed7-4e83-b0ff-ea62a312114f
-Ledger date: 27 August 2026
+Ledger date: 28 August 2026
 
 
 1. FINAL STATUS
@@ -76,10 +76,10 @@ credentials/artwork; they cannot be fabricated in code.
                         remaining exposure and plan warning.
 
 CURRENT-REHAUL RELEASE RECORD:
-  Deployed application source:  e67eec7 (feat: refine scenarios globe and incident media)
-  Main Worker version:          1e12ba63-1fe8-4112-bda9-b6ebd3b460b0
+  Deployed application source:  638e063 (fix: separate incident context and clarify media viewer)
+  Main Worker version:          97819d30-6091-41ec-9b57-6320eca81edf
   Ledger Worker version:        af5d0e22-9ed7-4e83-b0ff-ea62a312114f (unchanged)
-  Canonical verify totals:      82 total / 81 passed / 0 failed / 1 optional live-feed skipped
+  Canonical verify totals:      85 total / 84 passed / 0 failed / 1 optional live-feed skipped
   Production build:             PASS
   Public API smoke checks:      health, providers, simulation catalog and Agent Ledger all HTTP 200
   Remote globe/search proof:    1366 x 768 public browser replay; orbit override enabled; Tokyo search
@@ -689,20 +689,24 @@ Verification:
   - Public health and media endpoints returned HTTP 200; browser warning/error log remained empty.
 
 
-24. SOURCE-ONLY MEDIA AND INCIDENT-PRESENTATION AUDIT (27 AUGUST 2026)
+24. DEPLOYED MEDIA AND INCIDENT-PRESENTATION AUDIT (28 AUGUST 2026)
 =======================================================================
 
-The shared working tree contains a follow-up accuracy pass that has not been deployed. Keep the public
-release record above unchanged until a new Worker is published and replayed.
+The follow-up accuracy pass is deployed in commit `638e063` on Worker
+`97819d30-6091-41ec-9b57-6320eca81edf`.
 
   - `npm run test:unit`: 85 total / 84 passed / 0 failed / 1 optional public-live-feed skipped.
   - TypeScript, ESLint and production build: PASS; only the existing large-chunk advisory is emitted.
-  - Keyless incident media now accepts only incident-matching Commons results; no-match/provider failure
+  - Keyless incident media accepts only incident-matching Commons results; no-match/provider failure
     returns safe source/search links and an explicit unavailable state. Unrelated clips are not substituted.
   - Globe incident markers classify explicit live, simulated and context records separately; only live
     records receive the red/pulsing treatment.
   - Sentinel imagery is configured through zoom 15 (source-native through zoom 14); the coherent keyless
     OpenStreetMap street raster supplies close-range context through zoom 19.
+  - Public browser smoke: world overview and auto-orbit were active, detail zoom retained a valid canvas,
+    no missing-map placeholder or console error appeared, and the source viewer stayed inside AEGIS.
+  - Assam/Nepal media no-match checks returned `unavailable` with search/report links and zero unrelated
+    playable clips.
 
 
 END OF LEDGER

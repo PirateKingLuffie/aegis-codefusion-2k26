@@ -40,6 +40,6 @@ Only HTTPS video resources and allow-listed YouTube URL forms can reach the play
 4. Confirm the AEGIS URL does not change and the media dialog shows a matching clip or a truthful unavailable state; no unrelated example footage should appear.
 5. Read the green observed/simulated label and amber footage-verification warning before using the media as context.
 
-The public acceptance release for this workflow is Worker `1e12ba63-1fe8-4112-bda9-b6ebd3b460b0`. The
-follow-up source verification in `docs/GLOBE_AND_UI_ACCEPTANCE.md` is not deployed until a new Worker
-release is recorded.
+The public acceptance release for this workflow is commit `638e063`, Worker
+`97819d30-6091-41ec-9b57-6320eca81edf`. The deployed viewer and marker-separation checks are recorded in
+`docs/GLOBE_AND_UI_ACCEPTANCE.md`.

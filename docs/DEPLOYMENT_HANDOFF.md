@@ -6,12 +6,12 @@ This is the owner-action checklist for GitHub publication, immediate Cloudflare 
 
 | Surface | URL | Worker version |
 | --- | --- | --- |
-| Command center | https://aegis.guptashivaani233.workers.dev | `1e12ba63-1fe8-4112-bda9-b6ebd3b460b0` |
+| Command center | https://aegis.guptashivaani233.workers.dev | `97819d30-6091-41ec-9b57-6320eca81edf` |
 | Dedicated Agent Ledger | https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger | `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` |
 
-The D1 migration is applied and live in APAC. Cross-deployment ledger `GET`, `POST` and human-review `PATCH` were accepted, including a D1-persisted approved revision 2 with verified SHA-256 receipt links. Remote-browser acceptance also confirmed globe rotation, country/city/street labels, Tokyo search and a clean console. The street-detail safety layer now uses one coherent OpenStreetMap tile source through zoom 19; Sentinel context imagery is optional through its zoom-15 layer limit. Do not reintroduce mixed provider URLs or key-gated CARTO raster endpoints into one source. The remaining acceptance item is repetition on the target Lenovo LOQ for device-specific GPU and Chrome validation.
+The D1 migration is applied and live in APAC. Cross-deployment ledger `GET`, `POST` and human-review `PATCH` were accepted, including a D1-persisted approved revision 2 with verified SHA-256 receipt links. The 28 August 2026 release (`638e063`, Worker `97819d30-6091-41ec-9b57-6320eca81edf`) also passed the public browser smoke replay: globe overview, auto-orbit, detail zoom, separate marker classes, scenario separation and the enlarged incident source viewer. The street-detail safety layer now uses one coherent OpenStreetMap tile source through zoom 19; Sentinel context imagery is optional through its zoom-15 layer limit. Do not reintroduce mixed provider URLs or key-gated CARTO raster endpoints into one source. The remaining acceptance item is repetition on the target Lenovo LOQ for device-specific GPU and Chrome validation.
 
-The current working tree also contains a source-only media/incident-presentation accuracy pass (`npm run test:unit`: 85 total, 84 passed, 0 failed, 1 optional network skip). It has not been deployed; publish a new Worker and repeat the browser acceptance before treating those changes as live.
+The deployed release ran `npm run test:unit` with 85 total tests, 84 passed, 0 failed and 1 optional public-live-feed skip. A no-match media query returned `status: unavailable` with source/search links and no unrelated clip substitution. In the public browser, the initial map had `data-world-overview=true`, `data-auto-orbit=running`, 1 context marker and 19 live markers; after detail zoom the canvas remained valid with no “map data not available” text or console errors.
 
 ## Deployment split
 

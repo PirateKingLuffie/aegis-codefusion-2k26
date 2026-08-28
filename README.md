@@ -10,11 +10,11 @@ AEGIS combines a slowly rotating and searchable 3D world view, source-labelled i
 - **Dedicated Agent Ledger:** https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 - **Source repository:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26
 - **Windows and presentation downloads:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26/releases/tag/v0.1.0
-- **Deployed application source commit:** `e67eec7` (`feat: refine scenarios globe and incident media`)
-- **Main Worker version:** `1e12ba63-1fe8-4112-bda9-b6ebd3b460b0`
+- **Deployed application source commit:** `638e063` (`fix: separate incident context and clarify media viewer`)
+- **Main Worker version:** `97819d30-6091-41ec-9b57-6320eca81edf`
 - **Ledger Worker version:** `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
-- **Deployed verification:** 82 tests total — 81 passed, 0 failed, 1 optional public-live-feed test skipped; production build passed.
-- **Current source-only verification:** 85 tests total — 84 passed, 0 failed, 1 optional public-live-feed test skipped. The follow-up media/incident-presentation changes are not public until a new Worker release is recorded.
+- **Deployed verification:** 85 tests total — 84 passed, 0 failed, 1 optional public-live-feed test skipped; TypeScript, ESLint and production build passed.
+- **Incident/media follow-up:** deployed in `638e063` / Worker `97819d30-6091-41ec-9b57-6320eca81edf`; live, simulated and context markers are separated, and the source viewer refuses unrelated footage.
 - **Remote browser:** At 1366 × 768, the clean public site loaded with no browser warnings/errors; orbit override, live-source focus, Tokyo world search, origin/safe/source tools, operating-area completion and reset were replayed successfully.
 
 Cloudflare D1 is migrated and live for immutable Agent Ledger receipt revisions. Cross-deployment `GET`, `POST` and human-review `PATCH` were verified. D1 is the ledger store only; scenario history remains browser-local unless the separate FastAPI operations service is deployed.

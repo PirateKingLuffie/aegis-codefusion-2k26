@@ -2,9 +2,8 @@
 
 This note records the August 2026 globe-to-street and operations-interface rehaul. It is both the source contract and the release checklist for the world map. It does not turn public map context into surveyed terrain, live satellite imagery, a verified disaster perimeter or a live sensor feed.
 
-The current rehaul is implemented in source. The deployed Worker record below is kept separate from the
-source-only verification record because the working tree may contain changes that have not yet been
-published. Older deployed records at the end of this file are retained as historical evidence.
+The current rehaul is implemented and deployed. Older Worker records at the end of this file are retained
+as historical evidence; the release record below is the canonical public state.
 
 ## Intended operator flow
 
@@ -112,19 +111,24 @@ Free public providers have no availability SLA. If one basemap fails, AEGIS swit
 - Browser warning/error log: empty after globe, Scenario and Incident Source Viewer replay.
 - Lenovo LOQ device check: owner manual check remains before presentation.
 
-## Current source verification — 27 August 2026 (not yet deployed)
+## Current deployed follow-up — 28 August 2026
 
-The shared working tree includes the follow-up media-accuracy and incident-presentation changes. They
-must not be described as part of Worker `1e12ba63-1fe8-4112-bda9-b6ebd3b460b0` until a new deployment is
-completed.
+The incident/media accuracy and marker-classification pass is live in Worker
+`97819d30-6091-41ec-9b57-6320eca81edf` from commit `638e063`.
 
 - `npm run test:unit`: **85 total, 84 passed, 0 failed, 1 optional public-live-feed test skipped**.
-- TypeScript, ESLint and production build: PASS (the build emits only the existing large-chunk advisory).
-- Keyless media now returns only incident-matching Commons results; when no match/provider result exists,
-  the API returns `safe-search-links` with an explicit unavailable notice. Generic or unrelated clips are
+- TypeScript, ESLint and production build: PASS (only the existing large-chunk advisory is emitted).
+- Keyless media returns only incident-matching Commons results; when no match/provider result exists, the
+  API returns `safe-search-links`/`unavailable` with explicit source links. Generic or unrelated clips are
   never substituted.
 - Incident markers classify explicit live, simulated and context records separately; only live records
-  receive the red/pulsing treatment.
+  receive the red/pulsing treatment. Simulation presets are separate from observed/context records.
+- Public browser replay: `data-world-overview=true` and `data-auto-orbit=running` on load; detail zoom
+  changed the overview flag without a black canvas, missing-data tiles or console errors. The public
+  replay showed one context marker and nineteen live markers in Monitor, and an amber simulation marker
+  when Scenario was selected.
+- Incident Source Viewer opened as a large in-site dialog, reported `NO VERIFIED LIVE CAMERA AVAILABLE`
+  for the selected Nepal record, showed zero matching playable results and retained search/report links.
 
 ## Operational-marker release record — 26 August 2026
 
