@@ -2,7 +2,6 @@
 
 import {
   AlertTriangle,
-  ArrowLeft,
   CalendarClock,
   ExternalLink,
   Globe2,
@@ -14,8 +13,8 @@ import {
   Timer,
   Video,
 } from "lucide-react";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FeatureNavigation } from "@/components/navigation/FeatureNavigation";
 import type {
   IncidentCategory,
   LiveIncident,
@@ -163,11 +162,7 @@ export function LiveContextConsole() {
             <span>Live evidence desk</span>
           </div>
         </div>
-        <nav className={styles.topLinks} aria-label="AEGIS companion surfaces">
-          <Link href="/" className={styles.back}><ArrowLeft size={13} /> Command center</Link>
-          <Link href="/automation">Automation</Link>
-          <Link href="/agent-ledger">Agent ledger</Link>
-        </nav>
+        <FeatureNavigation active="intelligence" />
       </header>
 
       <main className={styles.main}>

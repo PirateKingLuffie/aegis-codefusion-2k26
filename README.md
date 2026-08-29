@@ -100,6 +100,7 @@ All hazard consequences and evacuation outcomes are prototype planning estimates
 - [Judge brief](docs/JUDGE_BRIEF.md)
 - [Agent Ledger](docs/AI_AGENT_LEDGER.md)
 - [Automation and live evidence](docs/AUTOMATION_AND_LIVE_EVIDENCE.md)
+- [Real-world reliability and IoT roadmap](docs/REAL_WORLD_AND_IOT_ROADMAP.md)
 - [API and providers](docs/API_AND_PROVIDERS.md)
 - [Data provenance](docs/DATA_PROVENANCE.md)
 - [EIT authoritative-data import](docs/EIT_DATA_IMPORT.md)

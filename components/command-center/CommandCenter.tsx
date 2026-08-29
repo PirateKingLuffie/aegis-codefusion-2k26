@@ -66,6 +66,7 @@ import type {
   AegisMapLayers,
   AegisMapSelection,
 } from "@/components/map/types";
+import { FeatureNavigation } from "@/components/navigation/FeatureNavigation";
 import type { FeatureCollection, GeoJsonProperties, Geometry, LineString } from "geojson";
 import type { HazardKind } from "@/lib/domain/types";
 import {
@@ -2592,14 +2593,7 @@ export function CommandCenter() {
           >
             <Command size={16} />
           </button>
-          <a
-            className={styles.iconButton}
-            href="/agent-ledger"
-            aria-label="Open AEGIS agent activity ledger"
-            title="Agent activity ledger"
-          >
-            <Activity size={16} />
-          </a>
+          <FeatureNavigation active="operations" compact />
           <button
             className={styles.iconButton}
             aria-label="Open scenario workspace"

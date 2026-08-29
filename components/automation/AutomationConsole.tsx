@@ -3,7 +3,6 @@
 import {
   Bell,
   BellRing,
-  ChevronLeft,
   CircleAlert,
   Crosshair,
   Database,
@@ -18,8 +17,8 @@ import {
   Wifi,
   X,
 } from "lucide-react";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FeatureNavigation } from "@/components/navigation/FeatureNavigation";
 import type { IncidentCategory, LiveIncident } from "@/lib/live/types";
 import type { AutomationRegion, AutomationReceipt } from "@/lib/automation/types";
 import styles from "./AutomationConsole.module.css";
@@ -448,7 +447,7 @@ export function AutomationConsole() {
           <i className={`${styles.statusDot} ${evaluation ? styles.online : ""}`} />
           <span>{evaluation ? "Evaluation ready" : "Dry-run console"}</span>
         </div>
-        <Link className={styles.backLink} href="/"><ChevronLeft size={15} /> Command center</Link>
+        <FeatureNavigation active="automation" />
       </header>
 
       <main className={styles.main}>

@@ -325,12 +325,13 @@ test("D1 stores immutable revisions and verifies the complete receipt chain", as
   assert.equal(changed.records[0].receipt.verification, "invalid");
 });
 
-test("wires the standalone route, audit API and command-center entry without sample records", async () => {
-  const [page, consoleSource, api, commandCenter, docs, migration, wrangler] = await Promise.all([
+test("wires the standalone route, audit API and shared navigation without sample records", async () => {
+  const [page, consoleSource, api, commandCenter, featureNavigation, docs, migration, wrangler] = await Promise.all([
     readFile(new URL("../app/agent-ledger/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/agent-activity/AgentActivityConsole.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/agent-activity/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../components/command-center/CommandCenter.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/navigation/FeatureNavigation.tsx", import.meta.url), "utf8"),
     readFile(new URL("../docs/AI_AGENT_LEDGER.md", import.meta.url), "utf8"),
     readFile(new URL("../migrations/0001_agent_activity_ledger.sql", import.meta.url), "utf8"),
     readFile(new URL("../wrangler.jsonc", import.meta.url), "utf8"),
@@ -341,7 +342,8 @@ test("wires the standalone route, audit API and command-center entry without sam
   assert.match(api, /export async function GET/);
   assert.match(api, /export async function POST/);
   assert.match(api, /export async function PATCH/);
-  assert.match(commandCenter, /href="\/agent-ledger"/);
+  assert.match(commandCenter, /FeatureNavigation/);
+  assert.match(featureNavigation, /href: "\/agent-ledger"/);
   assert.match(docs, /no seeded [“"]success[”"] events/);
   assert.match(migration, /PRIMARY KEY \(receipt_id, revision\)/);
   assert.match(wrangler, /"binding": "AEGIS_LEDGER_DB"/);

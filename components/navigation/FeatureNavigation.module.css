@@ -1,0 +1,69 @@
+.tabs {
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  border: 1px solid #33383b;
+  border-radius: 3px;
+  background: #15181a;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  min-height: 34px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 12px;
+  border-right: 1px solid #303538;
+  color: #aeb5b9;
+  background: transparent;
+  text-decoration: none;
+  font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+  transition: color 140ms ease, background 140ms ease;
+}
+
+.tab:last-child { border-right: 0; }
+.tab:hover { color: #f0f3f4; background: #1d2123; }
+.tab svg { flex: 0 0 auto; color: #90999d; }
+
+.active {
+  color: #fff;
+  background: #23272a;
+  box-shadow: inset 0 -2px 0 #d2a84e;
+}
+
+.active svg { color: #e2bd6c; }
+
+.compact {
+  height: 31px;
+  overflow: hidden;
+  border-color: rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.compact .tab {
+  width: 32px;
+  min-height: 30px;
+  padding: 0;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.compact .tab span { display: none; }
+
+@media (max-width: 760px) {
+  .tabs:not(.compact) .tab { width: 38px; padding: 0; }
+  .tabs:not(.compact) .tab span { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab { transition: none; }
+}

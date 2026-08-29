@@ -2,7 +2,6 @@
 
 import {
   Activity,
-  ArrowLeft,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -23,8 +22,8 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FeatureNavigation } from "@/components/navigation/FeatureNavigation";
 import type {
   AgentActivityRecord,
   AgentLedgerListResponse,
@@ -265,10 +264,7 @@ export function AgentActivityConsole() {
           <span>Audit capture active</span>
           <small>No seeded events</small>
         </div>
-        <Link className={styles.backLink} href="/">
-          <ArrowLeft size={15} />
-          Command center
-        </Link>
+        <FeatureNavigation active="ledger" />
       </header>
 
       <main className={styles.main}>
