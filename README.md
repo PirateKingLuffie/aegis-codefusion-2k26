@@ -19,9 +19,9 @@ AEGIS combines a slowly rotating and searchable 3D world view, source-labelled i
 
 Cloudflare D1 is migrated and live for immutable Agent Ledger receipt revisions. Cross-deployment `GET`, `POST` and human-review `PATCH` were verified. D1 is the ledger store only; scenario history remains browser-local unless the separate FastAPI operations service is deployed.
 
-### Source-only companion surfaces
+### Automation and evidence companion surfaces
 
-Two additive routes are implemented in the current source tree but are **not included in the public Worker version above**: `/live-context` provides a source-labelled incident/evidence desk, and `/automation` provides deterministic regional watch evaluation with browser-local, dry-run alert previews. Neither route sends an emergency notification or changes the existing command center. See [Automation and live evidence](docs/AUTOMATION_AND_LIVE_EVIDENCE.md) for architecture, truth classes, limitations, verification and controlled deployment.
+Two additive routes are deployed alongside the command center: [`/live-context`](https://aegis.guptashivaani233.workers.dev/live-context) provides a source-labelled incident/evidence desk, and [`/automation`](https://aegis.guptashivaani233.workers.dev/automation) provides deterministic regional watch evaluation with browser-local, dry-run alert previews. Neither route sends an emergency notification or changes the existing command center. See [Automation and live evidence](docs/AUTOMATION_AND_LIVE_EVIDENCE.md) for architecture, truth classes, limitations and verification.
 
 ## Zero-cost stack
 

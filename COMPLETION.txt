@@ -709,13 +709,14 @@ The follow-up accuracy pass is deployed in commit `638e063` on Worker
     playable clips.
 
 
-25. SOURCE-ONLY REGIONAL AUTOMATION AND LIVE EVIDENCE (29 AUGUST 2026)
+25. REGIONAL AUTOMATION AND LIVE EVIDENCE RELEASE (29 AUGUST 2026)
 ========================================================================
 
 Release state:
-  [SOURCE COMPLETE] Additive routes are implemented and verified in the repository.
-  [NOT DEPLOYED] The recorded public Worker remains on version
-                 97819d30-6091-41ec-9b57-6320eca81edf until an owner-approved release.
+  [DEPLOYED] Additive routes are implemented, verified and published at:
+             https://aegis.guptashivaani233.workers.dev/automation
+             https://aegis.guptashivaani233.workers.dev/live-context
+  [VERSION] Cloudflare Worker 98e55b99-3e20-47b2-b46b-9c205952eca5.
   [UNCHANGED] Existing Monitor, Scenario and Response command-center renderer files were not modified.
 
 Completed:
@@ -744,6 +745,8 @@ Verification:
   - Vinext/Cloudflare production build: PASS; only the pre-existing large-chunk advisory remains.
   - Full suite: 99 tests, 98 passed, zero failed, one optional public-feed test skipped.
   - Focused automation/evidence suite: 14 tests, 14 passed.
+  - Public HTTP checks: `/`, `/automation`, `/live-context` and `/api/automation` returned HTTP 200.
+  - In-app browser checks: both companion headings rendered and browser error logs were empty.
 
 Exact non-claims:
   - Browser polling is not a server scheduler and stops when the page/tab is not active.

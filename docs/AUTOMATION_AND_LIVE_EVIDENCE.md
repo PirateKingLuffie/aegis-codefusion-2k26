@@ -1,9 +1,11 @@
 # Automation and live-evidence companion surfaces
 
-This note documents two additive AEGIS routes that are present in source but are **not part of the currently published Worker version** listed in the repository README:
+This note documents two additive AEGIS routes deployed on the public AEGIS Worker:
 
 - `/live-context` — a source-labelled incident and evidence desk;
 - `/automation` — deterministic regional watch evaluation and alert-proposal console.
+
+Public release: `98e55b99-3e20-47b2-b46b-9c205952eca5` on 29 August 2026.
 
 They do not replace or modify the existing command-center workflow. They reuse the existing live-intelligence contracts and deliberately keep simulations, source reports and notification delivery separate.
 
@@ -148,7 +150,7 @@ The focused automation tests cover first proposals, cooldown suppression, unique
 
 ## Controlled deployment
 
-The current public command center should remain on its recorded Worker version until these source-only routes pass the full release gates. For a future owner-authorised Cloudflare release:
+The companion routes passed the release gates and were published without modifying the existing command-center renderer. For a future owner-authorised Cloudflare release:
 
 1. run the verification sequence above and complete the clean-browser checks;
 2. review `git diff` and scan the repository/history for credentials;
