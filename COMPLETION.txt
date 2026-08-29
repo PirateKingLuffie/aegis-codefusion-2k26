@@ -757,5 +757,34 @@ Exact non-claims:
     and audit controls; none are implied or bypassed by this prototype.
 
 
+26. SHARED FEATURE NAVIGATION AND IOT ROADMAP (29 AUGUST 2026)
+================================================================
+
+Public release:
+  https://aegis.guptashivaani233.workers.dev/?release=e2583031
+  Cloudflare Worker version: e2583031-87a9-4c47-b503-702a1415d6ce
+  Source commit: 6380ce0
+
+Completed:
+  [DONE] Added one shared, accessible product switcher across all four working surfaces:
+         Operations, Live Intelligence, Automation and Decision Ledger.
+  [DONE] Preserved Monitor, Scenario and Response as command-center modes and preserved the internal
+         World Map, Incident, Scenarios, Impacts, Sources and Analysis rail as local navigation.
+  [DONE] Used compact icon tabs in the crowded command-center header and labelled tabs on companion pages.
+  [DONE] Added active-route semantics, descriptive labels/tooltips, keyboard focus and responsive icon collapse.
+  [DONE] Added `docs/REAL_WORLD_AND_IOT_ROADMAP.md` covering LoRaWAN IN865, MQTT 5, SensorThings,
+         CAP exercise alerts, EIT flood/weather/fire/structural sensing, edge failover, calibration,
+         device security, official Indian integrations and a staged operational pilot.
+
+Verification:
+  - TypeScript and scoped ESLint: PASS.
+  - Vinext/Cloudflare production build: PASS; existing large MapLibre/command-center chunk advisory remains.
+  - Full suite: 101 tests, 100 passed, zero failed, one optional public-feed test skipped.
+  - Public 1366 x 768 check: all four tabs fit; Operations active state and route transitions verified.
+  - Public 390 x 844 check: document width matched viewport, compact tabs remained inside the screen.
+  - Live Intelligence, Automation and Decision Ledger headings and active tabs verified after real clicks.
+  - Browser error log remained empty through the complete navigation replay.
+
+
 END OF LEDGER
 =============
