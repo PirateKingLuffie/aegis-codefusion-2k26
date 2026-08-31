@@ -2844,6 +2844,17 @@
 .legendRoute { background: #2f8fff; }
 .legendSafe { background: #43d17f; }
 .legendUnsafe { background: #73787b; }
+.legendObserved {
+  border-radius: 50% !important;
+  background: #ff4354;
+  box-shadow: 0 0 0 2px rgba(255, 67, 84, 0.2);
+}
+.legendContext { background: #879095; }
+.legendSimulation {
+  border: 1px dashed #d8b35b;
+  background: rgba(216, 179, 91, 0.2);
+  transform: rotate(45deg) scale(0.8);
+}
 
 .timeline {
   left: 16px;

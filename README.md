@@ -42,8 +42,9 @@ Public upstreams can throttle, revise or become unavailable. AEGIS exposes their
 - Nominatim search accepts countries, cities, addresses, streets, buildings, landmarks and coordinates. A selected result receives a persistent focus marker/name and becomes the active planning coordinate.
 - At regional/street zoom, one coherent keyless OpenStreetMap raster is kept beneath provider labels and AEGIS operational layers through zoom 19. Sentinel context imagery is optional and fades out by its configured zoom-15 layer limit, preventing opaque provider placeholders or blank low-feature regions when imagery or subtle vector fills are unavailable.
 - Place labels, roads and available building context come from public OpenStreetMap/OpenMapTiles/CARTO sources. Coverage is not uniform and the imagery is not live satellite.
-- Source-labelled current/live incidents can pulse red. That status is inherited from the named provider record and freshness rules; it is not an AEGIS field observation and is not mixed with simulated hazard geometry.
+- Incidents use one clustered WebGL renderer, without duplicate DOM pings. Only fresh, active or monitoring observed records retrieved from a live source receive red markers and pulses; cached, aging, degraded or unknown-freshness records are gray context, and simulations are amber. Labels use the same classification. “Current observed” describes the provider record, not an AEGIS field observation or verified live damage.
 - The operator can place a hazard source, evacuation origins/destinations and an operating area, then run any of the five implemented hazard plugins around the selected world location. “Any location” does not mean survey-grade fidelity everywhere, and “five plugins” does not mean literally every disaster type is modelled.
+- Each committed Origin, Safe point or Source marker—and each completed three-or-more-point Area—starts a visible local deterministic assessment. Inspect clicks and uncommitted area vertices do not. A pointer outside the previous planning domain recenters that domain; a completed area recenters it on the selected centroid. Supported region dimensions are 120 m–100 km; selections outside that range use a visibly labelled center-based fallback, not a simulation bounded to the drawn region. The workflow recalculates estimated impact/access/evacuation outputs, creates a local decision brief and offers the detailed evacuation response through one button. It does not send phone notifications, public alerts or field dispatches. See [Globe, incident and operator-selection workflow](docs/GLOBE_INCIDENT_AND_SELECTION_WORKFLOW.md) for the complete interaction and truth limits.
 
 ## Development verification
 
@@ -105,6 +106,7 @@ All hazard consequences and evacuation outcomes are prototype planning estimates
 - [Data provenance](docs/DATA_PROVENANCE.md)
 - [EIT authoritative-data import](docs/EIT_DATA_IMPORT.md)
 - [Globe and interface acceptance](docs/GLOBE_AND_UI_ACCEPTANCE.md)
+- [Globe, incident and operator-selection workflow](docs/GLOBE_INCIDENT_AND_SELECTION_WORKFLOW.md)
 - [Demo runbook](docs/DEMO_RUNBOOK.md)
 - [Deployment handoff](docs/DEPLOYMENT_HANDOFF.md)
 - [Windows and deferred mobile builds](docs/PLATFORM_BUILDS.md)

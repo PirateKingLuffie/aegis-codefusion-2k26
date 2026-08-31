@@ -74,6 +74,7 @@ import {
   createEvacuationPlan,
   createEitFaridabadScenario,
   createLocationScenario,
+  distanceMeters,
   runSimulation,
   rankInterventions,
   summarizeForClient,
@@ -119,6 +120,16 @@ import type { CommandAction } from "./ProductPanels";
 import { LiveMediaDialog } from "./LiveMediaDialog";
 import { COMING_SOON, HAZARDS, type HazardId } from "./catalog";
 import styles from "./command-center.module.css";
+import { SelectionWorkflowCard } from "./SelectionWorkflowCard";
+import {
+  buildSelectionWorkflowAssessment,
+  selectionAreaDimensionsMeters,
+  selectionAreaSummary,
+  selectionFingerprint,
+  selectionHasOperationalInput,
+  selectionPlanningAnchor,
+  type SelectionWorkflowStage,
+} from "./selection-workflow";
 import { WorldLocationSearch } from "./WorldLocationSearch";
 import { searchOfflineWorldPlaces, type WorldLocationSelection } from "./world-search";
 
@@ -439,8 +450,13 @@ type LiveIncidentSummary = {
   category: string;
   severity: "critical" | "high" | "medium" | "low" | "unknown";
   state: string;
+  reality?: "observed" | "simulated";
   dataMode?: "near-real-time" | "recent-report" | "cached-source-snapshot" | "simulated-demo";
   observedAt?: string;
+  freshness?: {
+    band: "live" | "near-real-time" | "recent" | "aging" | "archived" | "unknown";
+    label: string;
+  };
   location: {
     name: string;
     coordinates?: { latitude: number; longitude: number };
@@ -773,6 +789,16 @@ function locationFidelityLabel(location: ActiveLocation): string {
     : "GLOBAL PROTOTYPE";
 }
 
+function incidentIsCurrentObserved(incident: LiveIncidentSummary): boolean {
+  const currentFreshness = incident.freshness
+    ? incident.freshness.band === "live" || incident.freshness.band === "near-real-time"
+    : incident.dataMode === "near-real-time";
+  return incident.reality !== "simulated"
+    && incident.provenance.status === "live"
+    && (incident.state === "active" || incident.state === "monitoring")
+    && currentFreshness;
+}
+
 const fallbackDecision: OperationsDecision = {
   source: "deterministic-fallback",
   latencyMs: 0,
@@ -1009,6 +1035,7 @@ export function CommandCenter() {
   const [layerThreshold, setLayerThreshold] = useState(0);
   const [question, setQuestion] = useState("What is our biggest risk in the next 30 minutes?");
   const [decision, setDecision] = useState<OperationsDecision>(fallbackDecision);
+  const [automaticDecisionActive, setAutomaticDecisionActive] = useState(false);
   const [decisionNarrative, setDecisionNarrative] = useState<string | null>(null);
   const [decisionExecution, setDecisionExecution] = useState<DecisionExecution>({
     mode: "deterministic-fallback",
@@ -1027,6 +1054,10 @@ export function CommandCenter() {
   const [liveRefreshNonce, setLiveRefreshNonce] = useState(0);
   const previousLiveIncidentsRef = useRef<LiveIncidentSummary[]>([]);
   const [mapSelection, setMapSelection] = useState<AegisMapSelection>({ points: [] });
+  const [selectionWorkflowStage, setSelectionWorkflowStage] = useState<SelectionWorkflowStage>("idle");
+  const [selectionWorkflowVisible, setSelectionWorkflowVisible] = useState(false);
+  const selectionWorkflowTimerRef = useRef<number | null>(null);
+  const selectionFingerprintRef = useRef("");
   const [focusRequest, setFocusRequest] = useState<AegisFocusRequest | undefined>();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1080,13 +1111,9 @@ export function CommandCenter() {
   const selectedOperatingArea = useMemo<ScenarioOperatingAreaInput | undefined>(() => {
     const boundary = mapSelection.area?.geometry.coordinates[0];
     if (!boundary || boundary.length < 4) return undefined;
-    const latitudes = boundary.map(([, lat]) => lat);
-    const longitudes = boundary.map(([lon]) => lon);
-    const centerLatitude = latitudes.reduce((sum, latitude) => sum + latitude, 0) / latitudes.length;
-    const northSouthM = (Math.max(...latitudes) - Math.min(...latitudes)) * 111_320;
-    const eastWestM = (Math.max(...longitudes) - Math.min(...longitudes))
-      * 111_320
-      * Math.max(0.2, Math.cos(centerLatitude * Math.PI / 180));
+    const dimensions = selectionAreaDimensionsMeters({ points: [], area: mapSelection.area });
+    if (!dimensions) return undefined;
+    const { northSouthM, eastWestM } = dimensions;
     if (Math.min(northSouthM, eastWestM) < 120 || Math.max(northSouthM, eastWestM) > 100_000) {
       return undefined;
     }
@@ -1324,6 +1351,65 @@ export function CommandCenter() {
     }),
     [demonstration, evacuationPlan, evacuationVisible, minute, planState],
   );
+  const selectionWorkflowAssessment = useMemo(() => {
+    if (!selectionHasOperationalInput(mapSelection) || selectionWorkflowStage === "idle") return null;
+    return buildSelectionWorkflowAssessment({
+      selection: mapSelection,
+      stage: selectionWorkflowStage,
+      locationLabel: activeLocation.name,
+      hazardLabel: selectedHazard.label,
+      scenarioSeed: demonstration.scenario.seed,
+      scenarioRevision: `${demonstration.result.runId}:${scenarioStrength}:${minute}:${evacuationMode}:${planDepartureMinute}:${surgeCapacity}:${evacuationPlan.id}`,
+      operatingAreaAccepted: Boolean(selectedOperatingArea),
+      metrics: {
+        peakExposedPopulation: demonstration.result.metrics.peakExposedPopulation,
+        affectedBuildings: impactSnapshot.summary.affectedBuildings,
+        closedRoads: impactSnapshot.summary.closedRoads,
+        restrictedRoads: impactSnapshot.summary.restrictedRoads,
+      },
+      plan: {
+        id: evacuationPlan.id,
+        routeCount: evacuationPlan.routes.length,
+        coveragePct: evacuationPlan.after.coveragePct,
+        clearanceMinutes: evacuationPlan.after.estimatedClearanceMinutes,
+        peopleRemainingExposed: evacuationPlan.after.peopleRemainingExposed,
+        warnings: evacuationPlan.warnings,
+        generatedBy: evacuationPlan.generatedBy,
+      },
+    });
+  }, [activeLocation.name, demonstration.result.metrics.peakExposedPopulation, demonstration.result.runId, demonstration.scenario.seed, evacuationMode, evacuationPlan, impactSnapshot.summary, mapSelection, minute, planDepartureMinute, scenarioStrength, selectedHazard.label, selectedOperatingArea, selectionWorkflowStage, surgeCapacity]);
+
+  const automaticSelectionDecision = useMemo(() => deterministicDecision({
+      location: activeLocation.name,
+      hazard: selectedHazard.label,
+      minute,
+      peakMinute: demonstration.result.metrics.peakMinute,
+      maximumValue: demonstration.result.metrics.maximumHazardValue,
+      maximumUnit: demonstration.result.metrics.maximumHazardUnit,
+      unavailableRoads: demonstration.result.metrics.peakUnavailableRoads,
+      exposure: demonstration.result.metrics.peakExposedPopulation,
+      confidence: averageConfidence / 100,
+      topAction: impactSnapshot.recoveryPlan.actions[0]?.action,
+      remainingExposure: impactSnapshot.humanImpact.peopleRemainingInPlanningEnvelope,
+    }), [
+      activeLocation.name,
+      averageConfidence,
+      demonstration.result.metrics,
+      impactSnapshot.humanImpact.peopleRemainingInPlanningEnvelope,
+      impactSnapshot.recoveryPlan.actions,
+      minute,
+      selectedHazard.label,
+    ]);
+  const automaticSelectionDecisionRef = useRef(automaticSelectionDecision);
+  const selectionWorkflowAssessmentRef = useRef(selectionWorkflowAssessment);
+  useEffect(() => {
+    automaticSelectionDecisionRef.current = automaticSelectionDecision;
+    selectionWorkflowAssessmentRef.current = selectionWorkflowAssessment;
+  }, [automaticSelectionDecision, selectionWorkflowAssessment]);
+  const displayedDecision = automaticDecisionActive ? automaticSelectionDecision : decision;
+  const displayedDecisionNarrative = automaticDecisionActive && selectionWorkflowAssessment
+    ? `Automatic deterministic brief ${selectionWorkflowAssessment.id} is recalculated from the current map inputs, hazard settings and timeline minute. It is a planning estimate, not an observed damage report or an issued evacuation order.`
+    : decisionNarrative;
   const interventionRanking = useMemo(
     () => rankInterventions(demonstration.scenario, demonstration.result),
     [demonstration.result, demonstration.scenario],
@@ -1421,14 +1507,164 @@ export function CommandCenter() {
     }
   }, [searchQuery]);
 
-  const updateMapSelection = useCallback((selection: AegisMapSelection) => {
-    setMapSelection(selection);
-    setPlanState("idle");
+  const beginSelectionWorkflow = useCallback((selection: AegisMapSelection) => {
+    if (!selectionHasOperationalInput(selection)) {
+      if (selectionWorkflowTimerRef.current !== null) {
+        window.clearTimeout(selectionWorkflowTimerRef.current);
+        selectionWorkflowTimerRef.current = null;
+      }
+      selectionFingerprintRef.current = "";
+      setSelectionWorkflowStage("idle");
+      setSelectionWorkflowVisible(false);
+      setAutomaticDecisionActive(false);
+      setPlanState("idle");
+      setEvacuationVisible(false);
+      return false;
+    }
+
+    const fingerprint = selectionFingerprint(selection);
+    if (fingerprint === selectionFingerprintRef.current) return false;
+    if (selectionWorkflowTimerRef.current !== null) {
+      window.clearTimeout(selectionWorkflowTimerRef.current);
+      selectionWorkflowTimerRef.current = null;
+    }
+    selectionFingerprintRef.current = fingerprint;
+    setSelectionWorkflowVisible(true);
+    setAutomaticDecisionActive(true);
+    setSelectionWorkflowStage("assessing");
+    setMinute((current) => current === 0 ? 30 : current);
+    setPlaying(false);
+    setPlanDepartureMinute(0);
+    setPlanState("calculating");
     setEvacuationVisible(false);
+    setViewMode("respond");
+    setActiveNav("incident");
+    setPanelTab("intelligence");
+    setRightPanelOpen(false);
+    setLayerVisibility((current) => ({
+      ...current,
+      hazard: true,
+      damage: true,
+      roads: true,
+      evacuation: true,
+      facilities: true,
+    }));
+    selectionWorkflowTimerRef.current = window.setTimeout(() => {
+      const assessmentId = selectionWorkflowAssessmentRef.current?.id ?? `ASM-${fingerprint.toUpperCase()}`;
+      setDecision(automaticSelectionDecisionRef.current);
+      setDecisionNarrative(
+        `Automatic deterministic brief ${assessmentId} was recalculated from the operator-defined map inputs. It is a planning estimate, not an observed damage report or an issued evacuation order.`,
+      );
+      setDecisionExecution({
+        mode: "deterministic-fallback",
+        provider: "AEGIS local engine",
+        model: "deterministic-operations-v1",
+      });
+      setSelectionWorkflowStage("ready");
+      setPlanState("ready");
+      selectionWorkflowTimerRef.current = null;
+    }, 420);
+    return true;
+  }, []);
+
+  const updateMapSelection = useCallback((selection: AegisMapSelection) => {
+    let nextSelection = selection;
+    const newPoint = selection.points.find((point) => !mapSelection.points.some((previous) => previous.id === point.id));
+    const anchor = newPoint
+      ? { latitude: newPoint.coordinates[1], longitude: newPoint.coordinates[0], label: newPoint.label ?? "Operator-selected point" }
+      : selectionPlanningAnchor(selection);
+    if (!selection.area && anchor && distanceMeters(
+      { lat: activeLocation.latitude, lon: activeLocation.longitude },
+      { lat: anchor.latitude, lon: anchor.longitude },
+    ) > 2_000) {
+      // A new remote pointer starts a local planning domain. Do not retain a
+      // hazard/source from the previous continent as if it belonged here.
+      nextSelection = {
+        points: selection.points.filter((point) => distanceMeters(
+          { lat: anchor.latitude, lon: anchor.longitude },
+          { lat: point.coordinates[1], lon: point.coordinates[0] },
+        ) <= 10_000),
+      };
+      setActiveLocation({
+        id: `operator-${selectionFingerprint(nextSelection)}`,
+        name: anchor.label,
+        region: `${anchor.latitude.toFixed(4)}°, ${anchor.longitude.toFixed(4)}° · operator-defined`,
+        latitude: anchor.latitude,
+        longitude: anchor.longitude,
+        fidelity: "GLOBAL PROTOTYPE",
+      });
+      setSourceIncident(undefined);
+      setWeatherContext(null);
+      setFieldOverlays([]);
+      setSceneView("world");
+      setFocusRequest({
+        center: [anchor.longitude, anchor.latitude],
+        zoom: 15.2,
+        pitch: 48,
+        bearing: -24,
+        durationMs: 1_300,
+        label: `${anchor.label} · operator-defined planning domain`,
+        requestId: `pointer-${selectionFingerprint(nextSelection)}-${Date.now()}`,
+      });
+    }
+    setMapSelection(nextSelection);
     setLiveRoadRoutes(null);
+    // Every explicit pointer or completed area deterministically recalculates
+    // the response package. Programmatic search/preset selections use the
+    // state setter directly, so they do not masquerade as operator input.
+    void beginSelectionWorkflow(nextSelection);
+  }, [activeLocation.latitude, activeLocation.longitude, beginSelectionWorkflow, mapSelection.points]);
+
+  const completeOperatingArea = useCallback((selection: AegisMapSelection) => {
+    const area = selectionAreaSummary(selection);
+    if (!area.center) return;
+    const areaLabel = selection.area?.properties.name ?? "Operator-selected area";
+    const nextLocation: ActiveLocation = {
+      id: `area-${selectionFingerprint(selection)}`,
+      name: areaLabel,
+      region: `${Math.abs(area.center.latitude).toFixed(4)}° ${area.center.latitude >= 0 ? "N" : "S"} · ${Math.abs(area.center.longitude).toFixed(4)}° ${area.center.longitude >= 0 ? "E" : "W"} · operator-defined`,
+      latitude: area.center.latitude,
+      longitude: area.center.longitude,
+      fidelity: "GLOBAL PROTOTYPE",
+    };
+    setMapSelection(selection);
+    setActiveLocation(nextLocation);
+    setSourceIncident(undefined);
+    setWeatherContext(null);
+    setFieldOverlays([]);
+    setScenarioName(`${selectedHazard.label} response · ${areaLabel}`);
+    setMinute(Math.max(15, Math.min(90, demonstration.result.metrics.peakMinute)));
+    const dimensions = selectionAreaDimensionsMeters(selection);
+    const extentKm = dimensions ? Math.max(dimensions.northSouthM, dimensions.eastWestM) / 1_000 : 1;
+    const validEnvelope = dimensions
+      && Math.min(dimensions.northSouthM, dimensions.eastWestM) >= 120
+      && extentKm <= 100;
+    const zoom = !validEnvelope ? 14.8
+      : extentKm < 0.6 ? 16
+        : extentKm < 2 ? 14.8
+          : extentKm < 10 ? 13
+            : extentKm < 30 ? 11.5 : 10.2;
+    setSceneView("world");
+    setFocusRequest({
+      center: [area.center.longitude, area.center.latitude],
+      zoom,
+      pitch: 48,
+      bearing: -24,
+      durationMs: 1_300,
+      label: `${areaLabel} · ${validEnvelope ? "bounded simulation" : "center-based model fallback"}`,
+      requestId: `area-${selectionFingerprint(selection)}-${Date.now()}`,
+    });
+    void beginSelectionWorkflow(selection);
+  }, [beginSelectionWorkflow, demonstration.result.metrics.peakMinute, selectedHazard.label]);
+
+  useEffect(() => () => {
+    if (selectionWorkflowTimerRef.current !== null) {
+      window.clearTimeout(selectionWorkflowTimerRef.current);
+    }
   }, []);
 
   const focusLocation = useCallback((location: ActiveLocation) => {
+    void beginSelectionWorkflow({ points: [] });
     setActiveLocation(location);
     setSourceIncident(undefined);
     setActiveNav("incident");
@@ -1457,9 +1693,10 @@ export function CommandCenter() {
     setEvacuationVisible(false);
     setLiveRoadRoutes(null);
     setSurgeCapacity(false);
-  }, []);
+  }, [beginSelectionWorkflow]);
 
   const focusWorldLocation = useCallback((selection: WorldLocationSelection) => {
+    void beginSelectionWorkflow({ points: [] });
     const location: ActiveLocation = {
       id: selection.id,
       name: selection.name,
@@ -1496,7 +1733,7 @@ export function CommandCenter() {
     setEvacuationVisible(false);
     setLiveRoadRoutes(null);
     setSurgeCapacity(false);
-  }, []);
+  }, [beginSelectionWorkflow]);
 
   const focusIncidentOnWorld = useCallback((incident: LiveIncidentSummary) => {
     const coordinate = incident.location.coordinates;
@@ -1873,13 +2110,17 @@ export function CommandCenter() {
       severity: "high",
       coordinates: [activeLocation.longitude, activeLocation.latitude],
       live: false,
+      reality: "simulated",
+      dataMode: "simulated-demo",
+      freshnessBand: "unknown",
+      freshnessLabel: "Simulation timeline",
+      sourceStatus: "live",
       status: "simulated",
       description: `${activeLocation.fidelity} deterministic hazard and evacuation scenario.`,
       source: "AEGIS simulation",
     };
     const observed = (liveIntelligence?.incidents ?? [])
       .filter((incident) => incident.location.coordinates)
-      .slice(0, 20)
       .map<AegisIncident>((incident) => ({
         id: incident.id,
         title: incident.title,
@@ -1894,13 +2135,34 @@ export function CommandCenter() {
           incident.location.coordinates!.longitude,
           incident.location.coordinates!.latitude,
         ],
-        live: incident.provenance.status === "live"
-          && (incident.state === "active" || incident.state === "monitoring"),
+        live: incidentIsCurrentObserved(incident),
+        reality: incident.reality ?? "observed",
+        dataMode: incident.dataMode,
+        freshnessBand: incident.freshness?.band ?? "unknown",
+        freshnessLabel: incident.freshness?.label ?? "Freshness unavailable",
+        sourceStatus: incident.provenance.status,
         status: incident.state,
         occurredAt: incident.observedAt,
         description: incident.summary,
         source: incident.provenance.sourceName,
-      }));
+      }))
+      .sort((first, second) => {
+        const liveDifference = Number(Boolean(second.live)) - Number(Boolean(first.live));
+        if (liveDifference) return liveDifference;
+        const severityRank: Record<AegisIncident["severity"], number> = {
+          critical: 4,
+          high: 3,
+          moderate: 2,
+          low: 1,
+        };
+        const severityDifference = severityRank[second.severity] - severityRank[first.severity];
+        if (severityDifference) return severityDifference;
+        const firstTime = Date.parse(first.occurredAt ?? "");
+        const secondTime = Date.parse(second.occurredAt ?? "");
+        return (Number.isFinite(secondTime) ? secondTime : 0)
+          - (Number.isFinite(firstTime) ? firstTime : 0);
+      })
+      .slice(0, 20);
     // Keep the exercise as a distinct amber record in Scenario/Response while
     // retaining the observed/context records for situational awareness. The
     // map renderer classifies them independently, so a preset can never be
@@ -1909,18 +2171,13 @@ export function CommandCenter() {
   }, [activeLocation, coreHazard, liveIntelligence, selectedHazard.label, viewMode]);
   const headlineIncident = useMemo(() => {
     const incidents = liveIntelligence?.incidents ?? [];
-    return incidents.find((incident) => (
-      incident.location.coordinates
-      && incident.provenance.status === "live"
-      && (incident.state === "active" || incident.state === "monitoring")
-    ))
+    return incidents.find((incident) => incident.location.coordinates && incidentIsCurrentObserved(incident))
       ?? incidents.find((incident) => incident.location.coordinates)
       ?? incidents[0];
   }, [liveIntelligence]);
   const headlineIsLive = Boolean(
     headlineIncident
-    && headlineIncident.provenance.status === "live"
-    && (headlineIncident.state === "active" || headlineIncident.state === "monitoring"),
+    && incidentIsCurrentObserved(headlineIncident),
   );
   useEffect(() => {
     if (!playing) return;
@@ -1995,6 +2252,7 @@ export function CommandCenter() {
   const askCopilot = useCallback(async (requestedQuestion?: string) => {
     const resolvedQuestion = (requestedQuestion ?? question).trim();
     if (!resolvedQuestion) return;
+    setAutomaticDecisionActive(false);
     setAsking(true);
     try {
       const response = await fetch("/api/agent-activity", {
@@ -2123,6 +2381,7 @@ export function CommandCenter() {
   const loadPlanningScenario = useCallback((preset: LoadedPlanningScenario) => {
     const location = QUICK_LOCATIONS.find((candidate) => candidate.id === preset.locationId);
     if (!location) return;
+    void beginSelectionWorkflow({ points: [] });
     setScenarioName(preset.name);
     setActiveLocation(location);
     setHazard(preset.hazard);
@@ -2186,7 +2445,7 @@ export function CommandCenter() {
       "Planning scenario loaded",
       `${preset.name} · ${location.name} · ${preset.hazard} · input strength ${preset.strength}`,
     );
-  }, [recordAudit]);
+  }, [beginSelectionWorkflow, recordAudit]);
 
   const explainEvacuationProcedure = useCallback(() => {
     const prompt = `Explain the current evacuation procedure for ${activeLocation.name} at T+${minute} minutes, including departure stages, preferred route, destination capacity, assistance demand and remaining exposure.`;
@@ -2248,6 +2507,7 @@ export function CommandCenter() {
   }, [activeLocation, annotations, demonstration.scenario.seed, hazard, layerThreshold, layerVisibility, mapSelection.area, mapSelection.points, minute, recordAudit, savedWorkspaces, scenarioName, scenarioStrength, sourceIncident, viewMode, workspaceLayout]);
 
   const loadWorkspace = useCallback((workspace: ScenarioWorkspace) => {
+    void beginSelectionWorkflow({ points: [] });
     setScenarioName(workspace.name);
     setActiveLocation({
       ...workspace.location,
@@ -2290,7 +2550,7 @@ export function CommandCenter() {
     setEvacuationVisible(false);
     setPlanState("idle");
     recordAudit("Scenario version loaded", `${workspace.name} v${workspace.revision}`);
-  }, [recordAudit]);
+  }, [beginSelectionWorkflow, recordAudit]);
 
   const deleteWorkspace = useCallback((workspace: ScenarioWorkspace) => {
     try {
@@ -2763,6 +3023,7 @@ export function CommandCenter() {
               }}
               selection={mapSelection}
               onSelectionChange={updateMapSelection}
+              onAreaComplete={completeOperatingArea}
               onIncidentSelect={focusMapIncident}
               focusRequest={focusRequest}
               viewMode={sceneView}
@@ -2774,11 +3035,21 @@ export function CommandCenter() {
             />
           </Suspense>
 
-          <div className={styles.semanticLegend} aria-label="Operational color legend">
-            <span><i className={styles.legendDamage} />Damaged</span>
-            <span><i className={styles.legendRoute} />Escape route</span>
-            <span><i className={styles.legendSafe} />Safe area</span>
-            <span><i className={styles.legendUnsafe} />Unsafe / unavailable</span>
+          <div className={styles.semanticLegend} aria-label={sceneView === "world" ? "Incident marker legend" : "Operational color legend"}>
+            {sceneView === "world" ? (
+              <>
+                <span><i className={styles.legendObserved} />Current observed</span>
+                <span><i className={styles.legendContext} />Source context</span>
+                {viewMode !== "monitor" ? <span><i className={styles.legendSimulation} />Simulation</span> : null}
+              </>
+            ) : (
+              <>
+                <span><i className={styles.legendDamage} />Simulated damage</span>
+                <span><i className={styles.legendRoute} />Escape route</span>
+                <span><i className={styles.legendSafe} />Safe area</span>
+                <span><i className={styles.legendUnsafe} />Unsafe / unavailable</span>
+              </>
+            )}
           </div>
 
           <div className={styles.locationBar}>
@@ -3643,7 +3914,23 @@ export function CommandCenter() {
               <Video size={14} /> View source media
             </button>
           </div>
+
         </div>
+      ) : null}
+
+      {selectionWorkflowVisible && selectionWorkflowAssessment ? (
+        <SelectionWorkflowCard
+          assessment={selectionWorkflowAssessment}
+          onDismiss={() => setSelectionWorkflowVisible(false)}
+          onOpenResponse={() => {
+            setViewMode("respond");
+            setActiveNav("incident");
+            setPanelTab("resources");
+            setRightPanelOpen(true);
+            setEvacuationVisible(true);
+            setSelectionWorkflowVisible(false);
+          }}
+        />
       ) : null}
 
       <LiveMediaDialog
@@ -3716,15 +4003,15 @@ export function CommandCenter() {
                 <p>{question}</p>
               </div>
               <div className={styles.copilotAnswer}>
-                <div className={styles.answerSection}><span>SUMMARY</span><p>{decision.summary}</p></div>
-                {decisionNarrative ? (
+                <div className={styles.answerSection}><span>SUMMARY</span><p>{displayedDecision.summary}</p></div>
+                {displayedDecisionNarrative ? (
                   <div className={styles.modelNarrative}>
-                    <span>Model-authored explanation · human review required</span>
-                    <p>{decisionNarrative}</p>
+                    <span>{automaticDecisionActive ? "Local deterministic assessment" : "Model-authored explanation"} · human review required</span>
+                    <p>{displayedDecisionNarrative}</p>
                     <small>{decisionExecution.provider} · {decisionExecution.model}</small>
                   </div>
                 ) : null}
-                <div className={styles.answerEvidence}><span>Supporting evidence</span>{decision.evidence.map((item) => <p key={item}><Check size={12} />{item}</p>)}</div>
+                <div className={styles.answerEvidence}><span>Supporting evidence</span>{displayedDecision.evidence.map((item) => <p key={item}><Check size={12} />{item}</p>)}</div>
                 {question.toLowerCase().includes("evacuat") ? (
                   <div className={styles.evacuationProcedure}>
                     <div><span>Current evacuation procedure</span><StatusTag tone="blue">Calculated plan</StatusTag></div>
@@ -3733,10 +4020,10 @@ export function CommandCenter() {
                     <small>{evacuationProcedure.source} · {evacuationProcedure.remaining.toLocaleString("en-IN")} people remain exposed in the current model state.</small>
                   </div>
                 ) : null}
-                <div className={styles.answerSection}><span>PREDICTION</span><p>{decision.prediction}</p></div>
+                <div className={styles.answerSection}><span>PREDICTION</span><p>{displayedDecision.prediction}</p></div>
                 <div className={styles.recommendationBlock}>
-                  <div><span>RECOMMENDATION</span><StatusTag tone="green">{Math.round(decision.confidence * 100)}% CONFIDENCE</StatusTag></div>
-                  <p>{decision.recommendation}</p>
+                  <div><span>RECOMMENDATION</span><StatusTag tone="green">{Math.round(displayedDecision.confidence * 100)}% CONFIDENCE</StatusTag></div>
+                  <p>{displayedDecision.recommendation}</p>
                   <small>Advisory only · operator approval required</small>
                 </div>
               </div>

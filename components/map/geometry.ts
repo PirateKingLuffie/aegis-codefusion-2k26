@@ -17,6 +17,7 @@ import type {
   AegisIncident,
   AegisMapSelection,
 } from "./types";
+import { incidentMarkerPresentation } from "./incident-presentation";
 import { EIT_FARIDABAD, LEGACY_EIT_SCENARIO_CENTER } from "./campus-data";
 
 export type AnyFeatureCollection = FeatureCollection<Geometry, GeoJsonProperties>;
@@ -493,22 +494,32 @@ export function polygonCollectionToPoints(
 export function incidentsToGeoJSON(incidents: AegisIncident[]): AnyFeatureCollection {
   return {
     type: "FeatureCollection",
-    features: incidents.map((incident) => ({
-      type: "Feature",
-      id: incident.id,
-      geometry: { type: "Point", coordinates: incident.coordinates },
-      properties: {
+    features: incidents.map((incident) => {
+      const presentation = incidentMarkerPresentation(incident);
+      return {
+        type: "Feature",
         id: incident.id,
-        title: incident.title,
-        type: incident.type,
-        severity: incident.severity,
-        live: incident.live ?? false,
-        status: incident.status ?? "active",
-        occurredAt: incident.occurredAt ?? "",
-        description: incident.description ?? "",
-        source: incident.source ?? "",
-      },
-    })),
+        geometry: { type: "Point", coordinates: incident.coordinates },
+        properties: {
+          id: incident.id,
+          title: incident.title,
+          type: incident.type,
+          severity: incident.severity,
+          markerKind: presentation.kind,
+          displayLabel: presentation.label,
+          live: presentation.live,
+          reality: incident.reality ?? (presentation.kind === "simulation" ? "simulated" : "observed"),
+          dataMode: incident.dataMode ?? "",
+          freshnessBand: incident.freshnessBand ?? "unknown",
+          freshnessLabel: incident.freshnessLabel ?? "",
+          sourceStatus: incident.sourceStatus ?? "",
+          status: incident.status ?? "active",
+          occurredAt: incident.occurredAt ?? "",
+          description: incident.description ?? "",
+          source: incident.source ?? "",
+        },
+      };
+    }),
   };
 }
 
@@ -538,6 +549,17 @@ export function externalOverlaysToGeoJSON(
   };
 }
 
+export function unwrapMapCoordinates(coordinates: AegisCoordinate[]): AegisCoordinate[] {
+  if (!coordinates.length) return [];
+  const reference = coordinates[0][0];
+  return coordinates.map(([value, latitude]) => {
+    let longitude = value;
+    while (longitude - reference > 180) longitude -= 360;
+    while (longitude - reference < -180) longitude += 360;
+    return [longitude, latitude];
+  });
+}
+
 export function selectionToGeoJSON(
   selection: AegisMapSelection,
   draftArea: AegisCoordinate[],
@@ -562,11 +584,19 @@ export function selectionToGeoJSON(
       },
     }),
   );
-  if (selection.area) features.push(selection.area);
+  if (selection.area) features.push({
+    ...selection.area,
+    geometry: {
+      ...selection.area.geometry,
+      coordinates: selection.area.geometry.coordinates.map((ring) => unwrapMapCoordinates(
+        ring.map(([longitude, latitude]) => [longitude, latitude]),
+      )),
+    },
+  });
   if (draftArea.length > 1) {
     features.push({
       type: "Feature",
-      geometry: { type: "LineString", coordinates: draftArea },
+      geometry: { type: "LineString", coordinates: unwrapMapCoordinates(draftArea) },
       properties: { draft: true },
     });
   }

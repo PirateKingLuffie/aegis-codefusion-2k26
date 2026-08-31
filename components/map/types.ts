@@ -58,6 +58,14 @@ export interface AegisIncident {
   coordinates: AegisCoordinate;
   /** True only for a currently active record retrieved from a live upstream feed. */
   live?: boolean;
+  /** Observed records come from a source; simulated records come from the AEGIS scenario engine. */
+  reality?: "observed" | "simulated";
+  /** Describes the age/transport class without implying that an old event is still active. */
+  dataMode?: "near-real-time" | "recent-report" | "cached-source-snapshot" | "simulated-demo";
+  freshnessBand?: "live" | "near-real-time" | "recent" | "aging" | "archived" | "unknown";
+  freshnessLabel?: string;
+  /** Health of the upstream retrieval path, not the incident's operational status. */
+  sourceStatus?: "live" | "cached" | "degraded" | "unavailable";
   status?: string;
   occurredAt?: string;
   description?: string;
@@ -338,6 +346,8 @@ export interface AegisMapProps {
   incidents?: AegisIncident[];
   selection?: AegisMapSelection;
   onSelectionChange?: (selection: AegisMapSelection) => void;
+  /** Fires only when the operator explicitly completes a 3+ point area. */
+  onAreaComplete?: (selection: AegisMapSelection) => void;
   onFeatureInspect?: (inspection: AegisFeatureInspection | null) => void;
   /** Called when an individual incident marker is activated on the map. */
   onIncidentSelect?: (incident: AegisIncident) => void;

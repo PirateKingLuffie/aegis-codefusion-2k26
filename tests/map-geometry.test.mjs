@@ -47,6 +47,11 @@ test("incident GeoJSON preserves the active status and live provider attribution
     description: "Current GDACS alert",
     source: "Global Disaster Alert and Coordination System",
     live: true,
+    reality: "observed",
+    dataMode: "near-real-time",
+    freshnessBand: "near-real-time",
+    freshnessLabel: "Updated 4 min ago",
+    sourceStatus: "live",
   }]);
 
   assert.equal(incidents.features.length, 1);
@@ -55,7 +60,14 @@ test("incident GeoJSON preserves the active status and live provider attribution
     title: "Active flood alert",
     type: "flood",
     severity: "critical",
+    markerKind: "incident",
+    displayLabel: "CURRENT OBSERVED · GDACS · Active flood alert",
     live: true,
+    reality: "observed",
+    dataMode: "near-real-time",
+    freshnessBand: "near-real-time",
+    freshnessLabel: "Updated 4 min ago",
+    sourceStatus: "live",
     status: "active",
     occurredAt: "2026-08-15T09:30:00.000Z",
     description: "Current GDACS alert",

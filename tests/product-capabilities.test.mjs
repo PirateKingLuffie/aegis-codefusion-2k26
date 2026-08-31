@@ -29,6 +29,7 @@ import {
   shouldAutoFlyToTwin,
   worldCameraForViewport,
   worldFocusUsesGlobe,
+  worldOverviewBottomPadding,
   worldPitchForFocus,
   worldProjectionModeForZoom,
 } from "../components/map/globe-runtime.ts";
@@ -168,6 +169,8 @@ test("world camera keeps a restrained presentation tilt and orbit pauses then wr
   assert.equal(WORLD_GLOBE_DEFAULT_ORBIT_SPEED, 1.6);
   assert.equal(WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS, 1_500);
   assert.equal(WORLD_GLOBE_INITIAL_ORBIT_DELAY_MS, 650);
+  assert.equal(worldOverviewBottomPadding(720), 44);
+  assert.ok(worldOverviewBottomPadding(997) > worldOverviewBottomPadding(768));
   assert.equal(initialOrbitResumeDeadline(1_000), 1_650);
   assert.equal(orbitResumeDeadline(1_000, WORLD_GLOBE_DEFAULT_IDLE_RESUME_MS), 2_500);
   assert.equal(orbitResumeDeadline(1_000, 6_500, 2_400), 9_900);
@@ -231,10 +234,10 @@ test("live incident ping expands and fades without leaving visible bounds", () =
   for (const time of [0, 215, 430, 860, 1_720, 4_300]) {
     const frame = incidentPingFrame(time);
     assert.ok(frame.progress >= 0 && frame.progress <= 1);
-    assert.ok(frame.worldRadius >= 10 && frame.worldRadius <= 28);
-    assert.ok(frame.streetRadius >= 16 && frame.streetRadius <= 40);
-    assert.ok(frame.opacity >= 0.14 && frame.opacity <= 0.52);
-    assert.ok(frame.strokeOpacity >= 0.24 && frame.strokeOpacity <= 0.96);
+    assert.ok(frame.worldRadius >= 6 && frame.worldRadius <= 14);
+    assert.ok(frame.streetRadius >= 10 && frame.streetRadius <= 22);
+    assert.ok(frame.opacity >= 0.1 && frame.opacity <= 0.38);
+    assert.ok(frame.strokeOpacity >= 0.2 && frame.strokeOpacity <= 0.82);
   }
 });
 
@@ -261,8 +264,23 @@ test("monitor incidents and simulation presets remain separate and the globe fie
   assert.match(commandCenter, /return viewMode === "monitor" \? observed : \[exercise, \.\.\.observed\]/);
   assert.match(commandCenter, /Simulation presets/);
   assert.match(mapSource, /data-world-overview=/);
-  assert.match(mapSource, /incidentMarkerPresentation/);
+  assert.match(mapSource, /\["get", "markerKind"\]/);
+  assert.match(mapSource, /\["get", "displayLabel"\]/);
   assert.match(mapStyles, /data-world-overview="true"/);
+});
+
+test("incident rendering uses source labels and one WebGL marker path without duplicate DOM incidents", async () => {
+  const source = await readFile(new URL("../components/map/AegisMap.tsx", import.meta.url), "utf8");
+  const markerStart = source.indexOf("const operationalMarkerRegistry = operationalMarkersRef.current;");
+  const markerEnd = source.indexOf("}, [activeSelection, activeTool, draftArea, mapReady, normalizedIncidents]);", markerStart);
+  assert.ok(markerStart >= 0 && markerEnd > markerStart);
+  const markerEffect = source.slice(markerStart, markerEnd);
+  assert.match(markerEffect, /incidentSource\?\.setData\(incidentsToGeoJSON\(normalizedIncidents\)\)/);
+  assert.match(markerEffect, /activeSelection\.points\.forEach/);
+  assert.doesNotMatch(markerEffect, /normalizedIncidents\.(?:forEach|map)\s*\(/);
+  assert.doesNotMatch(markerEffect, /incidentMarkerPresentation|`incident-\$\{/);
+  assert.match(source, /live_count:.*\["get", "markerKind"\]/);
+  assert.match(source, /"text-field": \["coalesce", \["get", "displayLabel"\], \["get", "title"\], "INCIDENT"\]/);
 });
 
 test("provider geographic labels are distinguishable from AEGIS overlay symbols", () => {

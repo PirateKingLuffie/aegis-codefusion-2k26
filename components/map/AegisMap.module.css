@@ -805,11 +805,11 @@
   transform: translateX(-50%);
 }
 
-.operationalMarker[data-kind="incident"] { --marker-tone: #ff314a; width: 2.05rem; height: 2.05rem; z-index: 6; }
+.operationalMarker[data-kind="incident"] { --marker-tone: #ff314a; width: 1.42rem; height: 1.42rem; z-index: 6; }
 .operationalMarker[data-kind="simulation"] {
   --marker-tone: #e4b34e;
-  width: 1.92rem;
-  height: 1.92rem;
+  width: 1.52rem;
+  height: 1.52rem;
   z-index: 5;
 }
 .operationalMarker[data-kind="simulation"] .operationalMarkerRing {
@@ -819,8 +819,8 @@
 .operationalMarker[data-kind="simulation"] .operationalMarkerCore { border-radius: 0.22rem; }
 .operationalMarker[data-kind="context"] {
   --marker-tone: #9aa4a8;
-  width: 1.62rem;
-  height: 1.62rem;
+  width: 1.24rem;
+  height: 1.24rem;
   z-index: 4;
   opacity: 0.9;
 }
@@ -866,7 +866,7 @@
 
 @keyframes operationalPing {
   0% { opacity: 0.95; transform: scale(0.72); }
-  72%, 100% { opacity: 0; transform: scale(2.35); }
+  72%, 100% { opacity: 0; transform: scale(2); }
 }
 
 @media (max-width: 900px) {

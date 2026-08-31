@@ -63,10 +63,7 @@ import type {
 import styles from "./AegisMap.module.css";
 import { OfflineCampusTwin } from "./OfflineCampusTwin";
 import { WorldContinuity } from "./WorldContinuity";
-import {
-  incidentMarkerPresentation,
-  type IncidentMarkerKind,
-} from "./incident-presentation";
+import type { IncidentMarkerKind } from "./incident-presentation";
 import {
   EIT_CAMPUS_BOUNDARY,
   EIT_CAMPUS_BUILDINGS,
@@ -83,6 +80,7 @@ import {
   prepareFloodVisuals,
   relocateLegacyEitCollection,
   selectionToGeoJSON,
+  unwrapMapCoordinates,
   type AnyFeatureCollection,
   type FloodVisualData,
 } from "./geometry";
@@ -113,6 +111,7 @@ import {
   isProviderContextLabelLayer,
   worldCameraForViewport,
   worldFocusUsesGlobe,
+  worldOverviewBottomPadding,
   worldPitchForFocus,
   worldProjectionModeForZoom,
   type WorldProjectionMode,
@@ -728,9 +727,9 @@ function addSources(map: MapLibreMap, data: SourceData, enableTerrain: boolean):
         clusterMaxZoom: 7,
         clusterRadius: 44,
         clusterProperties: {
-          live_count: ["+", ["case", ["==", ["get", "live"], true], 1, 0]],
-          simulation_count: ["+", ["case", ["==", ["get", "status"], "simulated"], 1, 0]],
-          context_count: ["+", ["case", ["all", ["!=", ["get", "live"], true], ["!=", ["get", "status"], "simulated"]], 1, 0]],
+          live_count: ["+", ["case", ["==", ["get", "markerKind"], "incident"], 1, 0]],
+          simulation_count: ["+", ["case", ["==", ["get", "markerKind"], "simulation"], 1, 0]],
+          context_count: ["+", ["case", ["==", ["get", "markerKind"], "context"], 1, 0]],
         },
       } : {}),
     });
@@ -1652,7 +1651,7 @@ function addMapLayers(
     source: SOURCE_IDS.incidents,
     filter: ["has", "point_count"],
     paint: {
-      "circle-radius": ["step", ["get", "point_count"], 30, 10, 36, 40, 42],
+      "circle-radius": ["step", ["get", "point_count"], 18, 10, 23, 40, 28],
       "circle-color": [
         "case",
         [">", ["get", "live_count"], 0], "#ff263f",
@@ -1669,7 +1668,7 @@ function addMapLayers(
     source: SOURCE_IDS.incidents,
     filter: ["has", "point_count"],
     paint: {
-      "circle-radius": ["step", ["get", "point_count"], 10, 10, 13, 40, 16],
+      "circle-radius": ["step", ["get", "point_count"], 8, 10, 10, 40, 12],
       "circle-color": "#17191a",
       "circle-stroke-color": [
         "case",
@@ -1701,15 +1700,15 @@ function addMapLayers(
     paint: {
       "circle-radius": [
         "match", ["get", "severity"],
-        "critical", 20,
-        "high", 16,
-        "moderate", 13,
-        10,
+        "critical", 12,
+        "high", 10,
+        "moderate", 8,
+        7,
       ],
       "circle-color": [
         "case",
-        ["==", ["get", "live"], true], "#ff334f",
-        ["==", ["get", "status"], "simulated"], "#efc153",
+        ["==", ["get", "markerKind"], "incident"], "#ff334f",
+        ["==", ["get", "markerKind"], "simulation"], "#efc153",
         "#6c929d",
       ],
       "circle-opacity": 0.18,
@@ -1729,7 +1728,7 @@ function addMapLayers(
       ],
     ],
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 0, 12, 10, 20],
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 0, 6, 10, 12],
       "circle-color": "#ff263f",
       "circle-opacity": 0.48,
       "circle-stroke-color": "#ff263f",
@@ -1743,11 +1742,11 @@ function addMapLayers(
     source: SOURCE_IDS.incidents,
     filter: ["!", ["has", "point_count"]],
     paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 0, 14, 2, 10, 10, 7],
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 0, 5, 2, 5.5, 10, 7],
       "circle-color": [
         "case",
-        ["==", ["get", "live"], true], "#ff263f",
-        ["==", ["get", "status"], "simulated"], "#efc153",
+        ["==", ["get", "markerKind"], "incident"], "#ff263f",
+        ["==", ["get", "markerKind"], "simulation"], "#efc153",
         "#6c929d",
       ],
       "circle-stroke-color": "#f4fbff",
@@ -1759,16 +1758,9 @@ function addMapLayers(
     type: "symbol",
     source: SOURCE_IDS.incidents,
     filter: ["!", ["has", "point_count"]],
-    minzoom: 1,
+    minzoom: 3,
     layout: {
-      "text-field": [
-        "case",
-        ["==", ["get", "live"], true],
-        ["concat", "LIVE | ", ["coalesce", ["get", "title"], "ACTIVE DISASTER"]],
-        ["==", ["get", "status"], "simulated"],
-        ["concat", "SIM | ", ["coalesce", ["get", "title"], "SCENARIO"]],
-        ["concat", "CTX | ", ["coalesce", ["get", "title"], "INCIDENT"]],
-      ],
+      "text-field": ["coalesce", ["get", "displayLabel"], ["get", "title"], "INCIDENT"],
       "text-font": MAP_FONT_STACK,
       "text-size": 10,
       "text-offset": [0, 1.45],
@@ -2449,6 +2441,19 @@ function setAtmosphere(map: MapLibreMap, world: boolean): void {
   }
 }
 
+function setWorldViewportBalance(map: MapLibreMap, overview: boolean): void {
+  try {
+    map.setPadding({
+      top: 0,
+      right: 0,
+      bottom: overview ? worldOverviewBottomPadding(map.getContainer().clientHeight) : 0,
+      left: 0,
+    });
+  } catch {
+    // Camera balance is presentation-only; rendering stays usable without it.
+  }
+}
+
 function setCampusLayerVisibility(map: MapLibreMap, visible: boolean): void {
   CAMPUS_LAYER_IDS.forEach((id) => {
     if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
@@ -2457,6 +2462,7 @@ function setCampusLayerVisibility(map: MapLibreMap, visible: boolean): void {
 
 function flyWorld(map: MapLibreMap, duration = 2_400): void {
   setAtmosphere(map, true);
+  setWorldViewportBalance(map, true);
   try {
     if (map.getTerrain()) map.setTerrain(null);
   } catch {
@@ -2484,6 +2490,7 @@ function flyTwin(
   bearing = -30,
 ): void {
   setAtmosphere(map, false);
+  setWorldViewportBalance(map, false);
   setCampusLayerVisibility(map, showEstimatedCampusMassing);
   if (enableTerrain && map.getSource("aegis-terrain-dem")) {
     try {
@@ -2600,6 +2607,7 @@ export function AegisMap({
   incidents = EMPTY_INCIDENTS,
   selection,
   onSelectionChange,
+  onAreaComplete,
   onFeatureInspect,
   onIncidentSelect,
   onLocationPick,
@@ -2631,6 +2639,7 @@ export function AegisMap({
   const mapRef = useRef<MapLibreMap | null>(null);
   const callbacksRef = useRef({
     onSelectionChange,
+    onAreaComplete,
     onFeatureInspect,
     onIncidentSelect,
     onLocationPick,
@@ -2787,6 +2796,7 @@ export function AegisMap({
   useEffect(() => {
     callbacksRef.current = {
       onSelectionChange,
+      onAreaComplete,
       onFeatureInspect,
       onIncidentSelect,
       onLocationPick,
@@ -2817,6 +2827,7 @@ export function AegisMap({
     normalizedLayers.evacuationRoutes,
     normalizedIncidents,
     onFeatureInspect,
+    onAreaComplete,
     onIncidentSelect,
     onLocationPick,
     onMapReady,
@@ -2859,26 +2870,21 @@ export function AegisMap({
       const nextDraft = [...draftAreaRef.current, coordinate];
       draftAreaRef.current = nextDraft;
       setDraftArea(nextDraft);
-      if (nextDraft.length >= 3) {
-        commitSelection({
-          ...currentSelectionRef.current,
-          area: {
-            type: "Feature",
-            geometry: { type: "Polygon", coordinates: [closePolygon(nextDraft)] },
-            properties: { name: "Selected operating area" },
-          },
-        });
-      }
       return;
     }
     pointSequenceRef.current += 1;
     const point = pointForTool(tool, coordinate, pointSequenceRef.current, hazardTypeRef.current);
     if (!point) return;
     const current = currentSelectionRef.current;
-    commitSelection({
-      ...current,
-      points: [...current.points.filter((item) => item.role !== point.role), point],
-    });
+    const repeatable = point.role === "origin" || point.role === "destination" || point.role === "waypoint";
+    const points = repeatable
+      ? [
+          ...current.points.filter((item) => item.role !== point.role),
+          ...current.points.filter((item) => item.role === point.role).slice(-5),
+          point,
+        ]
+      : [...current.points.filter((item) => item.role !== point.role), point];
+    commitSelection({ ...current, points });
   }, [commitSelection, inspectCoordinate]);
 
   useEffect(() => {
@@ -3204,6 +3210,7 @@ export function AegisMap({
             flyTwin(map, activeTwinCenterRef.current, 1_700, enableTerrain, showCampusMassing);
           } else {
             setCampusLayerVisibility(map, false);
+            setWorldViewportBalance(map, true);
             // Start the presentation orbit quickly after the first stable
             // frame. User interactions still use the longer configured pause.
             lastWorldRotation = performance.now();
@@ -3286,8 +3293,12 @@ export function AegisMap({
             interactionRef.current(coordinate);
             return;
           }
+          const incidentHitbox: [[number, number], [number, number]] = [
+            [event.point.x - 9, event.point.y - 9],
+            [event.point.x + 9, event.point.y + 9],
+          ];
           const cluster = map.getLayer("aegis-incident-cluster-core")
-            ? map.queryRenderedFeatures(event.point, { layers: ["aegis-incident-cluster-core"] })[0]
+            ? map.queryRenderedFeatures(incidentHitbox, { layers: ["aegis-incident-cluster-core"] })[0]
             : undefined;
           const clusterId = Number(cluster?.properties?.cluster_id);
           if (cluster?.geometry.type === "Point" && Number.isFinite(clusterId)) {
@@ -3299,9 +3310,12 @@ export function AegisMap({
             return;
           }
           const available = INTERACTIVE_LAYER_IDS.filter((id) => map?.getLayer(id));
-          let target = available.length
-            ? map.queryRenderedFeatures(event.point, { layers: available })[0]
+          const incidentTarget = map.getLayer("aegis-incident-core")
+            ? map.queryRenderedFeatures(incidentHitbox, { layers: ["aegis-incident-core"] })[0]
             : undefined;
+          let target = incidentTarget ?? (available.length
+            ? map.queryRenderedFeatures(event.point, { layers: available })[0]
+            : undefined);
           // WORLD clicks select the geographic position. Base-map roads,
           // buildings and water cover most of a detailed globe, so inspecting
           // them first would make click-to-focus appear broken. Operational
@@ -3360,6 +3374,7 @@ export function AegisMap({
             ) {
               map.setTerrain({ source: "aegis-terrain-dem", exaggeration: 0.78 });
             }
+            if (finalizeTerrain) setWorldViewportBalance(map, overview);
           } catch {
             // Projection remains usable if optional terrain cannot be toggled.
           }
@@ -3468,7 +3483,12 @@ export function AegisMap({
         animationFrame = window.requestAnimationFrame(animate);
 
         if (typeof ResizeObserver !== "undefined") {
-          resizeObserver = new ResizeObserver(() => window.requestAnimationFrame(() => map?.resize()));
+          resizeObserver = new ResizeObserver(() => window.requestAnimationFrame(() => {
+            map?.resize();
+            if (map && activeViewRef.current === "world" && worldFocusUsesGlobe(map.getZoom())) {
+              setWorldViewportBalance(map, true);
+            }
+          }));
           resizeObserver.observe(container);
         }
       } catch (error) {
@@ -3578,22 +3598,6 @@ export function AegisMap({
       operationalMarkerRegistry.set(id, marker);
     };
 
-    normalizedIncidents.slice(0, 40).forEach((incident, index) => {
-      const presentation = incidentMarkerPresentation(incident);
-      addMarker(
-        `incident-${incident.id}`,
-        incident.coordinates,
-        presentation.kind,
-        presentation.label,
-        presentation.glyph,
-        presentation.live,
-        activeTool === "inspect"
-          ? () => callbacksRef.current.onIncidentSelect?.(incident)
-          : undefined,
-        index < 4 ? "primary" : "secondary",
-      );
-    });
-
     activeSelection.points.forEach((point) => {
       addMarker(
         `selection-${point.id}`,
@@ -3611,7 +3615,7 @@ export function AegisMap({
     const completedRing = activeSelection.area?.geometry.coordinates[0]
       ?.slice(0, -1)
       .map(([longitude, latitude]) => [longitude, latitude] as AegisCoordinate) ?? [];
-    const perimeter = draftArea.length >= 2 ? draftArea : completedRing;
+    const perimeter = unwrapMapCoordinates(draftArea.length >= 2 ? draftArea : completedRing);
     if (perimeter.length >= 2) {
       const closed = draftArea.length >= 3 || completedRing.length >= 3;
       const segmentCount = closed ? perimeter.length : perimeter.length - 1;
@@ -3634,7 +3638,7 @@ export function AegisMap({
       }
       if (completedRing.length >= 3 && !draftArea.length) {
         const center: AegisCoordinate = [
-          completedRing.reduce((total, point) => total + point[0], 0) / completedRing.length,
+          perimeter.reduce((total, point) => total + point[0], 0) / perimeter.length,
           completedRing.reduce((total, point) => total + point[1], 0) / completedRing.length,
         ];
         addMarker("selected-area", center, "area", "SIMULATION AREA", "A");
@@ -3707,6 +3711,7 @@ export function AegisMap({
       // at landmark zooms: some zero-cost vector styles render a black canvas
       // there even though their tiles remain healthy.
       setCampusLayerVisibility(map, false);
+      setWorldViewportBalance(map, globeOverview);
       try {
         // Always detach the terrain mesh before projection/camera changes.
         // The zoomend synchronizer restores terrain after a local flight.
@@ -3771,14 +3776,16 @@ export function AegisMap({
   const finishArea = () => {
     const points = draftAreaRef.current;
     if (points.length >= 3) {
-      commitSelection({
+      const nextSelection: AegisMapSelection = {
         ...currentSelectionRef.current,
         area: {
           type: "Feature",
           geometry: { type: "Polygon", coordinates: [closePolygon(points)] },
           properties: { name: "Selected operating area" },
         },
-      });
+      };
+      commitSelection(nextSelection);
+      callbacksRef.current.onAreaComplete?.(nextSelection);
     }
     draftAreaRef.current = [];
     setDraftArea([]);

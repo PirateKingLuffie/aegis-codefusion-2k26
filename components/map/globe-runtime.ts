@@ -182,6 +182,12 @@ export function worldCameraForViewport(width: number, height: number): WorldCame
   };
 }
 
+/** Keeps the pitched globe visually centred above the timeline. */
+export function worldOverviewBottomPadding(height: number): number {
+  const safeHeight = Math.max(320, height);
+  return Math.round(Math.min(120, Math.max(44, (safeHeight - 600) * 0.3)));
+}
+
 export function orbitResumeDeadline(
   nowMs: number,
   idleResumeMs: number,
@@ -240,9 +246,9 @@ export function incidentPingFrame(timeMs: number): IncidentPingFrame {
   const progress = (Math.sin(Math.max(0, timeMs) / 430) + 1) / 2;
   return {
     progress,
-    worldRadius: 10 + progress * 18,
-    streetRadius: 16 + progress * 24,
-    opacity: 0.52 - progress * 0.38,
-    strokeOpacity: 0.96 - progress * 0.72,
+    worldRadius: 6 + progress * 8,
+    streetRadius: 10 + progress * 12,
+    opacity: 0.38 - progress * 0.28,
+    strokeOpacity: 0.82 - progress * 0.62,
   };
 }
