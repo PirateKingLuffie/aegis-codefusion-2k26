@@ -1621,6 +1621,21 @@ export function CommandCenter() {
     const cleared: AegisMapSelection = { points: [] };
     setMapSelection(cleared);
     setLiveRoadRoutes(null);
+    setSourceIncident(undefined);
+    setFieldOverlays([]);
+    setViewMode("monitor");
+    setSceneView("world");
+    setActiveNav("global");
+    setRightPanelOpen(false);
+    setFocusRequest({
+      center: [24, 16],
+      zoom: 1.96,
+      pitch: 12,
+      bearing: -8,
+      durationMs: 1_100,
+      label: "Global operations overview",
+      requestId: `clear-world-overview-${Date.now()}`,
+    });
     void beginSelectionWorkflow(cleared);
   }, [beginSelectionWorkflow]);
 
