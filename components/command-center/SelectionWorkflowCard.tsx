@@ -1,4 +1,4 @@
-import { Check, LoaderCircle, Route, ShieldAlert, X } from "lucide-react";
+import { Check, LoaderCircle, Route, ShieldAlert, Trash2, X } from "lucide-react";
 
 import type { SelectionWorkflowAssessment } from "./selection-workflow";
 import styles from "./SelectionWorkflowCard.module.css";
@@ -6,6 +6,7 @@ import styles from "./SelectionWorkflowCard.module.css";
 interface SelectionWorkflowCardProps {
   assessment: SelectionWorkflowAssessment;
   onOpenResponse: () => void;
+  onClear: () => void;
   onDismiss: () => void;
 }
 
@@ -16,6 +17,7 @@ function humanize(value: string): string {
 export function SelectionWorkflowCard({
   assessment,
   onOpenResponse,
+  onClear,
   onDismiss,
 }: SelectionWorkflowCardProps) {
   const ready = assessment.stage === "ready";
@@ -70,6 +72,9 @@ export function SelectionWorkflowCard({
           <p>{assessment.decisionSummary}</p>
           <button className={styles.openButton} type="button" onClick={onOpenResponse}>
             <Route size={14} /> Open evacuation response
+          </button>
+          <button className={styles.clearButton} type="button" onClick={onClear}>
+            <Trash2 size={13} /> Clear map selection
           </button>
         </>
       ) : (

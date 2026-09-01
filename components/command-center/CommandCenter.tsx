@@ -3403,6 +3403,13 @@ export function CommandCenter() {
                   </div>
                   <div className={styles.planActions}>
                     <button
+                      type="button"
+                      className={`${styles.secondaryAction} ${styles.clearSelectionAction}`}
+                      onClick={clearOperatorSelection}
+                    >
+                      <X size={14} /> Clear map selection
+                    </button>
+                    <button
                       className={styles.secondaryAction}
                       onClick={() => {
                         if (!surgeCapacity) {
@@ -3932,6 +3939,7 @@ export function CommandCenter() {
       {selectionWorkflowVisible && selectionWorkflowAssessment ? (
         <SelectionWorkflowCard
           assessment={selectionWorkflowAssessment}
+          onClear={clearOperatorSelection}
           onDismiss={() => setSelectionWorkflowVisible(false)}
           onOpenResponse={() => {
             setViewMode("respond");

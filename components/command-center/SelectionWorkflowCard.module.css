@@ -153,6 +153,25 @@
 
 .openButton:hover { background: #2b5d8e; }
 
+.clearButton {
+  width: calc(100% - 20px);
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: -3px 10px 9px;
+  border: 1px solid rgba(142, 157, 164, 0.28);
+  border-radius: 5px;
+  color: #b9c0c3;
+  background: #171a1b;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.clearButton:hover { color: #fff; border-color: rgba(255, 255, 255, 0.32); background: #202426; }
+
 .progress {
   display: flex;
   flex-direction: column;

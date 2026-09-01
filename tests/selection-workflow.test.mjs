@@ -165,6 +165,8 @@ test("command center wires map input to automatic deterministic assessment and r
   assert.match(source, /onAreaComplete=\{completeOperatingArea\}/);
   assert.match(source, /onSelectionClear=\{clearOperatorSelection\}/);
   assert.match(source, /selection=\{viewMode === "monitor" \? EMPTY_MAP_SELECTION : mapSelection\}/);
+  assert.match(source, /onClear=\{clearOperatorSelection\}/);
+  assert.match(source, /> Clear map selection/);
   assert.match(source, /<SelectionWorkflowCard/);
 
   const workflowStart = source.indexOf("const fingerprint = selectionFingerprint(selection);");
