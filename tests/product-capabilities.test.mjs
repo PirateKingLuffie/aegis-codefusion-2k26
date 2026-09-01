@@ -267,6 +267,7 @@ test("monitor incidents and simulation presets remain separate and the globe fie
   assert.match(mapSource, /\["get", "markerKind"\]/);
   assert.match(mapSource, /\["get", "displayLabel"\]/);
   assert.match(mapStyles, /data-world-overview="true"/);
+  assert.match(commandCenter, /setEvacuationVisible\(false\);\s*\}, \[\]\);/);
 });
 
 test("incident rendering uses source labels and one WebGL marker path without duplicate DOM incidents", async () => {
@@ -281,6 +282,7 @@ test("incident rendering uses source labels and one WebGL marker path without du
   assert.doesNotMatch(markerEffect, /incidentMarkerPresentation|`incident-\$\{/);
   assert.match(source, /live_count:.*\["get", "markerKind"\]/);
   assert.match(source, /"text-field": \["coalesce", \["get", "displayLabel"\], \["get", "title"\], "INCIDENT"\]/);
+  assert.match(source, /callbacksRef\.current\.onSelectionClear\(\)/);
 });
 
 test("provider geographic labels are distinguishable from AEGIS overlay symbols", () => {

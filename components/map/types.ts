@@ -346,6 +346,8 @@ export interface AegisMapProps {
   incidents?: AegisIncident[];
   selection?: AegisMapSelection;
   onSelectionChange?: (selection: AegisMapSelection) => void;
+  /** Clears controlled selection and any parent-owned response workflow. */
+  onSelectionClear?: () => void;
   /** Fires only when the operator explicitly completes a 3+ point area. */
   onAreaComplete?: (selection: AegisMapSelection) => void;
   onFeatureInspect?: (inspection: AegisFeatureInspection | null) => void;

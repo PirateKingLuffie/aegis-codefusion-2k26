@@ -2607,6 +2607,7 @@ export function AegisMap({
   incidents = EMPTY_INCIDENTS,
   selection,
   onSelectionChange,
+  onSelectionClear,
   onAreaComplete,
   onFeatureInspect,
   onIncidentSelect,
@@ -2639,6 +2640,7 @@ export function AegisMap({
   const mapRef = useRef<MapLibreMap | null>(null);
   const callbacksRef = useRef({
     onSelectionChange,
+    onSelectionClear,
     onAreaComplete,
     onFeatureInspect,
     onIncidentSelect,
@@ -2796,6 +2798,7 @@ export function AegisMap({
   useEffect(() => {
     callbacksRef.current = {
       onSelectionChange,
+      onSelectionClear,
       onAreaComplete,
       onFeatureInspect,
       onIncidentSelect,
@@ -2833,6 +2836,7 @@ export function AegisMap({
     onMapReady,
     onOverlayMove,
     onSelectionChange,
+    onSelectionClear,
     onViewModeChange,
     selection,
     sourceData,
@@ -3798,7 +3802,13 @@ export function AegisMap({
     setDraftArea([]);
     activeToolRef.current = "inspect";
     setActiveTool("inspect");
-    commitSelection({ points: [] });
+    const cleared: AegisMapSelection = { points: [] };
+    currentSelectionRef.current = cleared;
+    if (callbacksRef.current.onSelectionClear) {
+      callbacksRef.current.onSelectionClear();
+    } else {
+      commitSelection(cleared);
+    }
     setInspection(null);
     callbacksRef.current.onFeatureInspect?.(null);
   };

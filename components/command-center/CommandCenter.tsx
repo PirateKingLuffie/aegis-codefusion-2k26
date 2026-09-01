@@ -811,6 +811,8 @@ const fallbackDecision: OperationsDecision = {
   alternatives: ["Inspect live evidence", "Adjust the scenario and compare branches"],
 };
 
+const EMPTY_MAP_SELECTION: AegisMapSelection = { points: [] };
+
 function deterministicDecision(input: {
   location: string;
   hazard: string;
@@ -1615,6 +1617,12 @@ export function CommandCenter() {
     void beginSelectionWorkflow(nextSelection);
   }, [activeLocation.latitude, activeLocation.longitude, beginSelectionWorkflow, mapSelection.points]);
 
+  const clearOperatorSelection = useCallback(() => {
+    setMapSelection(EMPTY_MAP_SELECTION);
+    setLiveRoadRoutes(null);
+    void beginSelectionWorkflow(EMPTY_MAP_SELECTION);
+  }, [beginSelectionWorkflow]);
+
   const completeOperatingArea = useCallback((selection: AegisMapSelection) => {
     const area = selectionAreaSummary(selection);
     if (!area.center) return;
@@ -1836,6 +1844,7 @@ export function CommandCenter() {
       requestId: `world-overview-${Date.now()}`,
     });
     setRightPanelOpen(false);
+    setEvacuationVisible(false);
   }, []);
 
   const enterTwinView = useCallback(() => {
@@ -3021,8 +3030,9 @@ export function CommandCenter() {
                   annotation.id === id ? { ...annotation, coordinates } : annotation
                 )));
               }}
-              selection={mapSelection}
+              selection={viewMode === "monitor" ? EMPTY_MAP_SELECTION : mapSelection}
               onSelectionChange={updateMapSelection}
+              onSelectionClear={clearOperatorSelection}
               onAreaComplete={completeOperatingArea}
               onIncidentSelect={focusMapIncident}
               focusRequest={focusRequest}
@@ -3467,7 +3477,7 @@ export function CommandCenter() {
             </button>
             <div>
               <span>Incident</span>
-              <strong>INC-EIT-{coreHazard.toUpperCase()}-01</strong>
+              <strong>INC-{activeLocation.id.replace(/[^a-z0-9]+/gi, "-").toUpperCase()}-{coreHazard.toUpperCase()}</strong>
               <small className={styles.panelBrief}>Calculated effects and access state at T+{minute} min</small>
             </div>
             <StatusTag tone={currentFrame.severity === "minimal" || currentFrame.severity === "minor" ? "amber" : "red"}>
