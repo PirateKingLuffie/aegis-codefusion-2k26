@@ -173,3 +173,16 @@ test("command center wires map input to automatic deterministic assessment and r
   assert.ok(workflowStart >= 0 && duplicateGuard > workflowStart);
   assert.ok(replacementTimerClear > duplicateGuard, "a duplicate area completion must not cancel its active assessment timer");
 });
+
+test("map clear publishes an empty controlled selection before clearing parent response state", async () => {
+  const source = await readFile(new URL("../components/map/AegisMap.tsx", import.meta.url), "utf8");
+  const clearStart = source.indexOf("const clearSelection = () => {");
+  const clearEnd = source.indexOf("const zoom =", clearStart);
+  const clearBody = source.slice(clearStart, clearEnd);
+  const publishEmpty = clearBody.indexOf("commitSelection(cleared);");
+  const clearParent = clearBody.indexOf("callbacksRef.current.onSelectionClear();");
+
+  assert.ok(clearStart >= 0 && clearEnd > clearStart);
+  assert.ok(publishEmpty >= 0, "Clear must publish the empty selection through onSelectionChange");
+  assert.ok(clearParent > publishEmpty, "Parent workflow cleanup must follow controlled selection cleanup");
+});

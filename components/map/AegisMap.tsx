@@ -3804,10 +3804,14 @@ export function AegisMap({
     setActiveTool("inspect");
     const cleared: AegisMapSelection = { points: [] };
     currentSelectionRef.current = cleared;
+    // Always publish the empty selection through the normal controlled-state
+    // channel, then let the explicit clear callback remove parent-owned
+    // response panels. Keeping these as two independent signals prevents a
+    // controlled map from retaining its last polygon when only the workflow
+    // state was cleared.
+    commitSelection(cleared);
     if (callbacksRef.current.onSelectionClear) {
       callbacksRef.current.onSelectionClear();
-    } else {
-      commitSelection(cleared);
     }
     setInspection(null);
     callbacksRef.current.onFeatureInspect?.(null);

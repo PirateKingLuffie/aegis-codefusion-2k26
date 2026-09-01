@@ -1618,9 +1618,10 @@ export function CommandCenter() {
   }, [activeLocation.latitude, activeLocation.longitude, beginSelectionWorkflow, mapSelection.points]);
 
   const clearOperatorSelection = useCallback(() => {
-    setMapSelection(EMPTY_MAP_SELECTION);
+    const cleared: AegisMapSelection = { points: [] };
+    setMapSelection(cleared);
     setLiveRoadRoutes(null);
-    void beginSelectionWorkflow(EMPTY_MAP_SELECTION);
+    void beginSelectionWorkflow(cleared);
   }, [beginSelectionWorkflow]);
 
   const completeOperatingArea = useCallback((selection: AegisMapSelection) => {
