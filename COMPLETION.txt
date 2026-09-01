@@ -14,7 +14,7 @@ Cost policy: zero-paid-key deterministic core, no billing-required map path; opt
 Primary demo target: Lenovo LOQ, i5-12450HX, RTX 4050, 24 GB DDR5, 1366 x 768
 Live command center: https://aegis.guptashivaani233.workers.dev
 Dedicated Agent Ledger: https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
-Current main Worker version: 016af2c7-1ec1-41e7-8d7e-602e09638eb9
+Current main Worker version: f2d3cb55-907b-4d5a-9cd0-5f57d12c4100
 Previously accepted ledger Worker version: af5d0e22-9ed7-4e83-b0ff-ea62a312114f
 Ledger date: 1 September 2026
 
@@ -76,8 +76,8 @@ credentials/artwork; they cannot be fabricated in code.
                         remaining exposure and plan warning.
 
 CURRENT-REHAUL RELEASE RECORD:
-  Deployed application source:  5dadc7c (fix: return cleared responses to monitor)
-  Main Worker version:          016af2c7-1ec1-41e7-8d7e-602e09638eb9
+  Deployed application source:  ac9c069 (fix: reset playback with cleared response)
+  Main Worker version:          f2d3cb55-907b-4d5a-9cd0-5f57d12c4100
   Ledger Worker version:        af5d0e22-9ed7-4e83-b0ff-ea62a312114f (unchanged)
   Canonical verify totals:      112 total / 111 passed / 0 failed / 1 optional live-feed skipped
   TypeScript / ESLint / build:  PASS
@@ -85,7 +85,8 @@ CURRENT-REHAUL RELEASE RECORD:
   Browser acceptance:           1366 x 768 centred tilted globe; automatic orbit running; source-labelled
                                 incidents reached the WebGL renderer; a completed area generated the
                                 deterministic dry-run response and evacuation view; the reachable Clear
-                                action removed all selection/response overlays and returned to Monitor;
+                                action removed all selection/response overlays, reset T+000 and returned
+                                to Monitor;
                                 no warning/error logs.
   Truth boundary:               no phone, government, public-warning or field dispatch was performed;
                                 regional outputs remain deterministic prototype estimates.
@@ -381,7 +382,7 @@ Public upstreams can throttle, revise or become unavailable; AEGIS reports this 
 13. ORACLE / CONTAINER DEPLOYMENT PACKAGE
 ==========================================
 
-[LIVE] Cloudflare command center Worker version 016af2c7-1ec1-41e7-8d7e-602e09638eb9.
+[LIVE] Cloudflare command center Worker version f2d3cb55-907b-4d5a-9cd0-5f57d12c4100.
 [LIVE] Dedicated Agent Ledger Worker version af5d0e22-9ed7-4e83-b0ff-ea62a312114f.
 [LIVE] D1 migration applied in APAC; cross-deployment create, read, human review and verified revision 2 passed.
 
@@ -789,9 +790,9 @@ Verification:
 ============================================================================
 
 Public release:
-  https://aegis.guptashivaani233.workers.dev/?fresh=5dadc7c
-  Cloudflare Worker version: 016af2c7-1ec1-41e7-8d7e-602e09638eb9
-  Deployed application source commit: 5dadc7c
+  https://aegis.guptashivaani233.workers.dev/?fresh=ac9c069
+  Cloudflare Worker version: f2d3cb55-907b-4d5a-9cd0-5f57d12c4100
+  Deployed application source commit: ac9c069
 
 Completed:
   [DONE] One clustered WebGL incident renderer replaces duplicate DOM/WebGL pings.
@@ -805,7 +806,8 @@ Completed:
          with explicit model-default and out-of-bounds fallback disclosure.
   [DONE] The assessment opens a detailed evacuation response with routes, resources, access and impact state.
   [DONE] Clear is reachable from both the assessment and evacuation panels. It removes the controlled
-         selection, response package, evacuation overlay and stale area incident, then returns to Monitor.
+         selection, response package, evacuation overlay and stale area incident, resets playback to T+000,
+         then returns to Monitor.
   [DONE] Monitor hides scenario selection/response state and restores the rotating global overview.
   [DONE] Incident identifiers use the selected location and hazard instead of a hard-coded EIT prefix.
 
@@ -816,7 +818,7 @@ Verification:
   - Full suite: 112 tests, 111 passed, zero failed, one optional public-live-feed test skipped.
   - Public endpoints `/`, `/api/health` and `/api/live` returned HTTP 200.
   - Public 1366 x 768 browser replay: globe and orbit running; live-feed records reached the renderer;
-    three-point Area -> Response package ready -> evacuation response -> Clear -> clean Monitor passed.
+    three-point Area -> Response package ready -> evacuation response -> Clear -> T+000 clean Monitor passed.
   - Browser warning/error log remained empty through the final replay.
 
 Exact non-claims:
