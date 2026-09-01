@@ -1623,6 +1623,10 @@ export function CommandCenter() {
     setLiveRoadRoutes(null);
     setSourceIncident(undefined);
     setFieldOverlays([]);
+    setMinute(0);
+    setPlaying(false);
+    setPlanDepartureMinute(0);
+    setSurgeCapacity(false);
     setViewMode("monitor");
     setSceneView("world");
     setActiveNav("global");

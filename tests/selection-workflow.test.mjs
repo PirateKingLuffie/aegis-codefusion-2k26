@@ -168,6 +168,8 @@ test("command center wires map input to automatic deterministic assessment and r
   assert.match(source, /onClear=\{clearOperatorSelection\}/);
   assert.match(source, /> Clear map selection/);
   assert.match(source, /setViewMode\("monitor"\)/);
+  assert.match(source, /setMinute\(0\)/);
+  assert.match(source, /setPlaying\(false\)/);
   assert.match(source, /requestId: `clear-world-overview-\$\{Date\.now\(\)\}`/);
   assert.match(source, /<SelectionWorkflowCard/);
 
