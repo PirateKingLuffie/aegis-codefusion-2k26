@@ -20,7 +20,7 @@ The map tools are operational inputs:
 2. **Safe point** places or replaces the screened destination.
 3. **Source** places or replaces the hazard source.
 4. **Area** collects three or more vertices. The boundary is not committed until the operator presses **Complete**.
-5. **Clear** removes the pointers and boundary and resets the automatic workflow.
+5. **Clear** removes the pointers and boundary, closes the generated response overlays and returns to the clean Monitor globe. The action remains reachable from both the automatic assessment card and the detailed evacuation panel after those panels cover the original map-input rail.
 
 Committing an **Origin**, **Safe point** or **Source** marker, or pressing **Complete** for an Area, triggers a local deterministic recalculation. **Inspect** clicks and individual draft area vertices do not trigger it. A committed pointer outside the previous planning domain recenters the domain so the calculation follows the operator's input rather than retaining an unrelated location.
 

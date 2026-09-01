@@ -14,9 +14,9 @@ Cost policy: zero-paid-key deterministic core, no billing-required map path; opt
 Primary demo target: Lenovo LOQ, i5-12450HX, RTX 4050, 24 GB DDR5, 1366 x 768
 Live command center: https://aegis.guptashivaani233.workers.dev
 Dedicated Agent Ledger: https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
-Current main Worker version: 97819d30-6091-41ec-9b57-6320eca81edf
+Current main Worker version: 016af2c7-1ec1-41e7-8d7e-602e09638eb9
 Previously accepted ledger Worker version: af5d0e22-9ed7-4e83-b0ff-ea62a312114f
-Ledger date: 28 August 2026
+Ledger date: 1 September 2026
 
 
 1. FINAL STATUS
@@ -76,20 +76,19 @@ credentials/artwork; they cannot be fabricated in code.
                         remaining exposure and plan warning.
 
 CURRENT-REHAUL RELEASE RECORD:
-  Deployed application source:  638e063 (fix: separate incident context and clarify media viewer)
-  Main Worker version:          97819d30-6091-41ec-9b57-6320eca81edf
+  Deployed application source:  5dadc7c (fix: return cleared responses to monitor)
+  Main Worker version:          016af2c7-1ec1-41e7-8d7e-602e09638eb9
   Ledger Worker version:        af5d0e22-9ed7-4e83-b0ff-ea62a312114f (unchanged)
-  Canonical verify totals:      85 total / 84 passed / 0 failed / 1 optional live-feed skipped
-  Production build:             PASS
-  Public API smoke checks:      health, providers, simulation catalog and Agent Ledger all HTTP 200
-  Remote globe/search proof:    1366 x 768 public browser replay; orbit override enabled; Tokyo search
-                                returned imported OSM place data, live-source Focus on map stayed in the
-                                global view, Origin/Safe point/Source/Area tools completed and reset,
-                                and the final globe-to-street transition produced no warning/error logs.
-  Hazard animation proof:       five-plugin timeline/map test contract passed; Tokyo earthquake preset
-                                replayed at T+60 with its screening/impact state visible.
-  AI evacuation proof:          live Workers AI response returned from @cf/meta/llama-3.2-3b-instruct and
-                                the UI showed the current calculated evacuation procedure and evidence.
+  Canonical verify totals:      112 total / 111 passed / 0 failed / 1 optional live-feed skipped
+  TypeScript / ESLint / build:  PASS
+  Public API smoke checks:      command center, health and live-intelligence endpoints HTTP 200
+  Browser acceptance:           1366 x 768 centred tilted globe; automatic orbit running; source-labelled
+                                incidents reached the WebGL renderer; a completed area generated the
+                                deterministic dry-run response and evacuation view; the reachable Clear
+                                action removed all selection/response overlays and returned to Monitor;
+                                no warning/error logs.
+  Truth boundary:               no phone, government, public-warning or field dispatch was performed;
+                                regional outputs remain deterministic prototype estimates.
   Lenovo LOQ manual check:      owner device check remains before presentation.
 
 
@@ -382,7 +381,7 @@ Public upstreams can throttle, revise or become unavailable; AEGIS reports this 
 13. ORACLE / CONTAINER DEPLOYMENT PACKAGE
 ==========================================
 
-[LIVE] Cloudflare command center Worker version 1e12ba63-1fe8-4112-bda9-b6ebd3b460b0.
+[LIVE] Cloudflare command center Worker version 016af2c7-1ec1-41e7-8d7e-602e09638eb9.
 [LIVE] Dedicated Agent Ledger Worker version af5d0e22-9ed7-4e83-b0ff-ea62a312114f.
 [LIVE] D1 migration applied in APAC; cross-deployment create, read, human review and verified revision 2 passed.
 
@@ -784,6 +783,49 @@ Verification:
   - Public 390 x 844 check: document width matched viewport, compact tabs remained inside the screen.
   - Live Intelligence, Automation and Decision Ledger headings and active tabs verified after real clicks.
   - Browser error log remained empty through the complete navigation replay.
+
+
+27. GLOBE INCIDENT TRUTH AND OPERATOR-RESPONSE RELEASE (1 SEPTEMBER 2026)
+============================================================================
+
+Public release:
+  https://aegis.guptashivaani233.workers.dev/?fresh=5dadc7c
+  Cloudflare Worker version: 016af2c7-1ec1-41e7-8d7e-602e09638eb9
+  Deployed application source commit: 5dadc7c
+
+Completed:
+  [DONE] One clustered WebGL incident renderer replaces duplicate DOM/WebGL pings.
+  [DONE] Fresh active or monitoring observations from live providers are red; aging, cached, degraded or
+         unknown-freshness source context is gray; simulations are amber. Labels follow the same class.
+  [DONE] Marker visuals are smaller while padded hit targets preserve reliable pointer interaction.
+  [DONE] The full-world camera is centred, slightly tilted and continuously auto-orbits while idle at a
+         compatible globe zoom; operator interaction pauses it and the runtime resumes it after idle.
+  [DONE] Area input requires three or more points and an explicit Complete action before simulation.
+  [DONE] Origin, Safe point, Source and completed Area inputs start a deterministic local dry-run assessment
+         with explicit model-default and out-of-bounds fallback disclosure.
+  [DONE] The assessment opens a detailed evacuation response with routes, resources, access and impact state.
+  [DONE] Clear is reachable from both the assessment and evacuation panels. It removes the controlled
+         selection, response package, evacuation overlay and stale area incident, then returns to Monitor.
+  [DONE] Monitor hides scenario selection/response state and restores the rotating global overview.
+  [DONE] Incident identifiers use the selected location and hazard instead of a hard-coded EIT prefix.
+
+Verification:
+  - TypeScript: PASS.
+  - ESLint: PASS.
+  - Vinext/Cloudflare production build: PASS; the existing large-chunk advisory remains non-fatal.
+  - Full suite: 112 tests, 111 passed, zero failed, one optional public-live-feed test skipped.
+  - Public endpoints `/`, `/api/health` and `/api/live` returned HTTP 200.
+  - Public 1366 x 768 browser replay: globe and orbit running; live-feed records reached the renderer;
+    three-point Area -> Response package ready -> evacuation response -> Clear -> clean Monitor passed.
+  - Browser warning/error log remained empty through the final replay.
+
+Exact non-claims:
+  - A current provider record is not continuous camera coverage or an AEGIS field observation.
+  - Damage, casualty-screening, routing and response values are deterministic planning estimates unless an
+    individual field is explicitly backed by imported authoritative evidence.
+  - No phone, public, government, siren or field-dispatch action is sent by this demonstration workflow.
+  - The bundled EIT view uses public footprints plus estimated heights, terrain and occupancy. It is not
+    authoritative CAD, BIM, surveyed drainage or a certified campus evacuation model.
 
 
 END OF LEDGER

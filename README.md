@@ -10,12 +10,12 @@ AEGIS combines a slowly rotating and searchable 3D world view, source-labelled i
 - **Dedicated Agent Ledger:** https://aegis-agent-ledger-codefusion-2k26.guptashivaani233.workers.dev/agent-ledger
 - **Source repository:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26
 - **Windows and presentation downloads:** https://github.com/PirateKingLuffie/aegis-codefusion-2k26/releases/tag/v0.1.0
-- **Deployed application source commit:** `6380ce0` (`feat: unify feature navigation and document IoT roadmap`)
-- **Main Worker version:** `e2583031-87a9-4c47-b503-702a1415d6ce`
+- **Deployed application source commit:** `5dadc7c` (`fix: return cleared responses to monitor`)
+- **Main Worker version:** `016af2c7-1ec1-41e7-8d7e-602e09638eb9`
 - **Ledger Worker version:** `af5d0e22-9ed7-4e83-b0ff-ea62a312114f` (unchanged)
-- **Deployed verification:** 101 tests total — 100 passed, 0 failed, 1 optional public-live-feed test skipped; TypeScript, ESLint and production build passed.
-- **Incident/media follow-up:** deployed in `638e063` / Worker `97819d30-6091-41ec-9b57-6320eca81edf`; live, simulated and context markers are separated, and the source viewer refuses unrelated footage.
-- **Remote browser:** Shared Operations, Live Intelligence, Automation and Decision Ledger tabs were verified at 1366 × 768 and 390 × 844 with correct active states, no horizontal overflow and no browser console errors.
+- **Deployed verification:** 112 tests total — 111 passed, 0 failed, 1 optional public-live-feed test skipped; TypeScript, ESLint and production build passed.
+- **Earlier incident/media baseline (28 August 2026):** `638e063` / Worker `97819d30-6091-41ec-9b57-6320eca81edf`; retained as historical evidence.
+- **Remote-browser acceptance:** At 1366 × 768 the centred tilted globe loaded with automatic orbit running and 20 source records after live-feed hydration. A completed three-point area generated the deterministic dry-run response package and evacuation view; its reachable Clear control removed the selection, assessment, evacuation and area-incident overlays and returned to a clean Monitor globe. Browser warnings and errors remained empty.
 
 Cloudflare D1 is migrated and live for immutable Agent Ledger receipt revisions. Cross-deployment `GET`, `POST` and human-review `PATCH` were verified. D1 is the ledger store only; scenario history remains browser-local unless the separate FastAPI operations service is deployed.
 
